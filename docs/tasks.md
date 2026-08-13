@@ -35,6 +35,9 @@
 - [x] Enemy + follower grenade usage (frag dug-in targets before flanking)
 - [x] Vertical squash experiment (Character.VERTICAL_SQUASH = 0.8)
 - [x] Medic heal gun (auto-medic follower AI + player heal targeting)
+- [x] Awareness system: IDLE wander → SUSPICIOUS noise investigation → FIGHT
+      with last-known-position aiming, suppressive fire at stale LKPs, pack
+      alert sharing, lost-track stand-down
 
 ### M1 polish backlog (nice-to-have, not blocking)
 - [ ] Weapon grip orientation tuning (currently held at the side; fine at
@@ -55,7 +58,7 @@
       per-floor navmeshes (teleport waypoints per architecture.md)
 - [ ] Destructible doors + breach points
 - [ ] Elevation-aware LOS and cover
-- [ ] Enemy patrol routes + alert states (extend EnemyController IDLE)
+- [ ] Proper patrol ROUTES (waypoint paths; IDLE wander + alert states are in)
 - [ ] Camera floor transitions; hide geometry above active floor
 - [ ] Audio pass (AudioManager autoload, wayfarer `gen_audio.py` lineage)
 - [ ] Main menu + pause; save/load stub honoring `GameState.debug_session`

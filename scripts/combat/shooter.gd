@@ -165,9 +165,13 @@ func _alert_hearing() -> void:
 			continue
 		if character.global_position.distance_to(enemy.global_position) > HEARING_RADIUS:
 			continue
-		var controller := enemy.get_node_or_null("EnemyController") as EnemyController
-		if controller != null:
-			controller.alerted()
+		# Type-scan, not a name lookup — controllers are attached in code and
+		# not every call site names the node.
+		for child in enemy.get_children():
+			if child is EnemyController:
+				# Noise gives a position to investigate, not a target lock.
+				(child as EnemyController).heard(character.global_position)
+				break
 
 func _resolve_hitscan(target: Character, muzzle: Vector3, hit: bool, g: GearItem) -> void:
 	var scene := get_tree().current_scene

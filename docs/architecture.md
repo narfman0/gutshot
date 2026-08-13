@@ -117,9 +117,23 @@ Not implemented yet. Planned approach:
   model; an empty cone still sends the round downrange (`Shooter.fire_wild` —
   rate, mag, tracer, noise). The heal gun cone-acquires squadmates the same
   way.
-- **Gunfire is loud**: every shot (aimed or wild) calls
-  `Shooter._alert_hearing()` — enemies within `HEARING_RADIUS` aggro on the
-  noise even if the shot wasn't at them.
+- **Awareness** (`enemy_controller.gd` + `combat_brain.gd`): enemies run
+  IDLE → SUSPICIOUS → FIGHT.
+  - IDLE: amble within `WANDER_RADIUS` of spawn; a visible player-team
+    character inside `aggro_radius` → FIGHT (spotting pins the target).
+  - Gunfire within `Shooter.HEARING_RADIUS` gives a **noise position, not a
+    target** — SUSPICIOUS walks to it at `INVESTIGATE_SPEED`, looks around
+    for `SUSPICIOUS_LINGER_SECS`, then stands down.
+  - FIGHT tracks a **last-known position**: the brain updates `threat_lkp`
+    only while the threat is actually visible; ALL aiming/positioning
+    decisions (cover choice, flank arcs, grenade throws, facing) use the
+    believed position, so relocating unseen means they work your old spot —
+    including pop-out **suppressive fire** (`fire_wild`) at the stale LKP.
+    Unseen for `SIGHT_MEMORY_SECS` (and unpinned) → track lost → SUSPICIOUS
+    at the LKP.
+  - Being shot at or damaged (grenades included) always pins the attacker
+    and jumps straight to FIGHT; pack-mates share alerts with the position
+    fix, and a pack member dying is an alert by itself.
 - **Keys 1/2/3 are weapon slots** (primary / secondary / heavy-or-device), not
   character hotkeys. **Tab cycles the active character**; HUD portraits click.
 - **Followers are autonomous**: they trail the leader out of combat and fight

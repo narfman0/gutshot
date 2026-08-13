@@ -114,6 +114,29 @@ func _ready() -> void:
 		_check(max_swing > deg_to_rad(30.0),
 			"flank changed bearing by %.0f°" % rad_to_deg(max_swing))
 
+	# 3. Awareness: gunfire out of sight range but in earshot turns an idle
+	#    enemy SUSPICIOUS and pulls it toward the noise.
+	var noisy := _make_character(0, Vector3(16, 0.1, 16))
+	var noisy_gun := GearItem.new()
+	noisy_gun.fire_rate = 10.0
+	noisy.equip(noisy_gun)
+	var listener := _make_character(1, Vector3(16, 0.1, 3))  # 13 m: deaf-spot for sight (12), inside hearing (14)
+	var listener_brain := CombatBrain.new()
+	listener_brain.name = "CombatBrain"
+	listener.add_child(listener_brain)
+	var listener_ctrl := EnemyController.new()
+	listener.add_child(listener_ctrl)
+	await get_tree().physics_frame
+	_check(listener_ctrl.state == EnemyController.State.IDLE, "listener starts IDLE")
+	(noisy.get_node("Shooter") as Shooter).fire_wild(Vector3(10, 0, 16))
+	await get_tree().physics_frame
+	_check(listener_ctrl.state == EnemyController.State.SUSPICIOUS,
+		"gunfire in earshot → SUSPICIOUS (state %d)" % listener_ctrl.state)
+	var d0 := listener.global_position.distance_to(noisy.global_position)
+	await get_tree().create_timer(2.5).timeout
+	var d1 := listener.global_position.distance_to(noisy.global_position)
+	_check(d1 < d0 - 1.0, "investigates toward the noise (%.1f -> %.1f m)" % [d0, d1])
+
 	if _failures.is_empty():
 		print("AI_PROBE: ALL PASS")
 		get_tree().quit(0)

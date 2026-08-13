@@ -143,10 +143,13 @@ func notify_shot_at(attacker: Character) -> void:
 	if is_alive():
 		shot_at.emit(attacker)
 
-func receive_damage(amount: float, _attacker: Node = null) -> void:
+func receive_damage(amount: float, attacker: Node = null) -> void:
 	if not is_alive():
 		return
 	_last_damage_ms = Time.get_ticks_msec()
+	# Taking damage reveals the source — grenades included, not just gunfire.
+	if attacker is Character:
+		shot_at.emit(attacker)
 	if shield > 0.0:
 		var absorbed := minf(shield, amount)
 		shield -= absorbed
