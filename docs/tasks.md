@@ -54,6 +54,13 @@
 
 ## Phase 2 — Multi-Floor Template Level (next)
 
+See docs/locations.md — the Vantag District: tower (portal), Depot 9
+(warehouse), Fab Level (robotics lab), hideout, with instant travel between
+sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
+
+- [ ] Depot 9 (warehouse): container mazes, catwalks, loading-dock breach
+      doors — the Phase-2 systems testbed (see locations.md)
+- [ ] Hideout + district map (site select via SceneManager.LEVELS)
 - [ ] Two-floor hand-crafted level: stairs/ladder transitions between
       per-floor navmeshes (teleport waypoints per architecture.md)
 - [ ] Destructible doors + breach points

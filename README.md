@@ -47,4 +47,5 @@ xvfb-run -a godot res://future/tests/harnesses/overview_shot.tscn  # screenshots
 | [docs/plan.md](docs/plan.md) | 4-phase development roadmap |
 | [docs/architecture.md](docs/architecture.md) | Godot scene/system design |
 | [docs/narrative.md](docs/narrative.md) | Setting and crew concept |
+| [docs/locations.md](docs/locations.md) | The Vantag District — sites and travel |
 | [docs/tasks.md](docs/tasks.md) | Current task list |
