@@ -5,7 +5,6 @@ class_name SquadFollow
 extends Node
 
 const SPEED := 8.5           # slightly under the leader's so they trail
-const GRAVITY := 9.8
 const ENGAGE_DIST := 16.0    # enemy this close to me or the leader → fight
 const LEASH_RADIUS := 11.0
 const STOP_DIST := 1.4
@@ -69,7 +68,7 @@ func _tick_revive_assist(delta: float) -> bool:
 		body.velocity.x = 0.0
 		body.velocity.z = 0.0
 		if not body.is_on_floor():
-			body.velocity.y -= GRAVITY * delta
+			body.velocity.y -= Character.GRAVITY * delta
 		body.move_and_slide()
 		return true
 	return brain.nav_to(downed_mate.global_position, delta, SPEED, downed_mate.global_position)
@@ -135,7 +134,7 @@ func _in_combat() -> bool:
 
 func _follow(delta: float) -> void:
 	if not body.is_on_floor():
-		body.velocity.y -= GRAVITY * delta
+		body.velocity.y -= Character.GRAVITY * delta
 	if leader == null or not is_instance_valid(leader):
 		body.velocity.x = move_toward(body.velocity.x, 0.0, SPEED * 8.0 * delta)
 		body.velocity.z = move_toward(body.velocity.z, 0.0, SPEED * 8.0 * delta)

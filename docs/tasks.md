@@ -45,14 +45,11 @@
 - [x] Aim-at-cursor firing (LMB fires immediately toward the cursor, cone
       soft-acquire; gunfire alerts enemies in earshot)
 - [ ] Balance from human playtests (AI-vs-AI smoke wins too cleanly)
-- [ ] **Proper gravity / falling feel** — dropping off the catwalk is jank:
-      gravity is a floaty 9.8 (games usually run 2-3×), air control is the
-      same instant accel/stop as ground (should be reduced in air), and the
-      landing has no read (thump SFX, dust, brief recovery). Consider fall
-      damage thresholds, ledge coyote time, and making the prop-top unstick
-      guard obsolete (it now only fires while on-floor). Also: catwalk drop
-      as a deliberate move (crouch-drop input?) vs accidental walk-offs —
-      maybe soft edge resistance on the deck.
+- [x] Proper gravity / falling feel, first pass: one Character.GRAVITY
+      (24.0, ~2.5×), reduced air control + air drag on the player, landing
+      thump SFX + dust above a fall-speed threshold
+- [ ] Falling feel, later: fall damage thresholds, ledge coyote time,
+      deliberate drop input vs soft edge resistance on catwalk decks
 - [x] Characters can get boosted onto prop tops by capsule depenetration —
       anyone above the walkable plane snaps back to the nearest navmesh point
       (flat-arena guard; revisit for multi-floor)

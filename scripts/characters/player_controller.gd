@@ -10,9 +10,10 @@ extends Node
 
 const SPEED := 9.5
 const SPRINT_MUL := 1.5
-const ACCEL := 900.0       # max speed in a frame or two — think Doom
-const STOP_ACCEL := 900.0  # and stop just as hard
-const GRAVITY := 9.8
+const ACCEL := 900.0        # max speed in a frame or two — think Doom
+const STOP_ACCEL := 900.0   # and stop just as hard
+const AIR_ACCEL := 160.0    # limited steering mid-air — momentum carries you
+const AIR_DRAG := 30.0      # and letting go doesn't brake a fall
 const AIM_CONE_DEG := 14.0  # soft-acquire half-angle around the aim line
 
 var enabled := false:
@@ -36,17 +37,20 @@ func _physics_process(delta: float) -> void:
 		return
 
 	if not body.is_on_floor():
-		body.velocity.y -= GRAVITY * delta
+		body.velocity.y -= Character.GRAVITY * delta
 
 	var stick := _read_input()
 	var speed := SPEED * (SPRINT_MUL if Input.is_action_pressed("sprint") else 1.0)
+	var grounded := body.is_on_floor()
 	if stick.length_squared() > 0.01:
 		var dir := _camera_relative(stick)
-		body.velocity.x = move_toward(body.velocity.x, dir.x * speed, ACCEL * delta)
-		body.velocity.z = move_toward(body.velocity.z, dir.z * speed, ACCEL * delta)
+		var accel := ACCEL if grounded else AIR_ACCEL
+		body.velocity.x = move_toward(body.velocity.x, dir.x * speed, accel * delta)
+		body.velocity.z = move_toward(body.velocity.z, dir.z * speed, accel * delta)
 	else:
-		body.velocity.x = move_toward(body.velocity.x, 0.0, STOP_ACCEL * delta)
-		body.velocity.z = move_toward(body.velocity.z, 0.0, STOP_ACCEL * delta)
+		var brake := STOP_ACCEL if grounded else AIR_DRAG
+		body.velocity.x = move_toward(body.velocity.x, 0.0, brake * delta)
+		body.velocity.z = move_toward(body.velocity.z, 0.0, brake * delta)
 	body.move_and_slide()
 
 	var gear := body.active_gear()

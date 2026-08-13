@@ -11,7 +11,6 @@
 class_name EnemyController
 extends Node
 
-const GRAVITY := 9.8
 const WANDER_RADIUS := 5.0        # amble this far around spawn while idle
 const WANDER_PAUSE_SECS := 2.5    # stand a beat between ambles
 const SUSPICIOUS_LINGER_SECS := 4.0  # look around at the noise point this long
@@ -61,17 +60,17 @@ func _ready() -> void:
 					var mate := member as EnemyController
 					mate.alerted(body.global_position)
 					mate.check_morale())
+	# Being fired at — hit OR miss, any distance — always draws return fire:
+	# the muzzle flash reveals exactly who shot, so pin them as the threat.
+	body.shot_at.connect(func(attacker: Character):
+		brain.pin_threat(attacker)
+		_enter_fight())
 	# Count the full pack once everyone has spawned.
 	if pack_id != "":
 		_count_pack.call_deferred()
 
 func _count_pack() -> void:
 	_pack_initial = get_tree().get_nodes_in_group("pack_" + pack_id).size()
-	# Being fired at — hit OR miss, any distance — always draws return fire:
-	# the muzzle flash reveals exactly who shot, so pin them as the threat.
-	body.shot_at.connect(func(attacker: Character):
-		brain.pin_threat(attacker)
-		_enter_fight())
 
 func _physics_process(delta: float) -> void:
 	if body == null or not body.is_alive():
@@ -225,7 +224,7 @@ func _check_sight() -> bool:
 
 func _stand(delta: float) -> void:
 	if not body.is_on_floor():
-		body.velocity.y -= GRAVITY * delta
+		body.velocity.y -= Character.GRAVITY * delta
 	body.velocity.x = 0.0
 	body.velocity.z = 0.0
 	body.move_and_slide()

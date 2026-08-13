@@ -146,6 +146,17 @@ def sfx_down():
     return out
 
 
+def sfx_land():
+    n = int(0.16 * SR)
+    out = []
+    for i in range(n):
+        t = i / SR
+        thump = math.sin(2 * math.pi * (75 - 30 * i / n) * t) * env_exp(n, i, 9)
+        scuff = rng.uniform(-1, 1) * env_exp(n, i, 18) * 0.25
+        out.append(0.9 * thump + scuff)
+    return lowpass(out, 0.35)
+
+
 def sfx_heal():
     n = int(0.12 * SR)
     out = []
@@ -210,6 +221,7 @@ def main():
     write_wav("sfx_reload.wav", sfx_reload())
     write_wav("sfx_switch.wav", sfx_switch())
     write_wav("sfx_heal.wav", sfx_heal())
+    write_wav("sfx_land.wav", sfx_land())
     write_wav("sfx_down.wav", sfx_down())
     write_wav("sfx_revive.wav", sfx_revive())
     write_wav("sfx_telegraph.wav", sfx_telegraph())

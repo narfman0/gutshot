@@ -24,6 +24,12 @@ signal shot_at(attacker: Character)
 
 const MAX_ACTION_SLOTS := 4
 
+## One gravity for every mover. Deliberately heavier than Earth (games run
+## 2-3× or drops feel like moon-walking); tuned against the catwalk height.
+const GRAVITY := 24.0
+## Landing read threshold — falls slower than this land silently.
+const HARD_LANDING_VY := -6.0
+
 ## Gameplay-driven proportion squash: everything standing (characters, cover
 ## props) is compressed vertically so bodies and crates take less screen
 ## height at the iso pitch — deliberately, unrealistically squat. 1.0 = off.
@@ -86,12 +92,16 @@ func _apply_squash() -> void:
 func is_alive() -> bool:
 	return hp > 0.0
 
+var _airborne := false
+var _peak_fall_vy := 0.0
+
 func _process(delta: float) -> void:
 	if downed:
 		_tick_revive(delta)
 		return
 	if not is_alive():
 		return
+	_tick_landing()
 	_unstick_from_prop_tops()
 	if max_shield <= 0.0 or shield >= max_shield:
 		return
@@ -99,6 +109,21 @@ func _process(delta: float) -> void:
 		return
 	shield = minf(max_shield, shield + SHIELD_REGEN_RATE * delta)
 	shield_changed.emit(shield, max_shield)
+
+## Landing read: falls off the catwalk get a thump and a dust kick so the
+## drop feels like contact, not teleportation.
+func _tick_landing() -> void:
+	if not is_on_floor():
+		_airborne = true
+		_peak_fall_vy = minf(_peak_fall_vy, velocity.y)
+		return
+	if _airborne:
+		if _peak_fall_vy < HARD_LANDING_VY:
+			AudioManager.play_sfx("land", -4.0)
+			Juice.impact_burst(get_tree().current_scene,
+				global_position, Color(0.5, 0.48, 0.42))
+		_airborne = false
+		_peak_fall_vy = 0.0
 
 ## Crowded pop-out shuffles can depenetrate a capsule UP onto a cover prop,
 ## leaving a character standing on a vending machine. Characters can't climb,

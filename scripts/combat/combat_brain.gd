@@ -14,7 +14,6 @@ extends Node
 
 # ── Tuning ───────────────────────────────────────────────────────────────────
 const SPEED := 5.0
-const GRAVITY := 9.8
 const ENGAGE_RANGE := 18.0        # metres — acquire threats inside this
 const COVER_SEARCH_RADIUS := 12.0 # metres — how far to shop for cover
 const COVER_RING_POINTS := 8      # sample points around each cover prop
@@ -370,7 +369,7 @@ func _move_direct(dir: Vector3, delta: float) -> void:
 
 func _apply_gravity(delta: float) -> void:
 	if not body.is_on_floor():
-		body.velocity.y -= GRAVITY * delta
+		body.velocity.y -= Character.GRAVITY * delta
 
 func _fire_if_able() -> void:
 	if shooter.try_fire(threat) and shooter.last_shot_hit:
