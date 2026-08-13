@@ -45,8 +45,9 @@
 - [x] Aim-at-cursor firing (LMB fires immediately toward the cursor, cone
       soft-acquire; gunfire alerts enemies in earshot)
 - [ ] Balance from human playtests (AI-vs-AI smoke wins too cleanly)
-- [ ] Characters can get boosted onto prop tops by capsule depenetration
-      during crowded pop-out shuffles — add a step-height/nav guard
+- [x] Characters can get boosted onto prop tops by capsule depenetration —
+      anyone above the walkable plane snaps back to the nearest navmesh point
+      (flat-arena guard; revisit for multi-floor)
 - [ ] Design a "pressure" read to replace the removed hostiles counter —
       something diegetic about how much heat is bearing down on the squad
       (incoming-fire intensity, flank warnings, pack aggro state) rather than
@@ -118,3 +119,16 @@ and onto systems that already exist (CombatBrain, awareness, packs).
       Asset candidates (verified): POLYGON_Scifi_Space skinned robots
       (SK_Chr_BR_War_Robot_01, SK_Chr_RobotFemale_01), drone props in
       CyberCity/SciFiWorlds for spotters, POLYGON_Mech for the heavies.
+- [ ] **The cyber-ninja clan** — Little Japan's street authority (see
+      docs/locations.md). Melee/mobility faction that weaponizes the
+      awareness system from the other side: they break YOUR line of sight —
+      smoke, dash gap-closers, rooftop routes — and strike from where your
+      LKP on them is stale. Shurikens as silent PROJECTILE weapons (no
+      hearing alert — the quiet counterpart to gunfire), katana melee (melee
+      attack path shared with the demon-horde prereq), and clan honor rules:
+      neutral-ish on their turf like the Assembly, but they never forget a
+      slight (persistent standing, not per-mission aggro). Asset candidates
+      (verified): SK_Chr_CyborgNinja_01 (SciFi_City), POLYGON_Samurai pack
+      (ninja/warrior/sensei bodies), CyberCity katana + shuriken meshes, and
+      the ANIMATION_Sword_Combat attack combos already fetched for
+      hit/death clips.

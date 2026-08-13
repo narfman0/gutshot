@@ -90,12 +90,32 @@ func _process(delta: float) -> void:
 	if downed:
 		_tick_revive(delta)
 		return
-	if not is_alive() or max_shield <= 0.0 or shield >= max_shield:
+	if not is_alive():
+		return
+	_unstick_from_prop_tops()
+	if max_shield <= 0.0 or shield >= max_shield:
 		return
 	if Time.get_ticks_msec() - _last_damage_ms < int(SHIELD_REGEN_DELAY * 1000.0):
 		return
 	shield = minf(max_shield, shield + SHIELD_REGEN_RATE * delta)
 	shield_changed.emit(shield, max_shield)
+
+## Crowded pop-out shuffles can depenetrate a capsule UP onto a cover prop,
+## leaving a character standing on a vending machine. Characters can't climb,
+## so anyone well above the walkable plane gets snapped back to the nearest
+## navmesh point. Levels are flat in M1; revisit for multi-floor.
+const _PROP_TOP_Y := 0.9
+
+func _unstick_from_prop_tops() -> void:
+	if global_position.y <= _PROP_TOP_Y:
+		return
+	var map := get_world_3d().navigation_map
+	if NavigationServer3D.map_get_regions(map).is_empty():
+		return  # no navmesh (bare harness scene) — nothing sane to snap to
+	var ground := NavigationServer3D.map_get_closest_point(map, global_position)
+	if ground.y < global_position.y - 0.5:
+		global_position = ground + Vector3(0, 0.1, 0)
+		velocity = Vector3.ZERO
 
 func active_gear() -> GearItem:
 	return gear_slots[active_slot]

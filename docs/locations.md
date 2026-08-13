@@ -24,8 +24,13 @@ the tower's upper floors, the cult they funded has opened something.
         │  DEPOT 9           │   │  FAB LEVEL         │
         │  (warehouse)       │───│  (robotics lab)    │
         │  bandit-run        │ ^ │  Assembly turf     │
-        └───────────┬────────┘ │ └────────────────────┘
-                    │    freight tunnel
+        └───────────┬────────┘ │ └────────┬───────────┘
+                    │    freight tunnel   │ service stairs
+                    │                     │
+        ┌───────────┴─────────────────────┴───────────┐
+        │  LITTLE JAPAN (street level, under the      │
+        │  tower's shadow — markets, neon, the clan)  │
+        └───────────┬─────────────────────────────────┘
               transit stop
                     │
               ┌─────┴─────┐
@@ -64,6 +69,21 @@ violence only if provoked — but Vantag wants the level "audited" and the
 cult wants its fabricators, so provocation is coming from all sides.
 - The three-way-fight sandbox: bait corp security or hordes into machine
   territory and let the district sort itself out.
+
+### Little Japan (street level)
+The street level under the tower's shadow: noodle stalls, neon signage,
+arcades, shrine alleys — the POLYGON_CyberCity pack's Japanese-cyberpunk
+identity used at full strength (its prop set IS this place; katanas and
+shurikens ship in its weapons folder). Everyone passes through here — it's
+the district's crossroads and the closest thing to civilian ground.
+- Home turf of a **cyber-ninja clan** (see docs/tasks.md factions): they run
+  protection over the street and tolerate the crew — until crossed. Dense
+  alleys, market stalls (half cover everywhere), rooftop lines the clan uses
+  and you mostly can't.
+- Street fights here are knife-range and messy: tight LOS, crowds of cover,
+  verticality overhead that belongs to somebody else.
+- Connects everywhere: transit stop to the hideout, street entrances to the
+  tower lobby and Depot 9, service stairs down from the Fab Level.
 
 ### The Hideout (safe room)
 A bolt-hole in the district margins — the narrative's "one safe place".
