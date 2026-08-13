@@ -9,10 +9,11 @@ A real-time tactical squad shooter set in grimdark cyberpunk hive cities — bui
 ## Quick Start
 
 ```bash
-./fetch_assets.sh            # pull referenced Synty assets from the asset server
-godot --headless --import    # first import
-godot                        # play the skirmish
+./build.sh   # idempotent: gen audio if stale, fetch Synty assets, import
+godot        # play the skirmish
 ```
+
+`./build.sh test` builds and then runs every headless harness.
 
 Controls: **WASD** move (camera-relative, only movement — Doom-snappy) ·
 **mouse** aim · **hold LMB** on an enemy to fire (release to stop; drag across
@@ -26,9 +27,11 @@ leashed to whoever you're controlling.
 
 ### Tests
 
+`./build.sh test` runs the whole suite. Individually:
+
 ```bash
 godot --headless res://future/tests/harnesses/m1_smoke.tscn        # end-to-end
-godot --headless res://future/tests/harnesses/combat_smoke.tscn    # cover/accuracy
+godot --headless res://future/tests/harnesses/combat_smoke.tscn    # cover/accuracy/heal
 godot --headless res://future/tests/harnesses/ai_probe.tscn        # cover-seek/flank
 godot --headless res://future/tests/harnesses/skirmish_smoke.tscn  # win/lose wiring
 godot --headless res://future/tests/harnesses/resources_smoke.tscn # gear/abilities
