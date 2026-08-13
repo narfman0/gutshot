@@ -235,6 +235,32 @@ world-space DOWN / REVIVING % label.
 
 ---
 
+## Phase 2 As-Built (Depot 9)
+
+- **GameWorld is a base class**: levels subclass it and override the data
+  hooks (`_arena_half`, `_ground_color`, `_cover_layout`, `_crew_spawns`,
+  `_enemy_spawns` — dicts with optional `patrol`/`morale` — and
+  `_build_extra_geometry`). `skirmish_level.gd` and `depot_level.gd` are the
+  two sites; `SceneManager.LEVELS` maps ids to scenes.
+- **Transit zones** (`GameWorld.add_transit_zone`): glowing floor pads that
+  `change_level` when a crew body steps on — the district's instant travel.
+- **Breach doors** (`scripts/world/breach_door.gd`): cover-layer slabs with
+  HP. Wild gunfire raycasts cover geometry and damages them (aimed shots at
+  enemies pass through the accuracy model instead); grenade blasts batter
+  them; at 0 HP they blow out and `call_group("nav_owner", "rebake_nav")`
+  re-bakes the navmesh (deferred + debounced) to open the path.
+- **Catwalk elevation without multi-floor tech**: ramps + deck are static
+  colliders on the ground layer baked into the SAME navmesh (slopes within
+  the parser's max-slope walk up naturally). Elevation LOS/cover need no new
+  code — all rays were 3D already. Real per-floor navmeshes remain a tower
+  problem.
+- **Morale** (`EnemyController.has_morale` + `check_morale`): every pack
+  death runs the test; packs cut to `MORALE_BREAK_FRAC` break morale units —
+  FLEE away from the nearest hostile, recover, slink back SUSPICIOUS.
+  Machines/fanatics simply leave `has_morale` false.
+- **Patrol routes**: `patrol_points` on EnemyController — IDLE walks the
+  loop instead of ambling (deck-height points work; the navmesh covers it).
+
 ## Tuning Knobs
 
 | What | Where |

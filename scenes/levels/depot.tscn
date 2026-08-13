@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://scripts/world/skirmish_level.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/world/depot_level.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/characters/squad.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/world/objective_manager.gd" id="3"]
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="4"]

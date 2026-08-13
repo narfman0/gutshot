@@ -1,10 +1,14 @@
-## Mission root — docs/architecture.md scene contract:
+## Mission root BASE CLASS — docs/architecture.md scene contract:
 ##   GameWorld → Level (geometry+nav) / Squad / EnemySquad / ObjectiveManager
 ##             / CameraRig / HUD
 ## Owns mission lifecycle: builds the arena's cover + navmesh, spawns both
 ## sides (with a debug fallback squad so the scene runs standalone and in
 ## headless harnesses), locks the isometric camera to the active character,
 ## and shows the win/lose overlay.
+##
+## Levels subclass this (skirmish_level.gd, depot_level.gd) and override the
+## data hooks: _arena_half / _ground_color / _cover_layout / _crew_spawns /
+## _enemy_spawns / _build_extra_geometry.
 class_name GameWorld
 extends Node3D
 
@@ -19,44 +23,38 @@ const _CAM_FOLLOW_SPEED := 8.0
 var _zoom := 17.0  # close enough that sprinting reads fast; wheel adjusts
 
 # ── Arena ────────────────────────────────────────────────────────────────────
-const ARENA_HALF := 25.0  # 50×50 m
 const _WALL_H := 6.0
 const _WALL_T := 1.0
 
-## Cover prop meshes (full res:// literals so fetch_assets.sh resolves them).
-## Crates read as waist/chest-high (half cover); vending machines are
-## full-height blockers.
-const PROP_CRATE_01 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Crate_01.gltf"
-const PROP_CRATE_04 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Crate_04.gltf"
-const PROP_CRATE_06 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Crate_06.gltf"
-const PROP_VENDING := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Vending_Machine_01.gltf"
-
-## [mesh, x, z, yaw_deg] — hand-placed for lanes and mutual flanks.
-const COVER_LAYOUT := [
-	[PROP_CRATE_01, -8.0, 8.0, 0.0], [PROP_CRATE_04, -6.5, 8.5, 35.0],
-	[PROP_CRATE_06, 7.0, 9.0, 0.0], [PROP_CRATE_01, 9.0, 8.0, 90.0],
-	[PROP_VENDING, 0.0, 4.0, 180.0], [PROP_VENDING, 1.4, 4.0, 180.0],
-	[PROP_CRATE_04, -12.0, 0.0, 15.0], [PROP_CRATE_01, 12.0, -1.0, 70.0],
-	[PROP_CRATE_06, -4.0, -3.0, 0.0], [PROP_CRATE_01, 4.5, -4.0, 20.0],
-	[PROP_VENDING, -9.0, -8.0, 90.0], [PROP_CRATE_04, -8.0, -9.5, 0.0],
-	[PROP_CRATE_01, 8.5, -10.0, 45.0], [PROP_CRATE_06, 10.0, -8.5, 0.0],
-	[PROP_CRATE_04, 0.0, -12.0, 60.0], [PROP_VENDING, 3.0, -15.0, 0.0],
-]
-
-const CREW_SPAWNS := [
-	Vector3(-2.5, 0.1, 20.0), Vector3(0.0, 0.1, 21.0),
-	Vector3(2.5, 0.1, 20.0), Vector3(0.0, 0.1, 18.5),
-]
-
-## [skin_key, x, z, pack_id]
-const ENEMY_SPAWNS := [
-	["punk", -6.0, -6.0, "mid"], ["biker", -3.5, -7.0, "mid"],
-	["gangster", 9.0, -12.0, "east"], ["punk_girl", 11.0, -11.0, "east"],
-	["punk", -10.0, -12.0, "west"], ["biker", -12.0, -14.0, "west"],
-	["gangster", 0.0, -17.0, "west"],
-]
-
 const CharacterScene := preload("res://scenes/characters/character.tscn")
+
+# ── Level data hooks (override per level) ────────────────────────────────────
+
+func _arena_half() -> float:
+	return 25.0
+
+func _ground_color() -> Color:
+	return Color(0.17, 0.18, 0.21)  # wet asphalt
+
+## Array of [mesh_path, x, z, yaw_deg] — cover props.
+func _cover_layout() -> Array:
+	return []
+
+func _crew_spawns() -> Array:
+	return [
+		Vector3(-2.5, 0.1, 20.0), Vector3(0.0, 0.1, 21.0),
+		Vector3(2.5, 0.1, 20.0), Vector3(0.0, 0.1, 18.5),
+	]
+
+## Array of dicts: {skin, pos: Vector3, pack: String,
+##   patrol: Array[Vector3] (optional), morale: bool (optional)}.
+func _enemy_spawns() -> Array:
+	return []
+
+## Level-specific structures (catwalks, walls, breach doors, transit zones) —
+## built after ground/cover, before the navmesh bake.
+func _build_extra_geometry() -> void:
+	pass
 
 @onready var _level: Node3D = $Level
 @onready var _squad: Squad = $Squad
@@ -67,14 +65,19 @@ const CharacterScene := preload("res://scenes/characters/character.tscn")
 
 var _game_over := false
 
+var _nav_rid: RID
+var _rebake_queued := false
+
 func _ready() -> void:
+	add_to_group("nav_owner")
 	_setup_environment()
 	_setup_ground()
 	_setup_cover()
+	_build_extra_geometry()
 	_setup_bounds()
 	await get_tree().physics_frame
 	await get_tree().physics_frame
-	NavRuntime.bake(self, Layers.GROUND | Layers.COVER)
+	_nav_rid = NavRuntime.bake(self, Layers.GROUND | Layers.COVER)
 	_spawn_crew()
 	_spawn_enemies()
 	_setup_camera()
@@ -83,6 +86,23 @@ func _ready() -> void:
 	_objectives.mission_failed.connect(func(): _show_end_screen(false))
 	AudioManager.play_ambient()
 	SceneManager.fade_in()
+
+## Re-bake the navmesh after geometry changes (a breached door opening a
+## path). Deferred + debounced — several doors can break in one explosion.
+func rebake_nav() -> void:
+	if _rebake_queued:
+		return
+	_rebake_queued = true
+	_do_rebake.call_deferred()
+
+func _do_rebake() -> void:
+	# Wait a physics frame so queue_free'd geometry (breached doors) is
+	# actually gone before the parser walks the world.
+	await get_tree().physics_frame
+	_rebake_queued = false
+	if _nav_rid.is_valid():
+		NavigationServer3D.free_rid(_nav_rid)
+	_nav_rid = NavRuntime.bake(self, Layers.GROUND | Layers.COVER)
 
 # ── World building ───────────────────────────────────────────────────────────
 
@@ -126,16 +146,16 @@ func _setup_ground() -> void:
 	var col := CollisionShape3D.new()
 	col.name = "GroundCollision"
 	var box := BoxShape3D.new()
-	box.size = Vector3(ARENA_HALF * 2.0, 0.5, ARENA_HALF * 2.0)
+	box.size = Vector3(_arena_half() * 2.0, 0.5, _arena_half() * 2.0)
 	col.shape = box
 	col.position.y = -0.25
 	ground.add_child(col)
 	var mi := MeshInstance3D.new()
 	mi.name = "GroundMesh"
 	var plane := PlaneMesh.new()
-	plane.size = Vector2(ARENA_HALF * 2.0, ARENA_HALF * 2.0)
+	plane.size = Vector2(_arena_half() * 2.0, _arena_half() * 2.0)
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.17, 0.18, 0.21)  # wet asphalt
+	mat.albedo_color = _ground_color()
 	mat.roughness = 0.4
 	mat.metallic = 0.15
 	plane.material = mat
@@ -147,7 +167,7 @@ func _setup_cover() -> void:
 	var cover_root := Node3D.new()
 	cover_root.name = "Cover"
 	_level.add_child(cover_root)
-	for entry in COVER_LAYOUT:
+	for entry in _cover_layout():
 		var scene = load(entry[0])
 		var prop := StaticBody3D.new()
 		prop.collision_layer = Layers.COVER
@@ -188,17 +208,18 @@ func _add_aabb_collider(prop: StaticBody3D, visual: Node3D) -> void:
 	prop.add_child(col)
 
 func _setup_bounds() -> void:
+	var half := _arena_half()
 	for side in [
-		Vector3(0, 0, -ARENA_HALF), Vector3(0, 0, ARENA_HALF),
-		Vector3(-ARENA_HALF, 0, 0), Vector3(ARENA_HALF, 0, 0),
+		Vector3(0, 0, -half), Vector3(0, 0, half),
+		Vector3(-half, 0, 0), Vector3(half, 0, 0),
 	]:
 		var wall := StaticBody3D.new()
 		wall.collision_layer = Layers.BARRIERS
 		var col := CollisionShape3D.new()
 		var box := BoxShape3D.new()
 		var along_x := absf(side.z) > 0.0
-		box.size = Vector3(ARENA_HALF * 2.0 + _WALL_T * 2.0, _WALL_H, _WALL_T) if along_x \
-			else Vector3(_WALL_T, _WALL_H, ARENA_HALF * 2.0 + _WALL_T * 2.0)
+		box.size = Vector3(half * 2.0 + _WALL_T * 2.0, _WALL_H, _WALL_T) if along_x \
+			else Vector3(_WALL_T, _WALL_H, half * 2.0 + _WALL_T * 2.0)
 		col.shape = box
 		wall.add_child(col)
 		_level.add_child(wall)
@@ -225,7 +246,8 @@ func _spawn_crew() -> void:
 		c.anim_set = info["set"]
 		c.max_shield = 40.0  # crew get the regenerating layer; enemies don't
 		_squad.add_child(c)
-		c.global_position = CREW_SPAWNS[i % CREW_SPAWNS.size()]
+		var spawns := _crew_spawns()
+		c.global_position = spawns[i % spawns.size()]
 		c.setup_skin(info["path"])
 		c.equip(rifle if key == "gunner" else smg)
 		c.equip(heal_gun if key == "medic" else pistol)
@@ -239,15 +261,15 @@ func _spawn_crew() -> void:
 func _spawn_enemies() -> void:
 	var smg: GearItem = load("res://resources/gear/enemy_smg.tres")
 	var belt: GearItem = load("res://resources/gear/grenade_belt.tres")
-	for entry in ENEMY_SPAWNS:
-		var info: Dictionary = Skins.ENEMIES[entry[0]]
+	for entry in _enemy_spawns():
+		var info: Dictionary = Skins.ENEMIES[entry["skin"]]
 		var c: Character = CharacterScene.instantiate()
 		c.team = 1
-		c.display_name = String(entry[0]).capitalize()
+		c.display_name = String(entry["skin"]).capitalize()
 		c.anim_set = info["set"]
 		c.max_hp = 60.0
 		_enemy_squad.add_child(c)
-		c.global_position = Vector3(entry[1], 0.1, entry[2])
+		c.global_position = entry["pos"]
 		c.setup_skin(info["path"])
 		c.equip(smg)
 		c.equip(belt)  # dug-in crew get cover-called too
@@ -256,11 +278,53 @@ func _spawn_enemies() -> void:
 		c.add_child(brain)
 		var controller := EnemyController.new()
 		controller.name = "EnemyController"
-		controller.pack_id = entry[3]
+		controller.pack_id = entry["pack"]
+		controller.patrol_points = entry.get("patrol", [])
+		controller.has_morale = entry.get("morale", false)
 		c.add_child(controller)
 		_objectives.register(c)
 		# Enemies get the full send-off; crew corpses stay for the squad read.
 		c.character_died.connect(func(body): Juice.death_collapse(body, true))
+
+## A glowing floor pad that travels to another site when the crew's active
+## character steps on it — the district's instant-travel connectors.
+func add_transit_zone(pos: Vector3, target_level: String, label_text: String) -> void:
+	var zone := Area3D.new()
+	zone.collision_layer = 0
+	zone.collision_mask = Layers.SQUAD
+	var col := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(3.0, 2.0, 3.0)
+	col.shape = box
+	zone.add_child(col)
+	var pad := MeshInstance3D.new()
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(3.0, 3.0)
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color = Color(0.2, 0.9, 1.0, 0.35)
+	mat.emission_enabled = true
+	mat.emission = Color(0.2, 0.9, 1.0)
+	mat.emission_energy_multiplier = 1.5
+	plane.material = mat
+	pad.mesh = plane
+	pad.position.y = 0.04
+	zone.add_child(pad)
+	var sign := Label3D.new()
+	sign.text = label_text
+	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sign.font_size = 48
+	sign.pixel_size = 0.004
+	sign.outline_size = 8
+	sign.modulate = Color(0.55, 0.95, 1.0)
+	sign.position.y = 1.6
+	zone.add_child(sign)
+	_level.add_child(zone)
+	zone.global_position = pos
+	zone.body_entered.connect(func(body: Node3D):
+		if body is Character and (body as Character).team == 0 and not _game_over:
+			SceneManager.change_level(target_level))
 
 # ── Camera ───────────────────────────────────────────────────────────────────
 

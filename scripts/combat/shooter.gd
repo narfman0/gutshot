@@ -154,6 +154,14 @@ func fire_wild(at_point: Vector3) -> bool:
 	var reach := maxf(flat.length(), g.fire_range)
 	var toward: Vector3 = character.global_position + flat.normalized() * reach \
 		+ Vector3(0, 1.3 * Character.VERTICAL_SQUASH, 0)
+	# Wild rounds hit the world: cover geometry stops the tracer, and breach
+	# doors take the damage.
+	var query := PhysicsRayQueryParameters3D.create(muzzle, toward, Layers.LOS_MASK)
+	var hit := character.get_world_3d().direct_space_state.intersect_ray(query)
+	if not hit.is_empty():
+		toward = hit["position"]
+		if hit["collider"] is BreachDoor:
+			(hit["collider"] as BreachDoor).receive_damage(g.damage)
 	Vfx.tracer(get_tree().current_scene, muzzle, toward)
 	_alert_hearing()
 	return true

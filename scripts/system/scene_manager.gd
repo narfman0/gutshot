@@ -3,6 +3,7 @@ extends CanvasLayer
 
 const LEVELS := {
 	"skirmish": "res://scenes/levels/skirmish.tscn",
+	"depot": "res://scenes/levels/depot.tscn",
 }
 
 var _fade: ColorRect

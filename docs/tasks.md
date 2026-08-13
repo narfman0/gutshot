@@ -59,8 +59,12 @@ See docs/locations.md — the Vantag District: tower (portal), Depot 9
 (warehouse), Fab Level (robotics lab), hideout, with instant travel between
 sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
 
-- [ ] Depot 9 (warehouse): container mazes, catwalks, loading-dock breach
-      doors — the Phase-2 systems testbed (see locations.md)
+- [x] Depot 9 (warehouse): container aisles, catwalk-over-the-wall elevation
+      (one navmesh, ramps), two breach doors (shoot/blast → navmesh rebake),
+      bandit packs with patrol routes + morale breaks, transit pads to/from
+      the street (GameWorld refactored into base + per-level subclasses)
+- [ ] Depot 9 dressing pass: roller-door meshes on the breach doors,
+      catwalk railings, more warehouse props, interior lighting mood
 - [ ] Hideout + district map (site select via SceneManager.LEVELS)
 - [ ] Two-floor hand-crafted level: stairs/ladder transitions between
       per-floor navmeshes (teleport waypoints per architecture.md)

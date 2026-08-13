@@ -66,4 +66,8 @@ func _land(scene: Node, thrower: Character, nade: Node3D, at: Vector3) -> void:
 				continue
 			if telegraph.contains(target.global_position):
 				DamageNumber.hit(scene, target.global_position, int(damage))
-				target.receive_damage(damage, thrower))
+				target.receive_damage(damage, thrower)
+		# Blasts batter breach doors too — grenades are the loud way in.
+		for door in scene.get_tree().get_nodes_in_group("breach_doors"):
+			if door is BreachDoor and telegraph.contains((door as Node3D).global_position):
+				(door as BreachDoor).receive_damage(damage))
