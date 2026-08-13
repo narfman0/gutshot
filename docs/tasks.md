@@ -28,6 +28,10 @@
 - [ ] Enemy grenade usage (belt exists; brain never throws)
 - [ ] Characters can get boosted onto prop tops by capsule depenetration
       during crowded pop-out shuffles — add a step-height/nav guard
+- [ ] Design a "pressure" read to replace the removed hostiles counter —
+      something diegetic about how much heat is bearing down on the squad
+      (incoming-fire intensity, flank warnings, pack aggro state) rather than
+      a raw enemy count
 
 ## Phase 2 — Multi-Floor Template Level (next)
 

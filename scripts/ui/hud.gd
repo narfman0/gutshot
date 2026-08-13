@@ -1,5 +1,5 @@
 ## Mission HUD — squad portrait strip (bottom-left), weapon slot bar
-## (bottom-center), overhead health bars, hostiles counter. Chrome comes from
+## (bottom-center), overhead health bars. Chrome comes from
 ## the Synty INTERFACE_SciFi_Soldier_HUD sprite pack (fetched into assets/ui/
 ## from the asset server's raw tree); bars/text ride on UITheme.
 ## Portraits carry an empty shield segment and a status-effect icon row —
@@ -30,7 +30,6 @@ var _camera: Camera3D
 var _portraits: Array = []       # per member: {panel, hp, shield, status_row}
 var _slots: Array = []           # per slot: {box, icon, cooldown, key}
 var _overheads: Dictionary = {}  # Character → ProgressBar
-var _hostiles: Label
 
 func setup(squad: Squad, objectives: ObjectiveManager, camera: Camera3D) -> void:
 	_squad = squad
@@ -39,19 +38,13 @@ func setup(squad: Squad, objectives: ObjectiveManager, camera: Camera3D) -> void
 	layer = 10
 	_build_portraits()
 	_build_weapon_bar()
-	_build_hostiles_counter()
 	_squad.active_changed.connect(func(_i, _c): _refresh_portraits(); _refresh_slots())
 	for member in _squad.members:
 		(member as Character).hp_changed.connect(func(_h, _m): _refresh_portraits())
 		(member as Character).weapon_changed.connect(func(_s): _refresh_slots())
-	_objectives.objective_updated.connect(func(_s, e): _hostiles.text = "HOSTILES: %d" % e)
-	var enemies_alive := 0
 	for team in [0, 1]:
 		for c in _squad.get_tree().get_nodes_in_group("team_%d" % team):
 			_add_overhead(c as Character)
-			if team == 1 and (c as Character).is_alive():
-				enemies_alive += 1
-	_hostiles.text = "HOSTILES: %d" % enemies_alive
 	_refresh_portraits()
 	_refresh_slots()
 
@@ -208,18 +201,6 @@ func _refresh_slots() -> void:
 		icon.texture = _texture(WEAPON_ICONS.get(gear.display_name, "")) if gear != null else null
 		var box := entry["box"] as Control
 		box.modulate = Color(1, 1, 1) if i == active.active_slot else Color(0.6, 0.65, 0.7, 0.85)
-
-# ── Hostiles counter ─────────────────────────────────────────────────────────
-
-func _build_hostiles_counter() -> void:
-	_hostiles = Label.new()
-	_hostiles.theme = UITheme.theme
-	_hostiles.add_theme_font_size_override("font_size", 20)
-	_hostiles.add_theme_color_override("font_color", UITheme.C_HP_ENEMY)
-	_hostiles.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	_hostiles.position = Vector2(-190, 16)
-	_hostiles.text = "HOSTILES: -"
-	add_child(_hostiles)
 
 # ── Overhead bars ────────────────────────────────────────────────────────────
 
