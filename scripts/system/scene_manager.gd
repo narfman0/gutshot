@@ -2,6 +2,7 @@
 extends CanvasLayer
 
 const LEVELS := {
+	"hideout": "res://scenes/levels/hideout.tscn",
 	"skirmish": "res://scenes/levels/skirmish.tscn",
 	"depot": "res://scenes/levels/depot.tscn",
 }

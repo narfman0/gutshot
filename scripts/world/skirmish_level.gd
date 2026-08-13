@@ -33,5 +33,9 @@ func _enemy_spawns() -> Array:
 func _site_name() -> String:
 	return "THE STREET"
 
+func _site_id() -> String:
+	return "skirmish"
+
 func _build_extra_geometry() -> void:
 	add_transit_zone(Vector3(20.0, 0.0, 20.0), "depot", "→ DEPOT 9")
+	add_transit_zone(Vector3(-20.0, 0.0, 20.0), "hideout", "→ HIDEOUT")

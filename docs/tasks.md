@@ -53,10 +53,11 @@
 - [x] Characters can get boosted onto prop tops by capsule depenetration —
       anyone above the walkable plane snaps back to the nearest navmesh point
       (flat-arena guard; revisit for multi-floor)
-- [ ] Design a "pressure" read to replace the removed hostiles counter —
-      something diegetic about how much heat is bearing down on the squad
-      (incoming-fire intensity, flank warnings, pack aggro state) rather than
-      a raw enemy count
+- [x] Pressure HUD v1 ("HEAT"): thin top-center bar weighing enemy awareness
+      states (fighting > suspicious > fleeing), easing cyan→red; hidden when
+      the district is quiet
+- [ ] Pressure v2 ideas: incoming-fire intensity, flank warnings, per-pack
+      direction hints
 
 ## Phase 2 — Multi-Floor Template Level (next)
 
@@ -76,7 +77,10 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       practical light sources (signs, fixtures, machines), shadow budget,
       light cookies/IES looks, occlusion culling check, darkness as gameplay
       (sight ranges shrink in unlit aisles?)
-- [ ] Hideout + district map (site select via SceneManager.LEVELS)
+- [x] Hideout (safe room: warm light, no enemies, map console) + district
+      map overlay — M anywhere, console walk-up, travel to unlocked sites;
+      locked entries tease Little Japan / Fab Level / Tower
+- [x] Main menu (boot scene: title, Enter the District → hideout, Quit)
 - [ ] Two-floor hand-crafted level: stairs/ladder transitions between
       per-floor navmeshes (teleport waypoints per architecture.md)
 - [ ] Destructible doors + breach points
@@ -84,7 +88,7 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
 - [ ] Proper patrol ROUTES (waypoint paths; IDLE wander + alert states are in)
 - [ ] Camera floor transitions; hide geometry above active floor
 - [ ] Audio pass (AudioManager autoload, wayfarer `gen_audio.py` lineage)
-- [ ] Main menu + pause; save/load stub honoring `GameState.debug_session`
+- [ ] Save/load stub honoring `GameState.debug_session` (menu + pause done)
 
 ## Deferred — enemy factions
 

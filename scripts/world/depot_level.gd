@@ -26,6 +26,9 @@ func _ground_color() -> Color:
 func _site_name() -> String:
 	return "DEPOT 9"
 
+func _site_id() -> String:
+	return "depot"
+
 func _sun_energy() -> float:
 	return 0.9  # dimmer skylight leak — this is an interior
 
@@ -81,6 +84,7 @@ func _build_extra_geometry() -> void:
 	_build_dividing_wall()
 	_build_catwalk()
 	add_transit_zone(Vector3(22.0, 0.0, 22.0), "skirmish", "→ STREET")
+	add_transit_zone(Vector3(-22.0, 0.0, 22.0), "hideout", "→ HIDEOUT")
 
 ## Full-height wall across the arena at WALL_Z with two door gaps; the doors
 ## are BreachDoors. Wall sits UNDER the catwalk crossing at x = 0.

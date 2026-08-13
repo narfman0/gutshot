@@ -60,6 +60,10 @@ func _build_extra_geometry() -> void:
 func _site_name() -> String:
 	return "UNKNOWN SITE"
 
+## SceneManager.LEVELS id for this site — the district map marks it.
+func _site_id() -> String:
+	return ""
+
 func _sun_energy() -> float:
 	return 1.5
 
@@ -366,6 +370,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_zoom = minf(_ZOOM_MAX, _zoom + _ZOOM_STEP)
 	elif event.is_action_pressed("ui_cancel"):
 		_toggle_pause()
+	elif event.is_action_pressed("district_map") and not _game_over:
+		DistrictMap.toggle(self, _site_id())
 
 # ── Pause ────────────────────────────────────────────────────────────────────
 
