@@ -93,3 +93,21 @@ and onto systems that already exist (CombatBrain, awareness, packs).
       own squad. Asset candidates (verified): POLYGON_Spy_Kit,
       POLYGON_BattleRoyale, POLYGON_Mech (heavy support walker?), with
       POLYGON_Military_Warehouse for their turf.
+- [ ] **The Assembly (working name) — semi-sentient machine society** —
+      neutral-alignment robots, not anyone's foot soldiers. Territorial, not
+      hostile: they hold zones (salvage fields, maintenance levels), warn
+      trespassers off (posturing/escort behavior before violence), and only
+      escalate when provoked — attacked, or their territory shot up. Once
+      provoked they fight ANYONE in the zone, cult and corpo included, which
+      is the fun: a mission can tip into a three-way fight, or a clever crew
+      can bait the other faction into machine turf. No shields but no morale
+      either — machines don't rout, they calculate (disengage when losing the
+      math, return with more units). Distinct sound/read: no voice, servo +
+      chirp SFX, drone spotters feeding LKPs to walker guns.
+      **Engineering prerequisite**: the team system is binary today (`team`
+      0/1, `1 - team` math, `team_N` groups everywhere) — a third faction
+      needs a faction id + hostility-matrix refactor of Character,
+      CombatBrain, Projectile, and the group names first.
+      Asset candidates (verified): POLYGON_Scifi_Space skinned robots
+      (SK_Chr_BR_War_Robot_01, SK_Chr_RobotFemale_01), drone props in
+      CyberCity/SciFiWorlds for spotters, POLYGON_Mech for the heavies.
