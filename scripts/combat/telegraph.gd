@@ -110,6 +110,7 @@ func contains(world_point: Vector3) -> bool:
 # ── Visuals ───────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
+	AudioManager.play_sfx("telegraph")
 	var base := _make_mesh_instance(_flat_material(_color_base))
 	add_child(base)
 	_fill_pivot = Node3D.new()

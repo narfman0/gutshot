@@ -24,6 +24,7 @@ const POP_MAX_SECS := 2.2         # give up a pop-out that never finds LOS
 const BURST_SHOTS := 3            # shots per pop-out window
 const FLANK_TRIGGER_SECS := 4.0   # no damage dealt this long → go around
 const FLANK_ARC_DEG := 90.0
+const GRENADE_STARVE_SECS := 2.5  # dug-in target this long → try a grenade first
 const ARRIVE_DIST := 0.6
 const WAYPOINT_DIST := 0.5        # advance to the next path corner inside this
 const REPATH_DIST := 1.0          # re-query when the destination drifts this far
@@ -122,8 +123,27 @@ func tick(delta: float) -> void:
 			_tick_pop(delta)
 		State.FLANK:
 			_tick_flank(delta)
+	# Dug-in target: try to frag them out before committing to the flank walk.
+	if _starve_timer >= GRENADE_STARVE_SECS and state != State.FLANK:
+		if _try_grenade():
+			_starve_timer = 0.0
 	if _starve_timer >= FLANK_TRIGGER_SECS and state != State.FLANK:
 		_enter_flank()
+
+## Throw a frag at the threat if we carry one, it's off cooldown, and the
+## threat is inside throw range. Both followers and enemies use this — cover
+## campers get cover-called on either side.
+func _try_grenade() -> bool:
+	for ability in body.action_slots:
+		var frag := ability as FragGrenadeAbility
+		if frag == null:
+			continue
+		var flat := threat.global_position - body.global_position
+		flat.y = 0.0
+		if flat.length() > frag.throw_range:
+			return false
+		return body.activate_ability(frag, threat.global_position)
+	return false
 
 func idle_stop(delta: float) -> void:
 	body.velocity.x = move_toward(body.velocity.x, 0.0, SPEED * 8.0 * delta)

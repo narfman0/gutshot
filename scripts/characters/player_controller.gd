@@ -24,6 +24,7 @@ var body: Character
 var shooter: Shooter
 
 var target_enemy: Character = null  # survives until RMB, death, or switch
+var target_ally: Character = null   # heal-gun target while LMB is held
 
 var _lmb_held := false
 var _retarget_timer := 0.0
@@ -54,6 +55,8 @@ func _physics_process(delta: float) -> void:
 	# Drop dead/freed targets.
 	if target_enemy != null and (not is_instance_valid(target_enemy) or not target_enemy.is_alive()):
 		target_enemy = null
+	if target_ally != null and (not is_instance_valid(target_ally) or not target_ally.is_alive()):
+		target_ally = null
 	# While LMB is held, keep re-picking under the cursor (drag across enemies
 	# to retarget) and fire; releasing the button stops the shooting.
 	if _lmb_held:
@@ -61,13 +64,20 @@ func _physics_process(delta: float) -> void:
 		if _retarget_timer <= 0.0:
 			_retarget_timer = RETARGET_SECS
 			_pick_target(_mouse_pos)
-	if target_enemy != null:
+	var gear := body.active_gear()
+	var healing: bool = gear != null and gear.heals
+	if healing and target_ally != null:
+		_face(target_ally.global_position)
+	elif target_enemy != null:
 		_face(target_enemy.global_position)
 	elif Vector2(body.velocity.x, body.velocity.z).length() > 0.5:
 		_face(body.global_position + body.velocity)
-	if _lmb_held and target_enemy != null and body.active_gear() != null \
-			and body.active_gear().fire_mode != GearItem.FireMode.THROWN:
-		shooter.try_fire(target_enemy)
+	if _lmb_held and gear != null and gear.fire_mode != GearItem.FireMode.THROWN:
+		if healing:
+			if target_ally != null:
+				shooter.try_heal(target_ally)
+		elif target_enemy != null:
+			shooter.try_fire(target_enemy)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not enabled or body == null or not body.is_alive():
@@ -90,6 +100,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		body.select_slot(1)
 	elif event.is_action_pressed("weapon_3"):
 		body.select_slot(2)
+	elif event.is_action_pressed("reload"):
+		shooter.start_reload()
 
 func _on_lmb_pressed(screen_pos: Vector2) -> void:
 	var gear := body.active_gear()
@@ -103,21 +115,30 @@ func _on_lmb_pressed(screen_pos: Vector2) -> void:
 	_pick_target(screen_pos)
 
 func _pick_target(screen_pos: Vector2) -> void:
-	var hit := _pick(screen_pos)
+	var gear := body.active_gear()
+	var mask := Layers.CLICK_MASK
+	if gear != null and gear.heals:
+		mask = Layers.GROUND | Layers.SQUAD  # heal gun aims at your own crew
+	var hit := _pick(screen_pos, mask)
 	if hit.is_empty():
 		return
 	var collider = hit["collider"]
-	if collider is Character and (collider as Character).team != body.team \
-			and (collider as Character).is_alive():
-		target_enemy = collider
+	if not (collider is Character) or not (collider as Character).is_alive():
+		return
+	var character := collider as Character
+	if gear != null and gear.heals:
+		if character.team == body.team and character != body:
+			target_ally = character
+	elif character.team != body.team:
+		target_enemy = character
 
-func _pick(screen_pos: Vector2) -> Dictionary:
+func _pick(screen_pos: Vector2, mask: int = Layers.CLICK_MASK) -> Dictionary:
 	var camera := body.get_viewport().get_camera_3d()
 	if camera == null:
 		return {}
 	var from := camera.project_ray_origin(screen_pos)
 	var dir := camera.project_ray_normal(screen_pos)
-	var query := PhysicsRayQueryParameters3D.create(from, from + dir * 200.0, Layers.CLICK_MASK)
+	var query := PhysicsRayQueryParameters3D.create(from, from + dir * 200.0, mask)
 	return body.get_world_3d().direct_space_state.intersect_ray(query)
 
 func _read_input() -> Vector2:

@@ -12,4 +12,7 @@ fire_range = 12.0
 fire_rate = 2.5
 base_accuracy = 0.8
 moving_accuracy_mult = 0.7
+mag_size = 10
+reload_secs = 1.2
+shot_sfx = "shot_pistol"
 mesh_path = "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Weapons/SM_Wep_Pistol_01.gltf"

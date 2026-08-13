@@ -24,6 +24,11 @@ signal shot_at(attacker: Character)
 
 const MAX_ACTION_SLOTS := 4
 
+## Gameplay-driven proportion squash: everything standing (characters, cover
+## props) is compressed vertically so bodies and crates take less screen
+## height at the iso pitch — deliberately, unrealistically squat. 1.0 = off.
+const VERTICAL_SQUASH := 0.8
+
 const SHIELD_REGEN_DELAY := 4.0  # seconds without taking damage
 const SHIELD_REGEN_RATE := 18.0  # points/second once regen kicks in
 const REVIVE_RADIUS := 2.5       # a living squadmate this close revives
@@ -59,6 +64,24 @@ func _ready() -> void:
 	shield = max_shield
 	collision_layer = Layers.body_layer(team)
 	add_to_group("team_%d" % team)
+	weapon_changed.connect(func(_slot): _refresh_held_weapon())
+	_apply_squash()
+
+## Compress the body's vertical metrics to match the squashed visuals: the
+## collision capsule, the muzzle, and the cover sample points. The skin gets
+## its scale in setup_skin; cover props get theirs in GameWorld.
+func _apply_squash() -> void:
+	if is_equal_approx(VERTICAL_SQUASH, 1.0):
+		return
+	var col := $CollisionShape3D as CollisionShape3D
+	# The shape resource is shared by every instance — duplicate before sizing.
+	var capsule := (col.shape as CapsuleShape3D).duplicate() as CapsuleShape3D
+	capsule.height *= VERTICAL_SQUASH
+	col.shape = capsule
+	col.position.y *= VERTICAL_SQUASH
+	($Muzzle as Node3D).position.y *= VERTICAL_SQUASH
+	for marker in get_node("CoverPoints").get_children():
+		(marker as Node3D).position.y *= VERTICAL_SQUASH
 
 func is_alive() -> bool:
 	return hp > 0.0
@@ -91,6 +114,7 @@ func select_slot(slot: int) -> void:
 	if slot == active_slot or slot < 0 or slot >= gear_slots.size() or gear_slots[slot] == null:
 		return
 	active_slot = slot
+	AudioManager.play_sfx("switch")
 	weapon_changed.emit(slot)
 
 ## Cast `ability` at a world point, honoring its cooldown.
@@ -109,6 +133,12 @@ func activate_ability(ability: Ability, target_point: Vector3) -> bool:
 func cooldown_remaining(ability: Ability) -> float:
 	return maxf(0.0, (int(_cooldown_until.get(ability, 0)) - Time.get_ticks_msec()) / 1000.0)
 
+func receive_heal(amount: float) -> void:
+	if not is_alive() or downed:
+		return
+	hp = minf(max_hp, hp + amount)
+	hp_changed.emit(hp, max_hp)
+
 func notify_shot_at(attacker: Character) -> void:
 	if is_alive():
 		shot_at.emit(attacker)
@@ -122,8 +152,10 @@ func receive_damage(amount: float, _attacker: Node = null) -> void:
 		shield -= absorbed
 		amount -= absorbed
 		shield_changed.emit(shield, max_shield)
+		AudioManager.play_sfx("shield_hit")
 	if amount <= 0.0:
 		return
+	AudioManager.play_sfx("impact")
 	hp = maxf(0.0, hp - amount)
 	hp_changed.emit(hp, max_hp)
 	if hp <= 0.0:
@@ -156,6 +188,7 @@ func _enter_downed() -> void:
 	_down_label.text = "DOWN"
 	add_child(_down_label)
 	_down_label.position = Vector3(0, 2.0, 0)
+	AudioManager.play_sfx("down")
 	character_downed.emit(self)
 
 func _tick_revive(delta: float) -> void:
@@ -189,6 +222,7 @@ func _revive() -> void:
 		_down_label.queue_free()
 		_down_label = null
 	CharacterAnimator.revive(self)
+	AudioManager.play_sfx("revive")
 	hp_changed.emit(hp, max_hp)
 	shield_changed.emit(shield, max_shield)
 	character_revived.emit(self)
@@ -205,7 +239,44 @@ func setup_skin(skin_path: String) -> void:
 	var skin: Node = scene.instantiate()
 	skin.name = "Skin"
 	add_child(skin)
+	if skin is Node3D:
+		(skin as Node3D).scale.y *= VERTICAL_SQUASH
 	CharacterAnimator.attach(skin, self, anim_set)
+	_refresh_held_weapon()
+
+## Put the active gear's mesh in the right hand via a BoneAttachment3D.
+## Rebuilt on every weapon switch; no-op until the skin exists.
+func _refresh_held_weapon() -> void:
+	var skin := get_node_or_null("Skin")
+	if skin == null:
+		return
+	var skels: Array = skin.find_children("*", "Skeleton3D", true, false)
+	if skels.is_empty():
+		return
+	var skel: Skeleton3D = skels[0]
+	var old := skel.get_node_or_null("HeldWeapon")
+	if old != null:
+		old.queue_free()
+	var gear := active_gear()
+	if gear == null or gear.mesh_path == "":
+		return
+	var scene = load(gear.mesh_path)
+	if scene == null:
+		return
+	var attach := BoneAttachment3D.new()
+	attach.name = "HeldWeapon"
+	skel.add_child(attach)
+	attach.bone_name = "Hand_R"
+	var mesh: Node3D = scene.instantiate()
+	attach.add_child(mesh)
+	# The skeleton sits under the skin glTF's cm→m corrective node (0.01) and
+	# the weapon glTF carries its own corrective — parented to a bone, the
+	# weapon renders at 1/10000 scale. Cancel the inherited shrink (this also
+	# cancels the vertical squash, which suits a rigid prop).
+	var inherited := skel.global_transform.basis.get_scale()
+	mesh.scale = Vector3(1.0 / inherited.x, 1.0 / inherited.y, 1.0 / inherited.z)
+	# Grip into the palm — orientation tuned by screenshot.
+	mesh.rotation_degrees = Vector3(0, 90, -90)
 
 ## World-space positions cover raycasts test — head, chest, pelvis, shoulders.
 func cover_points() -> Array:

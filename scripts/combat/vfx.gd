@@ -58,6 +58,7 @@ static func explosion(scene: Node, pos: Vector3, radius := 3.0,
 	if scene == null or not scene.is_inside_tree():
 		return
 	Juice.flash_light(scene, pos, color, 5.0, 0.35)
+	AudioManager.play_sfx("explosion", 2.0)
 	var p := CPUParticles3D.new()
 	# emitting defaults true — hold the burst until the node is positioned or
 	# every explosion detonates at the world origin.

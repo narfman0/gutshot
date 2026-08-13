@@ -17,9 +17,9 @@ godot                        # play the skirmish
 Controls: **WASD** move (camera-relative, only movement — Doom-snappy) ·
 **mouse** aim · **hold LMB** on an enemy to fire (release to stop; drag across
 enemies to retarget) · **RMB** clear target · **1/2/3** weapon slots (primary /
-pistol / grenades — with grenades active, LMB lobs at the cursor) · **Tab** or
-portrait click switches crew · **wheel** zoom · **Esc** quit. Kill all
-hostiles before your crew drops.
+pistol / grenades — with grenades active, LMB lobs at the cursor) · **R**
+reload · **Tab** or portrait click switches crew · **wheel** zoom · **Esc**
+quit. Kill all hostiles before your crew drops.
 
 Followers fight on their own — they take cover, pop out to burst, and flank,
 leashed to whoever you're controlling.

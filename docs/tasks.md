@@ -27,11 +27,20 @@
       (shot_at → threat pin)
 - [x] Crew shields (regen out of combat) + downed/revive instead of death
 
+### Polish sprint (done)
+- [x] Placeholder audio: gen_audio.py + AudioManager (shots, impacts, shields,
+      reload, explosion, telegraph, down/revive, city ambient)
+- [x] Magazines + reload (auto on empty, R manual, HUD ammo + reload sweep)
+- [x] Weapons attached to hands (BoneAttachment3D, scale-corrected)
+- [x] Enemy + follower grenade usage (frag dug-in targets before flanking)
+- [x] Vertical squash experiment (Character.VERTICAL_SQUASH = 0.8)
+- [x] Medic heal gun (auto-medic follower AI + player heal targeting)
+
 ### M1 polish backlog (nice-to-have, not blocking)
-- [ ] Attach weapon meshes to character hands (bone attachment)
+- [ ] Weapon grip orientation tuning (currently held at the side; fine at
+      gameplay zoom)
 - [ ] Aim-at-cursor facing while firing on the move (currently faces target)
 - [ ] Balance from human playtests (AI-vs-AI smoke wins too cleanly)
-- [ ] Enemy grenade usage (belt exists; brain never throws)
 - [ ] Characters can get boosted onto prop tops by capsule depenetration
       during crowded pop-out shuffles — add a step-height/nav guard
 - [ ] Design a "pressure" read to replace the removed hostiles counter —

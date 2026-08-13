@@ -19,12 +19,55 @@ var character: Character
 ## "suppressing a covered target" from "actually landing damage".
 var last_shot_hit := false
 var _next_shot_ms := 0
+## slot index → rounds left in that slot's magazine (lazily filled).
+var _mag: Dictionary = {}
+var _reload_done_ms := 0
+var _reload_started_ms := 0
 
 func _ready() -> void:
 	character = get_parent() as Character
 
 func gear() -> GearItem:
 	return character.active_gear() if character != null else null
+
+# ── Ammo (reserves are infinite; magazines are not) ──────────────────────────
+
+func mag_left(slot: int) -> int:
+	var g: GearItem = character.gear_slots[slot]
+	if g == null or g.mag_size <= 0:
+		return -1  # no ammo system on this gear
+	if not _mag.has(slot):
+		_mag[slot] = g.mag_size
+	return _mag[slot]
+
+func is_reloading() -> bool:
+	return Time.get_ticks_msec() < _reload_done_ms
+
+## 0 → 1 over the reload; 0 when not reloading. HUD sweep + AI pacing.
+func reload_frac() -> float:
+	if not is_reloading():
+		return 0.0
+	var total := maxf(float(_reload_done_ms - _reload_started_ms), 1.0)
+	return clampf((_reload_done_ms - Time.get_ticks_msec()) / total, 0.0, 1.0)
+
+## Begin reloading the active slot (no-op if full, ammo-less, or in progress).
+func start_reload() -> void:
+	var g := gear()
+	if g == null or g.mag_size <= 0 or is_reloading():
+		return
+	if mag_left(character.active_slot) >= g.mag_size:
+		return
+	_reload_started_ms = Time.get_ticks_msec()
+	_reload_done_ms = _reload_started_ms + int(g.reload_secs * 1000.0)
+	AudioManager.play_sfx("reload")
+	# The magazine refills when the timer lapses — checked lazily on fire.
+
+func _finish_reload_if_due() -> void:
+	if _reload_done_ms > 0 and not is_reloading():
+		var g := gear()
+		if g != null and g.mag_size > 0:
+			_mag[character.active_slot] = g.mag_size
+		_reload_done_ms = 0
 
 func can_fire(target: Character) -> bool:
 	var g := gear()
@@ -34,6 +77,9 @@ func can_fire(target: Character) -> bool:
 		return false
 	if Time.get_ticks_msec() < _next_shot_ms:
 		return false
+	if is_reloading():
+		return false
+	_finish_reload_if_due()
 	return Cover.can_hit(character.muzzle_position(), target)
 
 ## 1.0 inside the weapon's optimal range, fire_range/distance beyond it.
@@ -55,6 +101,12 @@ func try_fire(target: Character) -> bool:
 			return false
 		return character.activate_ability(g.abilities[0], target.global_position)
 	_next_shot_ms = Time.get_ticks_msec() + int(1000.0 / maxf(g.fire_rate, 0.1))
+	if g.mag_size > 0:
+		var slot := character.active_slot
+		_mag[slot] = mag_left(slot) - 1
+		if _mag[slot] <= 0:
+			start_reload()  # auto-reload on empty; this shot still fires
+	AudioManager.play_sfx(g.shot_sfx)
 	var muzzle := character.muzzle_position()
 	Vfx.muzzle_flash(get_tree().current_scene, muzzle)
 	var moving := Vector2(character.velocity.x, character.velocity.z).length() > 0.5
@@ -96,6 +148,39 @@ func _fire_projectile(target: Character, muzzle: Vector3, hit: bool, g: GearItem
 			DamageNumber.hit(scene, body.global_position, int(g.damage))
 			body.receive_damage(g.damage, character),
 		g.projectile_speed)
+
+## Heal-gun path: beam a squadmate back up. Needs LOS and optimal range (no
+## falloff — the beam either connects or it doesn't), always "hits", and runs
+## on the same fire-rate/magazine clocks as any other gun.
+func try_heal(mate: Character) -> bool:
+	var g := gear()
+	if g == null or not g.heals or character == null or not character.is_alive():
+		return false
+	if mate == null or not is_instance_valid(mate) or not mate.is_alive():
+		return false
+	if mate.team != character.team or mate == character or mate.hp >= mate.max_hp:
+		return false
+	if Time.get_ticks_msec() < _next_shot_ms or is_reloading():
+		return false
+	_finish_reload_if_due()
+	if character.global_position.distance_to(mate.global_position) > g.fire_range:
+		return false
+	var muzzle := character.muzzle_position()
+	if not Cover.can_hit(muzzle, mate):
+		return false
+	_next_shot_ms = Time.get_ticks_msec() + int(1000.0 / maxf(g.fire_rate, 0.1))
+	if g.mag_size > 0:
+		var slot := character.active_slot
+		_mag[slot] = mag_left(slot) - 1
+		if _mag[slot] <= 0:
+			start_reload()
+	AudioManager.play_sfx(g.shot_sfx)
+	var scene := get_tree().current_scene
+	Vfx.tracer(scene, muzzle, mate.global_position + Vector3(0, 1.3 * Character.VERTICAL_SQUASH, 0),
+		Color(0.35, 1.0, 0.55))
+	DamageNumber.spawn(scene, mate.global_position, "+%d" % int(g.damage), Color(0.4, 1.0, 0.55))
+	mate.receive_heal(g.damage)
+	return true
 
 ## A point past the target, pushed sideways — where the missed shot "went".
 func _deflected(from: Vector3, toward: Vector3) -> Vector3:

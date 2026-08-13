@@ -58,7 +58,11 @@ func _ready() -> void:
 		"5 perfect shots deal 50 (hp %.1f -> %.1f)" % [hp0, target.hp])
 
 	# 2. Chest-high cover adjacent to the target: half-cover band, -50% accuracy.
-	var half_box := _make_cover_box(Vector3(0, 0.7, -7), Vector3(2.0, 1.4, 0.4))
+	#    Box heights scale with the world's vertical squash so the tier
+	#    geometry matches the squashed body sample points.
+	var squash := Character.VERTICAL_SQUASH
+	var half_box := _make_cover_box(Vector3(0, 0.7 * squash, -7),
+		Vector3(2.0, 1.4 * squash, 0.4))
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	var exposure := Cover.exposure(shooter_char.muzzle_position(), target)
@@ -69,7 +73,7 @@ func _ready() -> void:
 
 	# 3. Full-height wall: full cover, shot refused.
 	half_box.free()
-	_make_cover_box(Vector3(0, 1.1, -7), Vector3(2.4, 2.2, 0.4))
+	_make_cover_box(Vector3(0, 1.1 * squash, -7), Vector3(2.4, 2.2 * squash, 0.4))
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	var walled := Cover.exposure(shooter_char.muzzle_position(), target)
@@ -115,7 +119,17 @@ func _ready() -> void:
 	_check(is_equal_approx(shielded.shield, 0.0) and shielded.hp < hp_before_shield,
 		"overflow damage bleeds into hp (shield %.0f hp %.0f)" % [shielded.shield, shielded.hp])
 
+	# Heal gun: beams a wounded squadmate back up, refuses enemies and full-hp.
 	var mate := _make_character(0, Vector3(13, 0, 0))
+	var heal_gun: GearItem = load("res://resources/gear/heal_gun.tres")
+	mate.equip(heal_gun)
+	mate.select_slot(1)
+	var medic_shooter: Shooter = mate.get_node("Shooter")
+	var hurt_hp := shielded.hp
+	_check(medic_shooter.try_heal(shielded), "heal gun beams a wounded mate")
+	_check(shielded.hp > hurt_hp, "heal restored hp (%.0f -> %.0f)" % [hurt_hp, shielded.hp])
+	_check(not medic_shooter.try_heal(target), "heal gun refuses enemies")
+
 	shielded.receive_damage(9999.0)
 	_check(shielded.downed and not shielded.is_alive(), "crew at 0 hp goes DOWN, not dead")
 	await get_tree().create_timer(Character.REVIVE_SECS + 0.6).timeout

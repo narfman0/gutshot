@@ -81,6 +81,7 @@ func _ready() -> void:
 	($HUD as Hud).setup(_squad, _objectives, _camera)
 	_objectives.mission_complete.connect(func(): _show_end_screen(true))
 	_objectives.mission_failed.connect(func(): _show_end_screen(false))
+	AudioManager.play_ambient()
 	SceneManager.fade_in()
 
 # ── World building ───────────────────────────────────────────────────────────
@@ -155,6 +156,7 @@ func _setup_cover() -> void:
 		var visual: Node3D = null
 		if scene != null:
 			visual = scene.instantiate()
+			visual.scale.y = Character.VERTICAL_SQUASH  # squat world, squat props
 			prop.add_child(visual)
 		cover_root.add_child(prop)
 		prop.global_position = Vector3(entry[1], 0.0, entry[2])
@@ -210,6 +212,7 @@ func _spawn_crew() -> void:
 	var smg: GearItem = load("res://resources/gear/smg.tres")
 	var rifle: GearItem = load("res://resources/gear/rifle.tres")
 	var pistol: GearItem = load("res://resources/gear/pistol.tres")
+	var heal_gun: GearItem = load("res://resources/gear/heal_gun.tres")
 	var belt: GearItem = load("res://resources/gear/grenade_belt.tres")
 	var crew_keys: Array = Skins.crew_names()
 	var members: Array = []
@@ -225,7 +228,7 @@ func _spawn_crew() -> void:
 		c.global_position = CREW_SPAWNS[i % CREW_SPAWNS.size()]
 		c.setup_skin(info["path"])
 		c.equip(rifle if key == "gunner" else smg)
-		c.equip(pistol)
+		c.equip(heal_gun if key == "medic" else pistol)
 		c.equip(belt)
 		_squad.add_member(c)
 		_objectives.register(c)
@@ -235,6 +238,7 @@ func _spawn_crew() -> void:
 
 func _spawn_enemies() -> void:
 	var smg: GearItem = load("res://resources/gear/enemy_smg.tres")
+	var belt: GearItem = load("res://resources/gear/grenade_belt.tres")
 	for entry in ENEMY_SPAWNS:
 		var info: Dictionary = Skins.ENEMIES[entry[0]]
 		var c: Character = CharacterScene.instantiate()
@@ -246,6 +250,7 @@ func _spawn_enemies() -> void:
 		c.global_position = Vector3(entry[1], 0.1, entry[2])
 		c.setup_skin(info["path"])
 		c.equip(smg)
+		c.equip(belt)  # dug-in crew get cover-called too
 		var brain := CombatBrain.new()
 		brain.name = "CombatBrain"
 		c.add_child(brain)

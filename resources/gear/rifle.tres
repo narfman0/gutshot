@@ -12,4 +12,7 @@ fire_range = 24.0
 fire_rate = 1.6
 base_accuracy = 0.85
 moving_accuracy_mult = 0.45
+mag_size = 6
+reload_secs = 2.0
+shot_sfx = "shot_rifle"
 mesh_path = "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Weapons/SM_Wep_Rifle_01.gltf"

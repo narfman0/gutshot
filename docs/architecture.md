@@ -131,6 +131,32 @@ Not implemented yet. Planned approach:
   shooter as its threat for `CombatBrain.THREAT_PIN_SECS`, overriding the
   engage-range gate. This is the seed of the future awareness system —
   "they know exactly where the shot came from, for a while".
+- **Magazines + reload** (`shooter.gd`): per-slot mags (`GearItem.mag_size`),
+  infinite reserves. Auto-reload on empty, manual on **R**; `reload_secs`
+  blocks firing and sweeps the HUD slot like a cooldown. Thrown gear
+  (mag_size 0) runs on ability cooldowns instead. AI reload gaps are natural
+  pop-out windows.
+- **Heal gun** (medic's secondary, `heals = true` on GearItem): beams
+  squadmates for `damage` HP per shot — needs LOS and optimal range, always
+  connects, same magazine/reload clocks as a gun. The medic follower
+  auto-switches to it whenever a mate drops under 75% HP (stand-and-beam in
+  reach, close in otherwise) and back to their primary after; the player
+  version targets crew under the cursor while LMB is held.
+- **AI grenades**: both followers and enemies frag a target that stays dug in
+  for `GRENADE_STARVE_SECS` before committing to a flank — cover campers get
+  cover-called on either side.
+- **Vertical squash** (`Character.VERTICAL_SQUASH`, 0.8): the whole standing
+  world — skins, capsules, muzzle/cover points, cover props — is compressed
+  ~20% for iso readability (less vertical screen space, less occlusion).
+  Deliberately, unrealistically squat; set to 1.0 to turn off. Harness cover
+  geometry scales by the same const.
+- **Audio** (`audio_manager.gd` autoload + `tools/gen_audio.py`): synthesized
+  placeholder WAVs in assets/audio/ (committed) — per-weapon shots, impacts,
+  shield hits, reload, switch, explosion, telegraph, down/revive, city
+  ambient. Real assets replace the WAVs by name, no code change.
+- **Weapons in hands**: the active gear's mesh rides a `BoneAttachment3D` on
+  `Hand_R`, rebuilt on weapon switch. The skeleton sits under the skin glTF's
+  cm→m corrective node, so the attach cancels the inherited ~1/10000 scale.
 - **Tiered cover by exposed body** (`scripts/combat/cover.gd`): rays from the
   shooter's muzzle to five body sample points (`CoverPoints` markers on
   character.tscn: head/chest/pelvis/shoulders). Unblocked fraction > 0.75 →

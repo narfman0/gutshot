@@ -9,6 +9,7 @@ const GRAVITY := 9.8
 const ENGAGE_DIST := 16.0    # enemy this close to me or the leader → fight
 const LEASH_RADIUS := 11.0
 const STOP_DIST := 1.4
+const HEAL_BELOW_FRAC := 0.75  # medic beams mates under this HP fraction
 
 var enabled := false
 var leader: Character = null
@@ -29,10 +30,54 @@ func _physics_process(delta: float) -> void:
 	if not enabled or body == null or not body.is_alive():
 		return
 	brain.leash_center_node = leader
+	if _tick_medic(delta):
+		return
 	if _in_combat():
 		brain.tick(delta)
 	else:
 		_follow(delta)
+
+## Heal-gun carrier: patching a wounded squadmate beats shooting. Stands and
+## beams whenever a hurt mate is in range/LOS; otherwise falls through to the
+## normal fight/follow behavior (the leash keeps the medic near the action).
+func _tick_medic(delta: float) -> bool:
+	var heal_slot := -1
+	for i in body.gear_slots.size():
+		var g: GearItem = body.gear_slots[i]
+		if g != null and g.heals:
+			heal_slot = i
+			break
+	if heal_slot == -1:
+		return false
+	var patient: Character = null
+	var worst_frac := HEAL_BELOW_FRAC
+	for node in body.get_tree().get_nodes_in_group("team_%d" % body.team):
+		var mate := node as Character
+		if mate == null or mate == body or not mate.is_alive():
+			continue
+		var frac := mate.hp / mate.max_hp
+		if frac < worst_frac:
+			worst_frac = frac
+			patient = mate
+	if patient == null:
+		# Nobody hurt: put the gun away so fights use the primary.
+		if body.active_slot == heal_slot:
+			body.select_slot(0)
+		return false
+	body.select_slot(heal_slot)
+	var heal_gear: GearItem = body.gear_slots[heal_slot]
+	var in_reach: bool = body.global_position.distance_to(patient.global_position) <= heal_gear.fire_range \
+		and Cover.can_hit(body.muzzle_position(), patient)
+	if in_reach:
+		# Stand and beam — try_heal fires whenever its rate/reload clocks allow.
+		brain.idle_stop(delta)
+		body.rotation.y = atan2(
+			-(patient.global_position.x - body.global_position.x),
+			-(patient.global_position.z - body.global_position.z))
+		body.get_node("Shooter").try_heal(patient)
+		return true
+	# Can't reach the patient from here — close in on them.
+	return brain.nav_to(patient.global_position, delta, SPEED, patient.global_position)
 
 func _in_combat() -> bool:
 	# A pinned threat (someone shot at us) is combat no matter the distance.

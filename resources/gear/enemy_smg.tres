@@ -12,4 +12,7 @@ fire_range = 15.0
 fire_rate = 4.0
 base_accuracy = 0.55
 moving_accuracy_mult = 0.7
+mag_size = 18
+reload_secs = 2.0
+shot_sfx = "shot_smg"
 mesh_path = "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Weapons/SM_Wep_SMG_01.gltf"

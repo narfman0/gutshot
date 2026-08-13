@@ -17,6 +17,7 @@ const WEAPON_ICONS := {
 	"Rifle": "res://assets/ui/INTERFACE_SciFi_Soldier_HUD_Source_Sprites_v2/Source_Sprites/Sprites/Icons_Weapons/ICON_SM_Wep_Rifle_01_SciFiCyberCity.png",
 	"Pistol": "res://assets/ui/INTERFACE_SciFi_Soldier_HUD_Source_Sprites_v2/Source_Sprites/Sprites/Icons_Weapons/ICON_SM_Wep_Pistol_01_SciFiCyberCity.png",
 	"Frag Belt": "res://assets/ui/INTERFACE_SciFi_Soldier_HUD_Source_Sprites_v2/Source_Sprites/Sprites/Icons_Explosives/ICON_SM_Wep_Grenade_01_SciFiCyberCity.png",
+	"Heal Gun": "res://assets/ui/INTERFACE_SciFi_Soldier_HUD_Source_Sprites_v2/Source_Sprites/Sprites/Icons_Weapons/ICON_SM_Wep_Rifle_Laser_01_SciFiCity.png",
 }
 
 const PORTRAIT_SIZE := Vector2(150, 84)
@@ -189,7 +190,13 @@ func _build_weapon_bar() -> void:
 		key.add_theme_font_size_override("font_size", 13)
 		key.add_theme_color_override("font_color", UITheme.C_HEAD)
 		box.add_child(key)
-		_slots.append({"box": box, "icon": icon, "cooldown": cooldown})
+		var ammo := Label.new()
+		ammo.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+		ammo.position = Vector2(-34, -22)
+		ammo.add_theme_font_size_override("font_size", 13)
+		ammo.add_theme_color_override("font_color", UITheme.C_BODY)
+		box.add_child(ammo)
+		_slots.append({"box": box, "icon": icon, "cooldown": cooldown, "ammo": ammo})
 
 func _refresh_slots() -> void:
 	var active := _squad.active_character()
@@ -237,22 +244,31 @@ func _process(_delta: float) -> void:
 		var bar: ColorRect = _overheads[character]
 		if not is_instance_valid(character) or not is_instance_valid(bar) or not bar.visible:
 			continue
-		var world := (character as Node3D).global_position + Vector3(0, 2.1, 0)
+		var world := (character as Node3D).global_position \
+			+ Vector3(0, 2.1 * Character.VERTICAL_SQUASH, 0)
 		if _camera.is_position_behind(world):
 			bar.visible = false
 			continue
 		bar.position = _camera.unproject_position(world) - OVERHEAD_SIZE * 0.5
-	# Cooldown sweep for the active character's slots.
+	# Cooldown / reload sweep + ammo counters for the active character.
 	var active := _squad.active_character() if _squad != null else null
 	if active == null:
 		return
+	var shooter: Shooter = active.get_node("Shooter")
 	for i in 3:
 		var entry: Dictionary = _slots[i]
 		var cooldown := entry["cooldown"] as ColorRect
+		var ammo := entry["ammo"] as Label
 		var gear: GearItem = active.gear_slots[i]
 		var frac := 0.0
 		if gear != null and not gear.abilities.is_empty():
 			var ability: Ability = gear.abilities[0]
 			frac = clampf(active.cooldown_remaining(ability) / maxf(ability.cooldown, 0.01), 0.0, 1.0)
+		if i == active.active_slot and shooter.is_reloading():
+			frac = maxf(frac, shooter.reload_frac())
 		cooldown.offset_top = -SLOT_SIZE.y * frac
 		cooldown.visible = frac > 0.0
+		if gear != null and gear.mag_size > 0:
+			ammo.text = "%d/%d" % [maxi(shooter.mag_left(i), 0), gear.mag_size]
+		else:
+			ammo.text = ""
