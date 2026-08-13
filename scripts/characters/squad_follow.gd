@@ -22,6 +22,8 @@ func _ready() -> void:
 	body = get_parent() as Character
 	brain = body.get_node("CombatBrain")
 	brain.leash_radius = LEASH_RADIUS
+	# Followers return fire too when someone opens up on them from afar.
+	body.shot_at.connect(func(attacker: Character): brain.pin_threat(attacker))
 
 func _physics_process(delta: float) -> void:
 	if not enabled or body == null or not body.is_alive():
@@ -33,6 +35,10 @@ func _physics_process(delta: float) -> void:
 		_follow(delta)
 
 func _in_combat() -> bool:
+	# A pinned threat (someone shot at us) is combat no matter the distance.
+	if brain.threat != null and is_instance_valid(brain.threat) \
+			and brain.threat.is_alive():
+		return true
 	var anchors: Array = [body]
 	if leader != null and is_instance_valid(leader):
 		anchors.append(leader)

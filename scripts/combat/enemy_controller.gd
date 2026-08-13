@@ -22,8 +22,11 @@ func _ready() -> void:
 	if pack_id != "":
 		add_to_group("pack_" + pack_id)
 	body.character_died.connect(func(_c): set_physics_process(false))
-	# Getting shot is an alert even from beyond aggro range.
-	body.hp_changed.connect(func(_hp, _max): alerted())
+	# Being fired at — hit OR miss, any distance — always draws return fire:
+	# the muzzle flash reveals exactly who shot, so pin them as the threat.
+	body.shot_at.connect(func(attacker: Character):
+		alerted()
+		brain.pin_threat(attacker))
 
 func alerted() -> void:
 	if _aggroed:

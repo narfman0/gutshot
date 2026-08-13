@@ -37,8 +37,11 @@ var shooter: Shooter
 var leash_center_node: Node3D = null
 var leash_radius := 12.0
 
+const THREAT_PIN_SECS := 6.0  # how long "I know where that shot came from" holds
+
 var state: State = State.ADVANCE
 var threat: Character = null
+var _threat_pin_until_ms := 0
 
 var _spawn := Vector3.ZERO
 var _cover_point := Vector3.INF
@@ -69,8 +72,20 @@ func _clamp_to_leash(point: Vector3) -> Vector3:
 		return point
 	return center + flat.normalized() * leash_radius
 
-## Nearest living opposing character within engage range.
+## Being shot at reveals the shooter — engage them regardless of range, and
+## remember the position read for a few seconds.
+func pin_threat(attacker: Character) -> void:
+	if attacker == null or not is_instance_valid(attacker) or not attacker.is_alive():
+		return
+	threat = attacker
+	_threat_pin_until_ms = Time.get_ticks_msec() + int(THREAT_PIN_SECS * 1000.0)
+
+## Nearest living opposing character within engage range; a pinned threat
+## (return fire) overrides the range gate while the pin lasts.
 func acquire_threat() -> Character:
+	if threat != null and is_instance_valid(threat) and threat.is_alive() \
+			and Time.get_ticks_msec() < _threat_pin_until_ms:
+		return threat
 	if threat != null and is_instance_valid(threat) and threat.is_alive() \
 			and body.global_position.distance_to(threat.global_position) <= ENGAGE_RANGE:
 		return threat

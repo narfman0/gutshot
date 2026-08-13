@@ -9,6 +9,9 @@ signal character_died(character: Character)
 signal ability_activated(character: Character, ability: Ability)
 signal hp_changed(current: float, maximum: float)
 signal weapon_changed(slot: int)
+## Someone fired at this character (hit or miss) — controllers use it for
+## return-fire alerts and threat pinning.
+signal shot_at(attacker: Character)
 
 const MAX_ACTION_SLOTS := 4
 
@@ -72,6 +75,10 @@ func activate_ability(ability: Ability, target_point: Vector3) -> bool:
 ## Seconds until `ability` is ready (0 = ready now). HUD cooldown fill.
 func cooldown_remaining(ability: Ability) -> float:
 	return maxf(0.0, (int(_cooldown_until.get(ability, 0)) - Time.get_ticks_msec()) / 1000.0)
+
+func notify_shot_at(attacker: Character) -> void:
+	if is_alive():
+		shot_at.emit(attacker)
 
 func receive_damage(amount: float, _attacker: Node = null) -> void:
 	if not is_alive():

@@ -1,13 +1,18 @@
 ## Per-character firing component (child node "Shooter" of Character).
 ## Owns the fire-rate clock and per-shot resolution:
-##   hit chance = weapon base accuracy × moving penalty × cover tier
+##   hit chance = base accuracy × moving penalty × cover tier × range falloff
+## There is no hard range cap — `fire_range` is the weapon's OPTIMAL range,
+## full accuracy inside it and hyperbolic falloff beyond (2× range → half
+## accuracy), floored so a desperate long shot is never literally impossible.
+## Every shot taken announces the shooter to its target (return-fire alert).
 ## Feel doctrine (from wayfarer): player-team hitscan resolves instantly —
 ## snappy; PROJECTILE mode has travel time — reactable. Misses render as a
 ## deflected tracer past the target so the read is honest.
 class_name Shooter
 extends Node
 
-const MISS_DEFLECT_M := 1.6  # how far wide a missed tracer lands
+const MISS_DEFLECT_M := 1.6   # how far wide a missed tracer lands
+const RANGE_FALLOFF_FLOOR := 0.05
 
 var character: Character
 ## Whether the most recently resolved shot connected — AI reads this to tell
@@ -29,9 +34,14 @@ func can_fire(target: Character) -> bool:
 		return false
 	if Time.get_ticks_msec() < _next_shot_ms:
 		return false
-	if character.global_position.distance_to(target.global_position) > g.fire_range:
-		return false
 	return Cover.can_hit(character.muzzle_position(), target)
+
+## 1.0 inside the weapon's optimal range, fire_range/distance beyond it.
+func range_falloff(g: GearItem, target: Character) -> float:
+	var distance := character.global_position.distance_to(target.global_position)
+	if distance <= g.fire_range:
+		return 1.0
+	return maxf(g.fire_range / distance, RANGE_FALLOFF_FLOOR)
 
 ## Attempt one shot at `target`. Returns true if a shot was actually taken
 ## (hit or miss); false if gated by fire rate / range / full cover.
@@ -50,7 +60,8 @@ func try_fire(target: Character) -> bool:
 	var moving := Vector2(character.velocity.x, character.velocity.z).length() > 0.5
 	var accuracy := g.base_accuracy \
 		* (g.moving_accuracy_mult if moving else 1.0) \
-		* Cover.accuracy_mult(Cover.exposure(muzzle, target))
+		* Cover.accuracy_mult(Cover.exposure(muzzle, target)) \
+		* range_falloff(g, target)
 	var hit := randf() < accuracy
 	last_shot_hit = hit
 	match g.fire_mode:
@@ -58,6 +69,8 @@ func try_fire(target: Character) -> bool:
 			_resolve_hitscan(target, muzzle, hit, g)
 		GearItem.FireMode.PROJECTILE:
 			_fire_projectile(target, muzzle, hit, g)
+	# Muzzle flash gives the shooter away — hit or miss, the target knows.
+	target.notify_shot_at(character)
 	return true
 
 func _resolve_hitscan(target: Character, muzzle: Vector3, hit: bool, g: GearItem) -> void:
