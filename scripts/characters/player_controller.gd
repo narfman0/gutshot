@@ -7,10 +7,10 @@
 class_name PlayerController
 extends Node
 
-const SPEED := 7.5
+const SPEED := 9.5
 const SPRINT_MUL := 1.5
-const ACCEL := 400.0       # reach max speed in ~a frame — think Doom
-const STOP_ACCEL := 400.0  # and stop just as hard
+const ACCEL := 900.0       # max speed in a frame or two — think Doom
+const STOP_ACCEL := 900.0  # and stop just as hard
 const GRAVITY := 9.8
 const RETARGET_SECS := 0.14  # cursor re-pick cadence while LMB is held
 

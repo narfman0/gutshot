@@ -4,7 +4,7 @@
 class_name SquadFollow
 extends Node
 
-const SPEED := 5.6           # slightly under the leader's so they trail
+const SPEED := 8.5           # slightly under the leader's so they trail
 const GRAVITY := 9.8
 const ENGAGE_DIST := 16.0    # enemy this close to me or the leader → fight
 const LEASH_RADIUS := 11.0
