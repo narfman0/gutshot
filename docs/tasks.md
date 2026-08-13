@@ -62,3 +62,34 @@
 - [ ] Camera floor transitions; hide geometry above active floor
 - [ ] Audio pass (AudioManager autoload, wayfarer `gen_audio.py` lineage)
 - [ ] Main menu + pause; save/load stub honoring `GameState.debug_session`
+
+## Deferred — enemy factions
+
+Distinct enemy types with their own AI feel, not just stat swaps. Each maps
+onto the narrative's antagonist structure (cult muscle + corporate backer)
+and onto systems that already exist (CombatBrain, awareness, packs).
+
+- [ ] **Demon hordes** — the cult's expendables: lots of weak melee/close
+      rushers, high bodycount, spiced with a few strong bruisers. Needs a
+      swarm-flavored brain variant (charge, no cover use, maybe simple
+      flocking), a melee attack path (no melee system yet), performance check
+      at 20-40 bodies (docs say GDExtension only if it actually bottlenecks),
+      and horde-scale telegraphs so the strong ones read. Asset candidates
+      (verified on the asset server): POLYGON_SciFi_Horror,
+      POLYGON_CityZombies / BossZombies (horde bodies + big bruisers),
+      POLYGON_Apocalypse.
+- [ ] **Space bandits** — scrappy mid-tier raiders: current street-gang AI
+      but with personality — looser packs, cowardice (morale breaks when the
+      pack thins → flee/regroup instead of fighting to the last), looted mix
+      of weapons, maybe grenade-happy. Mostly tuning + a morale layer on
+      EnemyController. Asset candidates: POLYGON_Spy_Kit / Gang_Warfare /
+      Sci-Fi Worlds gear.
+- [ ] **Corporate security / military** — the scary ones: full use of the
+      systems the player fights with. Shields (they already exist — just give
+      them max_shield), tight pack discipline (bounding overwatch: one element
+      suppresses the LKP while another flanks), disciplined trigger control,
+      flashlight/vision-cone patrols on real routes, and their own medic or
+      shield-restore support unit. Should feel like fighting a mirror of your
+      own squad. Asset candidates (verified): POLYGON_Spy_Kit,
+      POLYGON_BattleRoyale, POLYGON_Mech (heavy support walker?), with
+      POLYGON_Military_Warehouse for their turf.
