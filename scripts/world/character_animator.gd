@@ -77,6 +77,10 @@ static func attach(skin: Node, body: CharacterBody3D = null, set_key: String = "
 	for clip_name in COMBAT_CLIPS:
 		var clip: Animation = _Retarget.load_clip(COMBAT_CLIPS[clip_name], skel_path, skels[0])
 		if clip != null:
+			# Retargeted clips default to looping (right for locomotion);
+			# combat one-shots must play once — a looping death replays the
+			# collapse forever.
+			clip.loop_mode = Animation.LOOP_NONE
 			lib.add_animation(clip_name, clip)
 	anim._ap.add_animation_library("", lib)
 	anim._play("idle")

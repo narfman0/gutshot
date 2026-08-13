@@ -1,37 +1,33 @@
 ## Direct control for the active squad member — WASD run-and-gun.
-## WASD moves (camera-relative); LMB on an enemy sets a sticky target that the
-## active weapon auto-fires at while in range/LOS (accuracy dips while moving);
-## holding LMB on ground still walks there (secondary); RMB clears the target;
-## 1/2/3 switch weapon slots. With the thrown slot (grenades) active, LMB
-## throws at the cursor point instead.
+## WASD is the ONLY movement (camera-relative, Doom-snappy: max speed almost
+## instantly, hard stop). LMB on an enemy sets a sticky target that the active
+## weapon auto-fires at while in range/LOS (accuracy dips while moving); RMB
+## clears the target; 1/2/3 switch weapon slots. With the thrown slot
+## (grenades) active, LMB throws at the cursor point instead.
 class_name PlayerController
 extends Node
 
-# Snappier than wayfarer on purpose: near-instant accel, instant-ish stop.
-const SPEED := 6.0
+const SPEED := 7.5
 const SPRINT_MUL := 1.5
-const ACCEL := 60.0
-const STOP_ACCEL := 40.0
+const ACCEL := 400.0       # reach max speed in ~a frame — think Doom
+const STOP_ACCEL := 400.0  # and stop just as hard
 const GRAVITY := 9.8
-const ARRIVE_DIST := 0.4
-const HOLD_REISSUE_SECS := 0.14
+const RETARGET_SECS := 0.14  # cursor re-pick cadence while LMB is held
 
 var enabled := false:
 	set(value):
 		enabled = value
 		if not enabled:
-			_click_target = Vector3.INF
 			_lmb_held = false
 
 var body: Character
 var shooter: Shooter
 
-var target_enemy: Character = null  # sticky: survives ground clicks
+var target_enemy: Character = null  # survives until RMB, death, or switch
 
 var _lmb_held := false
-var _hold_timer := 0.0
+var _retarget_timer := 0.0
 var _mouse_pos := Vector2.ZERO
-var _click_target := Vector3.INF
 
 func _ready() -> void:
 	body = get_parent() as Character
@@ -41,46 +37,35 @@ func _physics_process(delta: float) -> void:
 	if not enabled or body == null or not body.is_alive():
 		return
 
-	if _lmb_held:
-		_hold_timer -= delta
-		if _hold_timer <= 0.0:
-			_hold_timer = HOLD_REISSUE_SECS
-			_handle_left_click(_mouse_pos)
-
 	if not body.is_on_floor():
 		body.velocity.y -= GRAVITY * delta
 
 	var stick := _read_input()
 	var speed := SPEED * (SPRINT_MUL if Input.is_action_pressed("sprint") else 1.0)
 	if stick.length_squared() > 0.01:
-		_click_target = Vector3.INF
 		var dir := _camera_relative(stick)
 		body.velocity.x = move_toward(body.velocity.x, dir.x * speed, ACCEL * delta)
 		body.velocity.z = move_toward(body.velocity.z, dir.z * speed, ACCEL * delta)
-	elif _click_target != Vector3.INF:
-		var to_target := _click_target - body.global_position
-		to_target.y = 0.0
-		if to_target.length() <= ARRIVE_DIST:
-			_click_target = Vector3.INF
-		else:
-			var dir := to_target.normalized()
-			body.velocity.x = move_toward(body.velocity.x, dir.x * speed, ACCEL * delta)
-			body.velocity.z = move_toward(body.velocity.z, dir.z * speed, ACCEL * delta)
 	else:
-		body.velocity.x = move_toward(body.velocity.x, 0.0, speed * STOP_ACCEL * delta)
-		body.velocity.z = move_toward(body.velocity.z, 0.0, speed * STOP_ACCEL * delta)
+		body.velocity.x = move_toward(body.velocity.x, 0.0, STOP_ACCEL * delta)
+		body.velocity.z = move_toward(body.velocity.z, 0.0, STOP_ACCEL * delta)
 	body.move_and_slide()
 
-	# Face the sticky target while it lives; otherwise face movement.
+	# Drop dead/freed targets.
 	if target_enemy != null and (not is_instance_valid(target_enemy) or not target_enemy.is_alive()):
 		target_enemy = null
+	# While LMB is held, keep re-picking under the cursor (drag across enemies
+	# to retarget) and fire; releasing the button stops the shooting.
+	if _lmb_held:
+		_retarget_timer -= delta
+		if _retarget_timer <= 0.0:
+			_retarget_timer = RETARGET_SECS
+			_pick_target(_mouse_pos)
 	if target_enemy != null:
 		_face(target_enemy.global_position)
 	elif Vector2(body.velocity.x, body.velocity.z).length() > 0.5:
 		_face(body.global_position + body.velocity)
-
-	# Sticky auto-fire with the active gun.
-	if target_enemy != null and body.active_gear() != null \
+	if _lmb_held and target_enemy != null and body.active_gear() != null \
 			and body.active_gear().fire_mode != GearItem.FireMode.THROWN:
 		shooter.try_fire(target_enemy)
 
@@ -93,8 +78,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
 				_lmb_held = true
-				_hold_timer = HOLD_REISSUE_SECS
-				_handle_left_click(event.position)
+				_retarget_timer = 0.0
+				_on_lmb_pressed(event.position)
 			else:
 				_lmb_held = false
 		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
@@ -106,24 +91,25 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("weapon_3"):
 		body.select_slot(2)
 
-func _handle_left_click(screen_pos: Vector2) -> void:
-	var hit := _pick(screen_pos)
-	if hit.is_empty():
-		return
+func _on_lmb_pressed(screen_pos: Vector2) -> void:
 	var gear := body.active_gear()
 	if gear != null and gear.fire_mode == GearItem.FireMode.THROWN:
-		# Grenade slot: LMB lobs at the cursor point, wherever it lands.
-		var point: Vector3 = hit["position"]
-		if not gear.abilities.is_empty():
-			body.activate_ability(gear.abilities[0], point)
-			_lmb_held = false  # one throw per click
+		# Grenade slot: LMB lobs at the cursor point, one throw per click.
+		var hit := _pick(screen_pos)
+		if not hit.is_empty() and not gear.abilities.is_empty():
+			body.activate_ability(gear.abilities[0], hit["position"])
+		_lmb_held = false
+		return
+	_pick_target(screen_pos)
+
+func _pick_target(screen_pos: Vector2) -> void:
+	var hit := _pick(screen_pos)
+	if hit.is_empty():
 		return
 	var collider = hit["collider"]
 	if collider is Character and (collider as Character).team != body.team \
 			and (collider as Character).is_alive():
 		target_enemy = collider
-		return
-	_click_target = hit["position"]
 
 func _pick(screen_pos: Vector2) -> Dictionary:
 	var camera := body.get_viewport().get_camera_3d()

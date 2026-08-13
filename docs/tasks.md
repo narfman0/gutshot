@@ -26,6 +26,8 @@
 - [ ] Aim-at-cursor facing while firing on the move (currently faces target)
 - [ ] Balance from human playtests (AI-vs-AI smoke wins too cleanly)
 - [ ] Enemy grenade usage (belt exists; brain never throws)
+- [ ] Characters can get boosted onto prop tops by capsule depenetration
+      during crowded pop-out shuffles — add a step-height/nav guard
 
 ## Phase 2 — Multi-Floor Template Level (next)
 

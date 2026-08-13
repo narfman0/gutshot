@@ -12,11 +12,11 @@ extends Node3D
 const _ISO_YAW := deg_to_rad(45.0)
 const _ISO_PITCH := deg_to_rad(-30.0)
 const _ISO_DIST := 40.0
-const _ZOOM_MIN := 16.0
-const _ZOOM_MAX := 34.0
+const _ZOOM_MIN := 22.0
+const _ZOOM_MAX := 48.0
 const _ZOOM_STEP := 2.0
 const _CAM_FOLLOW_SPEED := 8.0
-var _zoom := 24.0
+var _zoom := 34.0  # default to the wide tactical read; wheel zooms in
 
 # ── Arena ────────────────────────────────────────────────────────────────────
 const ARENA_HALF := 25.0  # 50×50 m

@@ -14,11 +14,12 @@ godot --headless --import    # first import
 godot                        # play the skirmish
 ```
 
-Controls: **WASD** move (camera-relative) · **mouse** aim · **LMB** on an enemy =
-sticky target + auto-fire (hold LMB on ground to walk there) · **RMB** clear
-target · **1/2/3** weapon slots (primary / pistol / grenades — with grenades
-active, LMB lobs at the cursor) · **Tab** or portrait click switches crew ·
-**wheel** zoom · **Esc** quit. Kill all hostiles before your crew drops.
+Controls: **WASD** move (camera-relative, only movement — Doom-snappy) ·
+**mouse** aim · **hold LMB** on an enemy to fire (release to stop; drag across
+enemies to retarget) · **RMB** clear target · **1/2/3** weapon slots (primary /
+pistol / grenades — with grenades active, LMB lobs at the cursor) · **Tab** or
+portrait click switches crew · **wheel** zoom · **Esc** quit. Kill all
+hostiles before your crew drops.
 
 Followers fight on their own — they take cover, pop out to burst, and flank,
 leashed to whoever you're controlling.

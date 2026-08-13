@@ -17,7 +17,7 @@ static func tracer(scene: Node, from_pos: Vector3, to_pos: Vector3,
 		return
 	var mi := MeshInstance3D.new()
 	var box := BoxMesh.new()
-	box.size = Vector3(0.03, 0.03, length)
+	box.size = Vector3(0.012, 0.012, length)
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -59,6 +59,9 @@ static func explosion(scene: Node, pos: Vector3, radius := 3.0,
 		return
 	Juice.flash_light(scene, pos, color, 5.0, 0.35)
 	var p := CPUParticles3D.new()
+	# emitting defaults true — hold the burst until the node is positioned or
+	# every explosion detonates at the world origin.
+	p.emitting = false
 	p.one_shot = true
 	p.amount = 28
 	p.lifetime = 0.5

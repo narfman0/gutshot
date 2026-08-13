@@ -19,7 +19,7 @@ const ENGAGE_RANGE := 18.0        # metres — acquire threats inside this
 const COVER_SEARCH_RADIUS := 12.0 # metres — how far to shop for cover
 const COVER_RING_POINTS := 8      # sample points around each cover prop
 const COVER_STANDOFF := 0.9       # metres outside the prop's collision extent
-const HOLD_SECS := 1.1            # crouched-in-cover beat between pop-outs
+const HOLD_SECS := 0.6            # crouched-in-cover beat between pop-outs
 const POP_MAX_SECS := 2.2         # give up a pop-out that never finds LOS
 const BURST_SHOTS := 3            # shots per pop-out window
 const FLANK_TRIGGER_SECS := 4.0   # no damage dealt this long → go around
@@ -135,10 +135,14 @@ func _tick_seek_cover(delta: float) -> void:
 		state = State.HOLD
 		_state_timer = HOLD_SECS
 		return
-	if not nav_to(_cover_point, delta, SPEED):
+	# Run-and-gun on the way in: face the threat and fire whenever the shot is
+	# there (moving accuracy penalty applies) — no free repositioning window.
+	if not nav_to(_cover_point, delta, SPEED, threat.global_position):
 		# No path to the point (off-navmesh) — shop again from scratch.
 		_cover_point = Vector3.INF
 		state = State.ADVANCE
+		return
+	_fire_if_able()
 
 func _tick_hold(delta: float) -> void:
 	idle_stop(delta)

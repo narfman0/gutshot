@@ -109,9 +109,10 @@ Not implemented yet. Planned approach:
 
 ### Control model (user decisions, locked)
 - **WASD + mouse aim, run-and-gun.** The active character moves camera-relative
-  (`scripts/characters/player_controller.gd`); LMB on an enemy sets a sticky
-  target that auto-fires while in range/LOS; hold-LMB ground click walks there
-  (secondary); RMB clears the target.
+  (`scripts/characters/player_controller.gd`), Doom-snappy (max speed in ~a
+  frame, hard stop) — WASD is the ONLY movement, there is no click-to-move.
+  **Hold LMB** on an enemy to fire (release stops; the cursor re-picks while
+  held so dragging retargets); RMB clears the target.
 - **Keys 1/2/3 are weapon slots** (primary / secondary / heavy-or-device), not
   character hotkeys. **Tab cycles the active character**; HUD portraits click.
 - **Followers are autonomous**: they trail the leader out of combat and fight
@@ -193,8 +194,6 @@ CyberCity meshes 1:1 (`ICON_SM_Wep_*_SciFiCyberCity.png`).
 - Enemies idle until aggro — patrol routes / alert states are Phase 2.
 - Weapon meshes are not yet attached to character hands (icons + tracers carry
   the read); needs a bone-attachment pass.
-- Click-to-move uses straight-line steering, not the navmesh (open arena makes
-  this invisible; revisit for Phase 2 interiors).
 - GDScript lambdas capture locals **by value** — signal-outcome flags in
   harnesses must be instance vars (see `skirmish_smoke.gd`).
 

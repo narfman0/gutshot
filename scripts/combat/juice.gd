@@ -59,6 +59,9 @@ static func impact_burst(scene: Node, pos: Vector3,
 		return
 	flash_light(scene, pos, color)
 	var p := CPUParticles3D.new()
+	# emitting defaults true — the burst would fire at the origin the moment
+	# add_child runs, before global_position lands. Hold it until positioned.
+	p.emitting = false
 	p.one_shot = true
 	p.amount = 10
 	p.lifetime = 0.32
