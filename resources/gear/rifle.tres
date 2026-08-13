@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="GearItem" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/gear_item.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Rifle"
+slot_type = 0
+fire_mode = 0
+damage = 22.0
+fire_range = 24.0
+fire_rate = 1.6
+base_accuracy = 0.85
+moving_accuracy_mult = 0.45
+mesh_path = "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Weapons/SM_Wep_Rifle_01.gltf"

@@ -1,0 +1,29 @@
+## Gear defines what a character can do — docs/architecture.md. A GearItem is
+## a weapon (or thrown-device belt) that occupies one of the three loadout
+## slots; its exported abilities register into the character's action_slots.
+class_name GearItem
+extends Resource
+
+enum SlotType { PRIMARY, SECONDARY, HEAVY }
+enum FireMode { HITSCAN, PROJECTILE, THROWN }
+
+@export var display_name := "Gear"
+@export var slot_type: SlotType = SlotType.PRIMARY
+@export var fire_mode: FireMode = FireMode.HITSCAN
+
+@export var damage := 10.0
+@export var fire_range := 20.0
+## Shots per second.
+@export var fire_rate := 4.0
+## Chance [0..1] a shot connects at rest against an exposed target.
+@export var base_accuracy := 0.8
+## Multiplier applied to accuracy while the shooter is moving (run-and-gun).
+@export var moving_accuracy_mult := 0.6
+## Projectile speed (PROJECTILE and THROWN modes).
+@export var projectile_speed := 18.0
+
+## Held weapon mesh (full res:// literal so fetch_assets.sh resolves it).
+@export var mesh_path := ""
+@export var icon: Texture2D
+
+@export var abilities: Array[Ability] = []

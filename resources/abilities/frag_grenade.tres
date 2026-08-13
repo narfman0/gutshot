@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FragGrenadeAbility" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/ability_frag_grenade.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Frag Grenade"
+cooldown = 6.0
+throw_range = 14.0
+blast_radius = 3.0
+flight_secs = 0.55
+fuse_secs = 0.8
+damage = 55.0
