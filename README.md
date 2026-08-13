@@ -16,11 +16,12 @@ godot        # play the skirmish
 `./build.sh test` builds and then runs every headless harness.
 
 Controls: **WASD** move (camera-relative, only movement — Doom-snappy) ·
-**mouse** aim · **hold LMB** on an enemy to fire (release to stop; drag across
-enemies to retarget) · **RMB** clear target · **1/2/3** weapon slots (primary /
-pistol / grenades — with grenades active, LMB lobs at the cursor) · **R**
-reload · **Tab** or portrait click switches crew · **wheel** zoom · **Esc**
-quit. Kill all hostiles before your crew drops.
+**hold LMB** to fire toward the cursor (release to stop) — enemies near the
+aim line are picked up automatically, and gunfire alerts anyone in earshot ·
+**1/2/3** weapon slots (primary / pistol / grenades — grenades lob at the
+cursor; the medic's heal gun beams crew near the aim line) · **R** reload ·
+**Tab** or portrait click switches crew · **wheel** zoom · **Esc** quit.
+Kill all hostiles before your crew drops.
 
 Followers fight on their own — they take cover, pop out to burst, and flank,
 leashed to whoever you're controlling.

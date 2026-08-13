@@ -13,6 +13,7 @@ extends Node
 
 const MISS_DEFLECT_M := 1.6   # how far wide a missed tracer lands
 const RANGE_FALLOFF_FLOOR := 0.05
+const HEARING_RADIUS := 14.0  # gunfire is loud — enemies this close aggro
 
 var character: Character
 ## Whether the most recently resolved shot connected — AI reads this to tell
@@ -121,9 +122,52 @@ func try_fire(target: Character) -> bool:
 			_resolve_hitscan(target, muzzle, hit, g)
 		GearItem.FireMode.PROJECTILE:
 			_fire_projectile(target, muzzle, hit, g)
-	# Muzzle flash gives the shooter away — hit or miss, the target knows.
+	# Muzzle flash gives the shooter away — hit or miss, the target knows —
+	# and gunfire carries: anyone hostile in earshot wakes up.
 	target.notify_shot_at(character)
+	_alert_hearing()
 	return true
+
+## Fire with nobody on the line — the round still leaves the gun (rate, mag,
+## flash, tracer into the dark) and the noise still carries. Cursor-direction
+## shooting calls this when the aim cone is empty.
+func fire_wild(at_point: Vector3) -> bool:
+	var g := gear()
+	if g == null or character == null or not character.is_alive():
+		return false
+	if g.fire_mode == GearItem.FireMode.THROWN or g.heals:
+		return false
+	if Time.get_ticks_msec() < _next_shot_ms or is_reloading():
+		return false
+	_finish_reload_if_due()
+	_next_shot_ms = Time.get_ticks_msec() + int(1000.0 / maxf(g.fire_rate, 0.1))
+	if g.mag_size > 0:
+		var slot := character.active_slot
+		_mag[slot] = mag_left(slot) - 1
+		if _mag[slot] <= 0:
+			start_reload()
+	AudioManager.play_sfx(g.shot_sfx)
+	var muzzle := character.muzzle_position()
+	Vfx.muzzle_flash(get_tree().current_scene, muzzle)
+	var flat := at_point - character.global_position
+	flat.y = 0.0
+	var reach := maxf(flat.length(), g.fire_range)
+	var toward: Vector3 = character.global_position + flat.normalized() * reach \
+		+ Vector3(0, 1.3 * Character.VERTICAL_SQUASH, 0)
+	Vfx.tracer(get_tree().current_scene, muzzle, toward)
+	_alert_hearing()
+	return true
+
+func _alert_hearing() -> void:
+	for node in get_tree().get_nodes_in_group("team_%d" % (1 - character.team)):
+		var enemy := node as Character
+		if enemy == null or not enemy.is_alive():
+			continue
+		if character.global_position.distance_to(enemy.global_position) > HEARING_RADIUS:
+			continue
+		var controller := enemy.get_node_or_null("EnemyController") as EnemyController
+		if controller != null:
+			controller.alerted()
 
 func _resolve_hitscan(target: Character, muzzle: Vector3, hit: bool, g: GearItem) -> void:
 	var scene := get_tree().current_scene

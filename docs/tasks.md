@@ -39,7 +39,8 @@
 ### M1 polish backlog (nice-to-have, not blocking)
 - [ ] Weapon grip orientation tuning (currently held at the side; fine at
       gameplay zoom)
-- [ ] Aim-at-cursor facing while firing on the move (currently faces target)
+- [x] Aim-at-cursor firing (LMB fires immediately toward the cursor, cone
+      soft-acquire; gunfire alerts enemies in earshot)
 - [ ] Balance from human playtests (AI-vs-AI smoke wins too cleanly)
 - [ ] Characters can get boosted onto prop tops by capsule depenetration
       during crowded pop-out shuffles — add a step-height/nav guard

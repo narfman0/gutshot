@@ -111,8 +111,15 @@ Not implemented yet. Planned approach:
 - **WASD + mouse aim, run-and-gun.** The active character moves camera-relative
   (`scripts/characters/player_controller.gd`), Doom-snappy (max speed in ~a
   frame, hard stop) — WASD is the ONLY movement, there is no click-to-move.
-  **Hold LMB** on an enemy to fire (release stops; the cursor re-picks while
-  held so dragging retargets); RMB clears the target.
+  **Hold LMB to fire toward the cursor immediately** — no clicking on
+  enemies: each shot soft-acquires the nearest enemy inside a ±`AIM_CONE_DEG`
+  cone along the aim line and resolves through the normal accuracy/cover
+  model; an empty cone still sends the round downrange (`Shooter.fire_wild` —
+  rate, mag, tracer, noise). The heal gun cone-acquires squadmates the same
+  way.
+- **Gunfire is loud**: every shot (aimed or wild) calls
+  `Shooter._alert_hearing()` — enemies within `HEARING_RADIUS` aggro on the
+  noise even if the shot wasn't at them.
 - **Keys 1/2/3 are weapon slots** (primary / secondary / heavy-or-device), not
   character hotkeys. **Tab cycles the active character**; HUD portraits click.
 - **Followers are autonomous**: they trail the leader out of combat and fight
