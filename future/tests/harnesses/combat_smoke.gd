@@ -103,6 +103,28 @@ func _ready() -> void:
 	_check(target.hp < hp_pre_nade,
 		"grenade damages behind cover (hp %.1f -> %.1f)" % [hp_pre_nade, target.hp])
 
+	# 6. Shields absorb before HP; crew go DOWN and a nearby mate revives them.
+	var shielded := _make_character(0, Vector3(12, 0, 0))
+	shielded.max_shield = 30.0
+	shielded.shield = 30.0
+	var hp_before_shield := shielded.hp
+	shielded.receive_damage(20.0)
+	_check(is_equal_approx(shielded.shield, 10.0) and is_equal_approx(shielded.hp, hp_before_shield),
+		"shield absorbs damage first (shield %.0f hp %.0f)" % [shielded.shield, shielded.hp])
+	shielded.receive_damage(30.0)
+	_check(is_equal_approx(shielded.shield, 0.0) and shielded.hp < hp_before_shield,
+		"overflow damage bleeds into hp (shield %.0f hp %.0f)" % [shielded.shield, shielded.hp])
+
+	var mate := _make_character(0, Vector3(13, 0, 0))
+	shielded.receive_damage(9999.0)
+	_check(shielded.downed and not shielded.is_alive(), "crew at 0 hp goes DOWN, not dead")
+	await get_tree().create_timer(Character.REVIVE_SECS + 0.6).timeout
+	_check(not shielded.downed and shielded.is_alive()
+		and is_equal_approx(shielded.hp, shielded.max_hp * Character.REVIVE_HP_FRAC),
+		"nearby mate revives at %.0f%% hp (downed=%s hp=%.0f)"
+		% [Character.REVIVE_HP_FRAC * 100.0, shielded.downed, shielded.hp])
+	mate.free()
+
 	if _failures.is_empty():
 		print("COMBAT_SMOKE: ALL PASS")
 		get_tree().quit(0)

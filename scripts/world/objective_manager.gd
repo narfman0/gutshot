@@ -15,9 +15,12 @@ var _over := false
 func register(character: Character) -> void:
 	if character.team == 0:
 		_squad.append(character)
+		# Crew go DOWN instead of dying; all-downed is still a wipe (nobody
+		# left standing to revive).
+		character.character_downed.connect(_on_character_out)
 	else:
 		_enemies.append(character)
-	character.character_died.connect(_on_character_died)
+		character.character_died.connect(_on_character_out)
 	objective_updated.emit(_living(_squad), _living(_enemies))
 
 func _living(list: Array) -> int:
@@ -27,7 +30,7 @@ func _living(list: Array) -> int:
 			count += 1
 	return count
 
-func _on_character_died(_character: Character) -> void:
+func _on_character_out(_character: Character) -> void:
 	if _over:
 		return
 	var squad_left := _living(_squad)

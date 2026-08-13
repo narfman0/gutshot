@@ -104,6 +104,21 @@ static func oneshot(body: Node, clip_name: String, speed: float = 1.0,
 		return false
 	return anim.play_oneshot(clip_name, speed, release_frac)
 
+## Back from the downed state: unlock the death-clip freeze and resume
+## locomotion. No-op for bodies without an animator.
+static func revive(body: Node) -> void:
+	if body == null:
+		return
+	var skin := body.get_node_or_null("Skin")
+	if skin == null or not skin.has_meta(_ANIM_META):
+		return
+	var anim := skin.get_meta(_ANIM_META) as CharacterAnimator
+	if anim == null:
+		return
+	anim._oneshot_until_ms = 0
+	anim._current = ""
+	anim._play("idle")
+
 ## Synty POLYGON meshes are authored facing +Z, but Godot's facing/movement
 ## convention is -Z forward. Left as-is the skin shows its back; spin it 180°
 ## so the visible front matches body facing. Guarded by meta so it lands

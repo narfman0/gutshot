@@ -21,6 +21,12 @@
       hostiles counter
 - [x] Headless harness suite + Xvfb screenshot gallery; balance pass
 
+### Post-M1 feel patches (done)
+- [x] Doom-snappy WASD-only movement (click-to-move removed), hold-LMB fire
+- [x] Range falloff instead of hard range cap; guaranteed return fire
+      (shot_at → threat pin)
+- [x] Crew shields (regen out of combat) + downed/revive instead of death
+
 ### M1 polish backlog (nice-to-have, not blocking)
 - [ ] Attach weapon meshes to character hands (bone attachment)
 - [ ] Aim-at-cursor facing while firing on the move (currently faces target)

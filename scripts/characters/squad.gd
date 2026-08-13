@@ -30,7 +30,8 @@ func add_member(character: Character) -> void:
 	follow.name = "SquadFollow"
 	character.add_child(follow)
 	members.append(character)
-	character.character_died.connect(_on_member_died)
+	character.character_downed.connect(_on_member_out)
+	character.character_revived.connect(func(_c): _refresh_control())
 	_refresh_control()
 
 func active_character() -> Character:
@@ -72,8 +73,8 @@ func _refresh_control() -> void:
 			follow.formation_offset = FORMATION[slot % FORMATION.size()]
 			slot += 1
 
-## The player's view must never sit on a corpse — auto-switch on death.
-func _on_member_died(character: Character) -> void:
+## The player's view must never sit on a downed body — auto-switch.
+func _on_member_out(character: Character) -> void:
 	if character == active_character():
 		_cycle_active()
 	else:

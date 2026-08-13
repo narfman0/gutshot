@@ -136,6 +136,14 @@ Not implemented yet. Planned approach:
   character.tscn: head/chest/pelvis/shoulders). Unblocked fraction > 0.75 →
   exposed; 0.25–0.75 → half cover (−50% hit chance); ≤ 0.25 → full cover, no
   shot. Grenades ignore cover on purpose — they're the counterplay.
+- **Health model** (`scripts/characters/character.gd`): crew carry a
+  regenerating **shield layer** (absorbs damage first; regens
+  `SHIELD_REGEN_RATE`/s after `SHIELD_REGEN_DELAY` seconds without taking
+  fire). HP underneath never regenerates in-mission. Enemies have no shields.
+  At 0 HP crew go **DOWN** instead of dying — a living squadmate standing
+  within `REVIVE_RADIUS` for `REVIVE_SECS` brings them back at
+  `REVIVE_HP_FRAC` HP with empty shields. All crew down = mission failed
+  (nobody left standing to revive). Enemies just die.
 - **Shared combat AI** (`scripts/combat/combat_brain.gd`), used by followers
   AND enemies: pick a cover ring point that breaks LOS to the threat → hold →
   pop out and burst → duck back; flank ~90° when no damage lands for a few
@@ -172,10 +180,11 @@ not reliably push polygons into the map through the NavigationRegion3D node.
 
 ### HUD
 `scripts/ui/hud.gd` builds everything from the INTERFACE_SciFi_Soldier_HUD
-sprite pack (fetched from the server's raw tree) + `UITheme`. Portraits carry
-an **empty shield segment** and a **status-effect icon row** — v1 stubs so the
-layout is ready when shields/status effects land. Weapon icons match the
-CyberCity meshes 1:1 (`ICON_SM_Wep_*_SciFiCyberCity.png`).
+sprite pack (fetched from the server's raw tree) + `UITheme`. Portraits show
+the live **shield segment** above health plus a **status-effect icon row**
+(still a stub — reserved for status effects). Weapon icons match the
+CyberCity meshes 1:1 (`ICON_SM_Wep_*_SciFiCyberCity.png`). Downed crew get a
+world-space DOWN / REVIVING % label.
 
 ---
 
@@ -198,7 +207,9 @@ CyberCity meshes 1:1 (`ICON_SM_Wep_*_SciFiCyberCity.png`).
 - **No gun animation pack on the asset server** — shooting is muzzle flash +
   tracer only; hit/death clips retarget from the Sword Combat pack. Revisit if
   a rifle animation pack lands.
-- Shields and status effects are HUD stubs (`Character.shield` always 0).
+- Status effects are still a HUD stub (empty icon row on portraits).
+- Downed crew can't be executed — enemies and grenades ignore bodies at
+  0 HP, so downing is strictly recoverable until the whole squad drops.
 - Enemies idle until aggro — patrol routes / alert states are Phase 2.
 - Weapon meshes are not yet attached to character hands (icons + tracers carry
   the read); needs a bone-attachment pass.

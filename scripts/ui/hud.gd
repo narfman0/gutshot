@@ -41,6 +41,7 @@ func setup(squad: Squad, objectives: ObjectiveManager, camera: Camera3D) -> void
 	_squad.active_changed.connect(func(_i, _c): _refresh_portraits(); _refresh_slots())
 	for member in _squad.members:
 		(member as Character).hp_changed.connect(func(_h, _m): _refresh_portraits())
+		(member as Character).shield_changed.connect(func(_s, _m): _refresh_portraits())
 		(member as Character).weapon_changed.connect(func(_s): _refresh_slots())
 	for team in [0, 1]:
 		for c in _squad.get_tree().get_nodes_in_group("team_%d" % team):
@@ -110,12 +111,12 @@ func _build_portraits() -> void:
 		name_label.add_theme_font_size_override("font_size", 13)
 		name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		vbox.add_child(name_label)
-		# Shield segment above health — always empty in v1, the slot is the point.
+		# Regenerating shield layer above health.
 		var shield := ProgressBar.new()
 		shield.custom_minimum_size = Vector2(0, 6)
 		shield.show_percentage = false
-		shield.max_value = 100.0
-		shield.value = 0.0
+		shield.max_value = maxf(member.max_shield, 1.0)
+		shield.value = member.shield
 		shield.add_theme_stylebox_override("fill", UITheme._fill_box(UITheme.C_SHIELD))
 		shield.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		vbox.add_child(shield)

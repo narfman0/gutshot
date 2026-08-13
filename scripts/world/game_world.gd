@@ -220,6 +220,7 @@ func _spawn_crew() -> void:
 		c.team = 0
 		c.display_name = key.capitalize()
 		c.anim_set = info["set"]
+		c.max_shield = 40.0  # crew get the regenerating layer; enemies don't
 		_squad.add_child(c)
 		c.global_position = CREW_SPAWNS[i % CREW_SPAWNS.size()]
 		c.setup_skin(info["path"])
