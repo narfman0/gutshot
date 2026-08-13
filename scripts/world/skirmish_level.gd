@@ -30,5 +30,8 @@ func _enemy_spawns() -> Array:
 		{"skin": "gangster", "pos": Vector3(0.0, 0.1, -17.0), "pack": "west"},
 	]
 
+func _site_name() -> String:
+	return "THE STREET"
+
 func _build_extra_geometry() -> void:
 	add_transit_zone(Vector3(20.0, 0.0, 20.0), "depot", "→ DEPOT 9")

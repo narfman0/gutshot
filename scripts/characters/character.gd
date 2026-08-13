@@ -107,7 +107,9 @@ func _process(delta: float) -> void:
 const _PROP_TOP_Y := 0.9
 
 func _unstick_from_prop_tops() -> void:
-	if global_position.y <= _PROP_TOP_Y:
+	# Only when STANDING somewhere elevated — a body mid-fall (dropping off
+	# the catwalk) must fall under gravity, not teleport to the floor.
+	if global_position.y <= _PROP_TOP_Y or not is_on_floor():
 		return
 	var map := get_world_3d().navigation_map
 	if NavigationServer3D.map_get_regions(map).is_empty():

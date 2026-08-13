@@ -32,13 +32,17 @@ var _portraits: Array = []       # per member: {panel, hp, shield, status_row}
 var _slots: Array = []           # per slot: {box, icon, cooldown, key}
 var _overheads: Dictionary = {}  # Character → ProgressBar
 
-func setup(squad: Squad, objectives: ObjectiveManager, camera: Camera3D) -> void:
+func setup(squad: Squad, objectives: ObjectiveManager, camera: Camera3D,
+		site_name := "") -> void:
 	_squad = squad
 	_objectives = objectives
 	_camera = camera
 	layer = 10
 	_build_portraits()
 	_build_weapon_bar()
+	if site_name != "":
+		_build_site_label(site_name)
+	_apply_crosshair_cursor()
 	_squad.active_changed.connect(func(_i, _c): _refresh_portraits(); _refresh_slots())
 	for member in _squad.members:
 		(member as Character).hp_changed.connect(func(_h, _m): _refresh_portraits())
@@ -209,6 +213,34 @@ func _refresh_slots() -> void:
 		icon.texture = _texture(WEAPON_ICONS.get(gear.display_name, "")) if gear != null else null
 		var box := entry["box"] as Control
 		box.modulate = Color(1, 1, 1) if i == active.active_slot else Color(0.6, 0.65, 0.7, 0.85)
+
+## Site name top-left — instant orientation after a transit pad.
+func _build_site_label(site_name: String) -> void:
+	var label := Label.new()
+	label.theme = UITheme.theme
+	label.text = site_name
+	label.add_theme_font_size_override("font_size", 22)
+	label.add_theme_color_override("font_color", UITheme.C_HEAD)
+	label.position = Vector2(18, 12)
+	add_child(label)
+
+## A drawn crosshair cursor — an arrow pointer reads as UI, not as aim.
+func _apply_crosshair_cursor() -> void:
+	var size := 25
+	var mid := size / 2
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	var main := Color(0.55, 0.95, 1.0, 0.95)
+	var shadow := Color(0, 0, 0, 0.8)
+	for offset in range(-1, 2):
+		for i in range(size):
+			var gap: bool = absi(i - mid) < 4  # open center so the target stays visible
+			if gap:
+				continue
+			img.set_pixel(i, clampi(mid + offset, 0, size - 1), shadow if offset != 0 else main)
+			img.set_pixel(clampi(mid + offset, 0, size - 1), i, shadow if offset != 0 else main)
+	img.set_pixel(mid, mid, main)
+	Input.set_custom_mouse_cursor(ImageTexture.create_from_image(img),
+		Input.CURSOR_ARROW, Vector2(mid, mid))
 
 # ── Overhead bars ────────────────────────────────────────────────────────────
 

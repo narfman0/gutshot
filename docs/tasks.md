@@ -45,6 +45,14 @@
 - [x] Aim-at-cursor firing (LMB fires immediately toward the cursor, cone
       soft-acquire; gunfire alerts enemies in earshot)
 - [ ] Balance from human playtests (AI-vs-AI smoke wins too cleanly)
+- [ ] **Proper gravity / falling feel** — dropping off the catwalk is jank:
+      gravity is a floaty 9.8 (games usually run 2-3×), air control is the
+      same instant accel/stop as ground (should be reduced in air), and the
+      landing has no read (thump SFX, dust, brief recovery). Consider fall
+      damage thresholds, ledge coyote time, and making the prop-top unstick
+      guard obsolete (it now only fires while on-floor). Also: catwalk drop
+      as a deliberate move (crouch-drop input?) vs accidental walk-offs —
+      maybe soft edge resistance on the deck.
 - [x] Characters can get boosted onto prop tops by capsule depenetration —
       anyone above the walkable plane snaps back to the nearest navmesh point
       (flat-arena guard; revisit for multi-floor)
@@ -63,8 +71,14 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       (one navmesh, ramps), two breach doors (shoot/blast → navmesh rebake),
       bandit packs with patrol routes + morale breaks, transit pads to/from
       the street (GameWorld refactored into base + per-level subclasses)
-- [ ] Depot 9 dressing pass: roller-door meshes on the breach doors,
-      catwalk railings, more warehouse props, interior lighting mood
+- [x] Depot 9 dressing pass: roller-door meshes on the breach doors (damage
+      strip glows toward failure), catwalk railings, sodium interior light
+      mood; usability: pause menu (Esc), site-name label, crosshair cursor,
+      active-character-only transit pads, followers auto-revive downed mates
+- [ ] **Lighting pass** (dedicated): per-level mood beyond corner floods —
+      practical light sources (signs, fixtures, machines), shadow budget,
+      light cookies/IES looks, occlusion culling check, darkness as gameplay
+      (sight ranges shrink in unlit aisles?)
 - [ ] Hideout + district map (site select via SceneManager.LEVELS)
 - [ ] Two-floor hand-crafted level: stairs/ladder transitions between
       per-floor navmeshes (teleport waypoints per architecture.md)

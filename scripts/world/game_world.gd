@@ -56,6 +56,22 @@ func _enemy_spawns() -> Array:
 func _build_extra_geometry() -> void:
 	pass
 
+## Shown top-left in the HUD so travel between sites reads instantly.
+func _site_name() -> String:
+	return "UNKNOWN SITE"
+
+func _sun_energy() -> float:
+	return 1.5
+
+## Array of [position, color] corner/fill lights — the level's light mood.
+func _flood_lights() -> Array:
+	return [
+		[Vector3(-18, 6, -18), Color(0.2, 0.8, 1.0)],
+		[Vector3(18, 6, -18), Color(0.95, 0.3, 0.75)],
+		[Vector3(-18, 6, 18), Color(0.95, 0.3, 0.75)],
+		[Vector3(18, 6, 18), Color(0.2, 0.8, 1.0)],
+	]
+
 @onready var _level: Node3D = $Level
 @onready var _squad: Squad = $Squad
 @onready var _enemy_squad: Node3D = $EnemySquad
@@ -81,7 +97,7 @@ func _ready() -> void:
 	_spawn_crew()
 	_spawn_enemies()
 	_setup_camera()
-	($HUD as Hud).setup(_squad, _objectives, _camera)
+	($HUD as Hud).setup(_squad, _objectives, _camera, _site_name())
 	_objectives.mission_complete.connect(func(): _show_end_screen(true))
 	_objectives.mission_failed.connect(func(): _show_end_screen(false))
 	AudioManager.play_ambient()
@@ -120,15 +136,10 @@ func _setup_environment() -> void:
 	var sun := $Sun as DirectionalLight3D
 	sun.rotation = Vector3(deg_to_rad(-55.0), deg_to_rad(30.0), 0.0)
 	sun.light_color = Color(0.85, 0.88, 1.0)
-	sun.light_energy = 1.5
+	sun.light_energy = _sun_energy()
 	sun.shadow_enabled = true
-	# Neon corner floods — cyberpunk fill so the arena reads at night.
-	for corner in [
-		[Vector3(-18, 6, -18), Color(0.2, 0.8, 1.0)],
-		[Vector3(18, 6, -18), Color(0.95, 0.3, 0.75)],
-		[Vector3(-18, 6, 18), Color(0.95, 0.3, 0.75)],
-		[Vector3(18, 6, 18), Color(0.2, 0.8, 1.0)],
-	]:
+	# Fill floods — each level brings its own light mood.
+	for corner in _flood_lights():
 		var flood := OmniLight3D.new()
 		flood.light_color = corner[1]
 		flood.light_energy = 2.5
@@ -323,7 +334,7 @@ func add_transit_zone(pos: Vector3, target_level: String, label_text: String) ->
 	_level.add_child(zone)
 	zone.global_position = pos
 	zone.body_entered.connect(func(body: Node3D):
-		if body is Character and (body as Character).team == 0 and not _game_over:
+		if body is Character and body == _squad.active_character() and not _game_over:
 			SceneManager.change_level(target_level))
 
 # ── Camera ───────────────────────────────────────────────────────────────────
@@ -354,7 +365,60 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			_zoom = minf(_ZOOM_MAX, _zoom + _ZOOM_STEP)
 	elif event.is_action_pressed("ui_cancel"):
-		get_tree().quit()
+		_toggle_pause()
+
+# ── Pause ────────────────────────────────────────────────────────────────────
+
+var _pause_layer: CanvasLayer = null
+
+func _toggle_pause() -> void:
+	if _game_over:
+		return
+	if _pause_layer != null:
+		_close_pause()
+		return
+	get_tree().paused = true
+	_pause_layer = CanvasLayer.new()
+	_pause_layer.layer = 60
+	_pause_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_pause_layer)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.55)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_pause_layer.add_child(dim)
+	var panel := PanelContainer.new()
+	panel.theme = UITheme.theme
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	_pause_layer.add_child(panel)
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 12)
+	panel.add_child(vbox)
+	var title := Label.new()
+	title.text = _site_name()
+	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", UITheme.C_HEAD)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(title)
+	var resume := Button.new()
+	resume.text = "Resume"
+	resume.pressed.connect(_close_pause)
+	vbox.add_child(resume)
+	var restart := Button.new()
+	restart.text = "Restart Site"
+	restart.pressed.connect(func():
+		_close_pause()
+		SceneManager.reload_current())
+	vbox.add_child(restart)
+	var quit := Button.new()
+	quit.text = "Quit"
+	quit.pressed.connect(func(): get_tree().quit())
+	vbox.add_child(quit)
+
+func _close_pause() -> void:
+	if _pause_layer != null:
+		_pause_layer.queue_free()
+		_pause_layer = null
+	get_tree().paused = false
 
 # ── End screen ───────────────────────────────────────────────────────────────
 

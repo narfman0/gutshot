@@ -30,12 +30,49 @@ func _physics_process(delta: float) -> void:
 	if not enabled or body == null or not body.is_alive():
 		return
 	brain.leash_center_node = leader
+	if _tick_revive_assist(delta):
+		return
 	if _tick_medic(delta):
 		return
 	if _in_combat():
 		brain.tick(delta)
 	else:
 		_follow(delta)
+
+## A downed mate outranks everything: the CLOSEST follower breaks off, runs
+## over, and stands the revive channel. Other followers keep fighting.
+func _tick_revive_assist(delta: float) -> bool:
+	var downed_mate: Character = null
+	var my_d := INF
+	for node in body.get_tree().get_nodes_in_group("team_%d" % body.team):
+		var mate := node as Character
+		if mate == null or not mate.downed:
+			continue
+		var d := body.global_position.distance_to(mate.global_position)
+		if d < my_d:
+			my_d = d
+			downed_mate = mate
+	if downed_mate == null:
+		return false
+	# Only the closest FOLLOWER responds (the player drives the active char).
+	for node in body.get_tree().get_nodes_in_group("team_%d" % body.team):
+		var other := node as Character
+		if other == null or other == body or not other.is_alive():
+			continue
+		var follow := other.get_node_or_null("SquadFollow") as SquadFollow
+		if follow == null or not follow.enabled:
+			continue
+		if other.global_position.distance_to(downed_mate.global_position) < my_d - 0.5:
+			return false
+	if my_d <= Character.REVIVE_RADIUS * 0.8:
+		# In the channel — stand it (dying to do so is the player's problem).
+		body.velocity.x = 0.0
+		body.velocity.z = 0.0
+		if not body.is_on_floor():
+			body.velocity.y -= GRAVITY * delta
+		body.move_and_slide()
+		return true
+	return brain.nav_to(downed_mate.global_position, delta, SPEED, downed_mate.global_position)
 
 ## Heal-gun carrier: patching a wounded squadmate beats shooting. Stands and
 ## beams whenever a hurt mate is in range/LOS; otherwise falls through to the

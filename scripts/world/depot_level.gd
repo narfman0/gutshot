@@ -23,6 +23,22 @@ func _arena_half() -> float:
 func _ground_color() -> Color:
 	return Color(0.20, 0.20, 0.19)  # stained warehouse concrete
 
+func _site_name() -> String:
+	return "DEPOT 9"
+
+func _sun_energy() -> float:
+	return 0.9  # dimmer skylight leak — this is an interior
+
+## Sodium work-lights over the aisles, one cold blue over the yard gate.
+func _flood_lights() -> Array:
+	return [
+		[Vector3(-12, 6, -14), Color(1.0, 0.65, 0.25)],
+		[Vector3(12, 6, -14), Color(1.0, 0.65, 0.25)],
+		[Vector3(0, 6, -6), Color(1.0, 0.55, 0.2)],
+		[Vector3(0, 6, 12), Color(0.35, 0.7, 1.0)],
+		[Vector3(18, 6, 18), Color(0.2, 0.8, 1.0)],
+	]
+
 func _cover_layout() -> Array:
 	return [
 		# Yard (crew side): scattered crates for the approach fight.
@@ -106,6 +122,24 @@ func _build_catwalk() -> void:
 	_walkable_box(Vector3(0, DECK_H * 0.5 - 0.15, 4.6), Vector3(3.0, 0.3, 5.9), 27.5)
 	# North ramp: ground at z≈-15 rising to the deck at z≈-10.
 	_walkable_box(Vector3(0, DECK_H * 0.5 - 0.15, -12.6), Vector3(3.0, 0.3, 5.9), -27.5)
+	# Railings: visual only (no collider) — shots pass, and dropping off the
+	# deck stays a legal shortcut down.
+	for rail_x in [-1.5, 1.5]:
+		_rail(Vector3(rail_x, DECK_H + 0.35, -4.0), Vector3(0.06, 0.7, 12.0))
+
+func _rail(pos: Vector3, size: Vector3) -> void:
+	var mi := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.7, 0.6, 0.15)
+	mat.emission_enabled = true
+	mat.emission = Color(0.9, 0.75, 0.2)
+	mat.emission_energy_multiplier = 0.4
+	mesh.material = mat
+	mi.mesh = mesh
+	_level.add_child(mi)
+	mi.global_position = pos
 
 func _walkable_box(pos: Vector3, size: Vector3, tilt_deg: float) -> void:
 	var body := StaticBody3D.new()
