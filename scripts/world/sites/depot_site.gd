@@ -9,6 +9,11 @@ const CONTAINER := "res://assets/meshes/POLYGON_Military_Warehouse_SourceFiles_v
 const CONTAINER_SMALL := "res://assets/meshes/POLYGON_Military_Warehouse_SourceFiles_v1/SourceFiles/FBX/SM_Prop_Shipping_Container_Small_01.gltf"
 const PROP_CRATE_01 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Crate_01.gltf"
 const PROP_CRATE_04 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Crate_04.gltf"
+const VEH_TRUCK := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Vehicles/SM_Veh_Truck_01.gltf"
+const PROP_TRASH_SKIP := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Trash_Skip_01.gltf"
+const BLD_PIPES := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Buildings/SM_Bld_Pipe_Large_Group_01.gltf"
+const PROP_ANTENNA := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Antenna_02.gltf"
+const PROP_WORK_BENCH := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Work_Bench_01.gltf"
 
 const WALL_Z := -4.0
 const DIV_WALL_H := 2.4
@@ -31,6 +36,9 @@ func sun_energy() -> float:
 
 func fog_density() -> float:
 	return 0.007  # warehouse dust hanging in the work-lights
+
+func wall_color() -> Color:
+	return Color(0.22, 0.21, 0.18)  # corrugated depot cladding
 
 func ambient() -> String:
 	return "ambient_industrial"  # thrum, ducts, the conveyor's slow thud
@@ -64,6 +72,8 @@ func cover_layout() -> Array:
 		[CONTAINER, 16.0, -14.0, 0.0], [CONTAINER, 16.0, -21.0, 0.0],
 		[CONTAINER_SMALL, 0.0, -16.0, 90.0], [CONTAINER_SMALL, 2.5, -20.0, 0.0],
 		[PROP_CRATE_04, -12.0, -9.0, 55.0], [PROP_CRATE_01, 12.0, -8.0, 15.0],
+		# The yard's half-loaded hauler and the overflow skip.
+		[VEH_TRUCK, -15.0, 12.0, 70.0], [PROP_TRASH_SKIP, 20.0, 7.0, 100.0],
 	]
 
 func crew_spawns() -> Array:
@@ -102,6 +112,19 @@ func build_extra_geometry() -> void:
 	add_practical_light(Vector3(0, 1.8, -0.5), Color(0.25, 0.85, 1.0), 1.2, 5.0)
 	add_practical_light(Vector3(-12, 2.5, -16), Color(1.0, 0.6, 0.25), 1.8, 8.0)
 	add_practical_light(Vector3(12, 2.5, -16), Color(1.0, 0.6, 0.25), 1.8, 8.0)
+	# Warehouse guts: pipe runs on the west wall, roof antennas, the shift
+	# bench nobody cleans, and the site's stencil signage.
+	add_decor(BLD_PIPES, Vector3(-25.2, 0, -6.0), 90.0)
+	add_decor(BLD_PIPES, Vector3(-25.2, 0, -18.0), 90.0)
+	add_decor(PROP_ANTENNA, Vector3(-9.0, 2.9, -25.4), 15.0)
+	add_decor(PROP_ANTENNA, Vector3(15.0, 2.9, -25.4), 300.0)
+	add_decor(PROP_WORK_BENCH, Vector3(22.5, 0, -10.0), 270.0)
+	add_neon_sign("DEPOT 9", Vector3(0.0, 2.7, -25.2), Color(0.9, 0.92, 0.95), 0.0, 72)
+	add_neon_sign("LOADING", Vector3(-19.0, 2.3, -25.2), Color(1.0, 0.7, 0.2),
+		0.0, 48, true)
+	add_practical_light(Vector3(-19.0, 2.3, -24.2), Color(1.0, 0.7, 0.2), 1.3, 6.0, true)
+	add_steam(Vector3(-4.0, 0, -7.2))
+	add_steam(Vector3(18.0, 0, 14.0))
 
 ## Full-height wall across the site at WALL_Z with two door gaps; the doors
 ## are BreachDoors. Wall sits UNDER the catwalk crossing at x = 0.

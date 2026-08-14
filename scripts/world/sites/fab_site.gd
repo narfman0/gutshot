@@ -10,6 +10,11 @@ const PROP_SHELF_2 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/Sour
 const PROP_EBOX := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Electrical_Box_01.gltf"
 const PROP_ROBOT_STATUE := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Robot_Posed_06.gltf"
 const CONTAINER_SMALL := "res://assets/meshes/POLYGON_Military_Warehouse_SourceFiles_v1/SourceFiles/FBX/SM_Prop_Shipping_Container_Small_01.gltf"
+const PROP_HOLO_STAND := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Hologram_Stand_01.gltf"
+const PROP_HOLO_SIGN := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Holo_Sign_02.gltf"
+const PROP_CONSOLE := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Street_Console_01.gltf"
+const BLD_PIPE_RING := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Buildings/SM_Bld_Pipe_Large_Circular_01.gltf"
+const ENV_HOLO_TREE := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Environment/SM_Env_Hologram_Tree_01.gltf"
 
 const SANCTUM_CENTER := Vector3(0, 0, -14)  # chunk-local
 const SANCTUM_RADIUS := 7.0
@@ -56,6 +61,9 @@ func fog_density() -> float:
 
 func ambient() -> String:
 	return "ambient_machine"  # maintained, not derelict — the Assembly's hum
+
+func wall_color() -> Color:
+	return Color(0.26, 0.28, 0.31)  # clean-room panelling — the ONE kept site
 
 func gates() -> Array:
 	return [{"side": "n", "center": -14.0}]  # freight tunnel from Depot 9
@@ -115,6 +123,17 @@ func build_extra_geometry() -> void:
 	add_practical_light(Vector3(0, 2.5, -14), Color(0.4, 1.0, 0.9), 2.2, 9.0)
 	add_practical_light(Vector3(-14, 2.2, 2), Color(0.7, 0.9, 1.0), 1.4, 7.0)
 	add_practical_light(Vector3(14, 2.2, 0), Color(0.7, 0.9, 1.0), 1.4, 7.0)
+	# Machine housekeeping: holo fixtures, a status console, plumbing on the
+	# west wall — and the Assembly's tended hologram tree by the sanctum.
+	add_decor(PROP_HOLO_STAND, Vector3(-10.0, 0, 2.0), 40.0)
+	add_decor(PROP_HOLO_SIGN, Vector3(10.0, 0, -3.0), 300.0)
+	add_decor(PROP_CONSOLE, Vector3(-17.0, 0, 12.0), 120.0)
+	add_decor(BLD_PIPE_RING, Vector3(-23.4, 0, -8.0), 90.0)
+	add_decor(ENV_HOLO_TREE, Vector3(-7.5, 0, -17.5), 0.0)
+	add_practical_light(Vector3(-7.5, 2.4, -17.5), Color(0.4, 1.0, 0.7), 1.2, 6.0)
+	add_neon_sign("FAB LEVEL 3", Vector3(0.0, 2.9, -23.2), Color(0.6, 0.9, 1.0), 0.0, 64)
+	add_neon_sign("警告 AUTHORIZED ONLY", Vector3(13.0, 2.3, -23.2),
+		Color(1.0, 0.5, 0.3), 0.0, 40)
 
 ## The fabricator — the machine the Assembly is protecting. Standing in its
 ## sanctum ring is trespass: one warning, then the whole floor turns.
@@ -156,6 +175,7 @@ func _build_fabricator() -> void:
 	fab.add_child(_sanctum_label)
 
 func _process(delta: float) -> void:
+	super._process(delta)  # SiteChunk's flicker tick
 	if not Engine.is_editor_hint():
 		_tick_trespass(delta)
 		_tick_turf_heat(delta)

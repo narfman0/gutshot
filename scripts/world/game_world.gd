@@ -102,12 +102,14 @@ func _ready() -> void:
 	_collect_chunks()
 	if Engine.is_editor_hint():
 		_build_connectors()
+		_build_backdrop()
 		return
 	add_to_group("nav_owner")
 	for chunk in _chunks:
 		chunk.world = self
 	_setup_environment()
 	_build_connectors()
+	_build_backdrop()
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	_bake_district()
@@ -407,6 +409,78 @@ func _corridor_sign(root: Node3D, pos: Vector3, text: String, style: Dictionary)
 	sign.modulate = (style["lights"][0] as Color).lightened(0.35)
 	root.add_child(sign)
 	sign.global_position = pos + Vector3(0, 2.3, 0)
+
+# ── Backdrop: the hive city beyond the walls ─────────────────────────────────
+
+const _BACKDROP_BLDGS := [
+	"res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Buildings/SM_Bld_Background_Building_01.gltf",
+	"res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Buildings/SM_Bld_Background_Building_02.gltf",
+	"res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Buildings/SM_Bld_Background_Building_03.gltf",
+	"res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Buildings/SM_Bld_Background_Building_04.gltf",
+]
+
+## The district no longer floats in void: a dark underlay plane fills the
+## space between and beyond the sites, and a ring of background towers
+## (Synty's purpose-built skyline silhouettes) stands beyond the walls.
+## Visual-only — no colliders, no navmesh, no gameplay.
+func _build_backdrop() -> void:
+	var stale := _level.get_node_or_null("GeneratedBackdrop")
+	if stale != null:
+		stale.free()
+	var root := Node3D.new()
+	root.name = "GeneratedBackdrop"
+	_level.add_child(root)
+	if _chunks.is_empty():
+		return
+	var rect: Rect2 = (_chunks[0] as SiteChunk).bounds_rect()
+	for chunk in _chunks:
+		rect = rect.merge((chunk as SiteChunk).bounds_rect())
+	# Underlay: the city floor under everything.
+	var under := MeshInstance3D.new()
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(rect.size.x + 160.0, rect.size.y + 160.0)
+	var umat := StandardMaterial3D.new()
+	umat.albedo_color = Color(0.035, 0.04, 0.055)
+	umat.roughness = 0.9
+	plane.material = umat
+	under.mesh = plane
+	root.add_child(under)
+	under.position = Vector3(rect.get_center().x, -0.2, rect.get_center().y)
+	# Skyline ring ~28 m out from the district envelope, deterministic mix
+	# of models/rotations so the editor preview is stable.
+	# Close enough that tower tops loom over the walls at gameplay zoom.
+	var ring := rect.grow(16.0)
+	var perimeter := (ring.size.x + ring.size.y) * 2.0
+	var count := int(perimeter / 34.0)
+	for i in count:
+		var t := float(i) / float(count) * perimeter
+		var pos := _ring_point(ring, t)
+		var h := (i * 2654435761) % 1000
+		var scene = load(_BACKDROP_BLDGS[i % _BACKDROP_BLDGS.size()])
+		if scene == null:
+			continue
+		var bldg: Node3D = scene.instantiate()
+		# Buildings-tree glTFs are raw centimetres — cm_correction shrinks.
+		var s := (0.7 + float(h % 400) / 1000.0) * SiteChunk.cm_correction(bldg)
+		bldg.scale = Vector3(s, s * Character.VERTICAL_SQUASH, s)
+		root.add_child(bldg)
+		bldg.position = Vector3(pos.x, -0.2, pos.y)
+		bldg.rotation.y = deg_to_rad(float(h % 4) * 90.0)
+
+## Walk the rectangle's perimeter: distance t → point on the edge.
+func _ring_point(ring: Rect2, t: float) -> Vector2:
+	var w := ring.size.x
+	var h := ring.size.y
+	if t < w:
+		return Vector2(ring.position.x + t, ring.position.y)
+	t -= w
+	if t < h:
+		return Vector2(ring.end.x, ring.position.y + t)
+	t -= h
+	if t < w:
+		return Vector2(ring.end.x - t, ring.end.y)
+	t -= w
+	return Vector2(ring.position.x, ring.end.y - t)
 
 ## Box size with `length` along the corridor axis and `width` across it.
 func _axis_size(axis: Vector3, length: float, height: float, width: float) -> Vector3:

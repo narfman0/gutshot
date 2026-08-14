@@ -208,12 +208,16 @@ func idle_stop(delta: float) -> void:
 # ── States ───────────────────────────────────────────────────────────────────
 
 func _tick_advance(delta: float) -> void:
-	# No cover chosen yet: find some; meanwhile close toward weapon range.
-	var found := _pick_cover_point()
-	if found != Vector3.INF:
-		_cover_point = found
-		state = State.SEEK_COVER
-		return
+	# Cover only matters inside fighting range — a pursuer 30 m behind a
+	# fleeing threat closes the gap first, THEN fights from cover.
+	var flat := threat_pos() - body.global_position
+	flat.y = 0.0
+	if flat.length() <= ENGAGE_RANGE:
+		var found := _pick_cover_point()
+		if found != Vector3.INF:
+			_cover_point = found
+			state = State.SEEK_COVER
+			return
 	nav_to(_clamp_to_leash(threat_pos()), delta, SPEED, threat_pos())
 	_fire_if_able()
 
@@ -236,6 +240,13 @@ func _tick_seek_cover(delta: float) -> void:
 func _tick_hold(delta: float) -> void:
 	idle_stop(delta)
 	_face(threat_pos())
+	# The threat pulled away — cover this far back is camping, not fighting.
+	var flat := threat_pos() - body.global_position
+	flat.y = 0.0
+	if flat.length() > ENGAGE_RANGE * 1.2:
+		_cover_point = Vector3.INF
+		state = State.ADVANCE
+		return
 	# Cover crumbled (threat moved / flanked us)? Re-seek.
 	if Cover.exposure(_threat_eye(), body) > Cover.EXPOSED_MIN:
 		_cover_point = Vector3.INF

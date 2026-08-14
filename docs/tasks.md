@@ -167,11 +167,23 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
 - [ ] Progression follow-ups: boss/objective XP when those systems land,
       deeper per-member perk menus (role-exclusive picks), difficulty
       scaling against crew level
-- [ ] World + aesthetic polish round — the district reads EMPTY: denser
-      site dressing (signage, debris, parked vehicles, stall clutter),
-      ground detail variation, a skyline/backdrop beyond the walls so sites
-      don't float in void, stronger per-site signage identity, idle-life
-      touches (flickering neon, steam, drips)
+- [x] World + aesthetic polish round v1 — the district no longer floats in
+      void: dark city underlay + a skyline ring of background towers beyond
+      the walls; sites got VISIBLE perimeter walls (tall camera-far, low
+      curb camera-near, per-site tones), pavement seam grids + grime
+      stains, and identity dressing — street (food truck, SUV, streetlamps,
+      dying neon: 麺 NOODLES / MOTEL / バー BAR), hideout (workbench,
+      table+chair, STAY LOW sign), exchange (stall carts, junk, the dead
+      hologram cherry tree), depot (hauler truck, wall pipes, antennas,
+      DEPOT 9 stencil), fab (holo fixtures, tended hologram tree, clean
+      signage). Idle life: flickering neon (deterministic tick) + steam
+      vents. SiteChunk grew add_decor/add_neon_sign/add_steam + a raw-cm
+      glTF corrector (Buildings-tree meshes ship uncorrected — a "tower"
+      measures 1.5 km). Chase AI fix rode along: cover only matters inside
+      engage range — pursuers close the gap instead of camping
+- [ ] Polish round v2 ideas: facade pieces on the tall walls, ground
+      texture decals (real textures over seam boxes), animated holograms,
+      district-edge fog wall, rain
 - [ ] Seamless-district follow-ups: spatial pruning for hostiles_of/hearing
       scans if rosters grow past dozens
 - [x] Save/load stub: crew hp/shields carried between sites (hideout heals),

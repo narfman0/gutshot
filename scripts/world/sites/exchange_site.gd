@@ -9,6 +9,10 @@ extends SiteChunk
 const PROP_CRATE_01 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Crate_01.gltf"
 const PROP_CRATE_04 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Crate_04.gltf"
 const CONTAINER_SMALL := "res://assets/meshes/POLYGON_Military_Warehouse_SourceFiles_v1/SourceFiles/FBX/SM_Prop_Shipping_Container_Small_01.gltf"
+const VEH_CART := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Vehicles/SM_Veh_Cart_01.gltf"
+const ENV_JUNK_2 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Environment/SM_Env_Junk_Pile_02.gltf"
+const ENV_CHERRY := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Environment/SM_Env_Hologram_Cherry_Tree_01.gltf"
+const PROP_WIRES := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Wires_10.gltf"
 
 const MEZZ_H := 3.0   # gallery walk height
 const TOP_H := 6.0    # counting-house walk height
@@ -37,6 +41,9 @@ func sun_energy() -> float:
 
 func fog_density() -> float:
 	return 0.006
+
+func wall_color() -> Color:
+	return Color(0.20, 0.18, 0.15)  # water-stained hall brick
 
 func floor_heights() -> Array:
 	return [0.0, MEZZ_H, TOP_H]
@@ -129,6 +136,20 @@ func build_extra_geometry() -> void:
 	add_practical_light(Vector3(26, 4.5, -10), Color(1.0, 0.65, 0.3), 1.4, 7.0)
 	add_practical_light(Vector3(0, 4.5, -25.5), Color(1.0, 0.65, 0.3), 1.4, 7.0)
 	add_practical_light(Vector3(0.5, 7.5, -25), Color(1.0, 0.45, 0.3), 1.6, 8.0)
+	# The dead market: abandoned stall carts, junk in the corners, and one
+	# hologram cherry tree still cycling in the atrium — nobody turned it off.
+	add_decor(VEH_CART, Vector3(-8.0, 0, 16.5), 25.0)
+	add_decor(VEH_CART, Vector3(11.0, 0, 17.0), 335.0)
+	add_decor(ENV_JUNK_2, Vector3(-17.0, 0, -16.0), 50.0)
+	add_decor(ENV_JUNK_2, Vector3(17.5, 0, 7.0), 190.0)
+	add_decor(ENV_CHERRY, Vector3(1.5, 0, 7.5), 0.0)
+	add_practical_light(Vector3(1.5, 2.6, 7.5), Color(1.0, 0.5, 0.75), 1.3, 7.0)
+	add_decor(PROP_WIRES, Vector3(-21.6, 2.4, 4.0), 90.0)
+	add_neon_sign("市場 THE EXCHANGE", Vector3(-29.3, 4.4, 6.0), Color(0.4, 0.9, 1.0),
+		-90.0, 72, true)
+	add_practical_light(Vector3(-28.2, 4.2, 6.0), Color(0.4, 0.9, 1.0), 1.4, 7.0, true)
+	add_steam(Vector3(12.0, 0, -2.0))
+	add_steam(Vector3(-6.0, 0, 12.5))
 
 ## U-shaped gallery hugging the north, west, and east walls, one deck height
 ## up, with ramps rising along the west and east walls. Railings on the inner

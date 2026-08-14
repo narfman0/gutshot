@@ -88,6 +88,14 @@ func flood_lights() -> Array:
 func gates() -> Array:
 	return []
 
+## Visible perimeter-wall tone — rooms read as rooms, in the site's palette.
+func wall_color() -> Color:
+	return Color(0.20, 0.20, 0.22)
+
+## Pavement seams + stains on the ground plane (off for special floors).
+func ground_detail() -> bool:
+	return true
+
 # ── Build ────────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
@@ -163,6 +171,52 @@ func _setup_ground() -> void:
 	mi.mesh = plane
 	ground.add_child(mi)
 	_gen.add_child(ground)
+	if ground_detail():
+		_ground_seams()
+		_ground_stains()
+
+## Pavement seam grid — thin darker strips break the single-color plane.
+func _ground_seams() -> void:
+	var half := arena_half()
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = ground_color().darkened(0.4)
+	mat.roughness = 0.7
+	var step := 6.0
+	var i := 1
+	while i * step < half * 2.0 - 1.0:
+		var offset := -half + i * step
+		for axis in 2:
+			var mi := MeshInstance3D.new()
+			var mesh := BoxMesh.new()
+			mesh.size = Vector3(half * 2.0, 0.02, 0.12) if axis == 0 \
+				else Vector3(0.12, 0.02, half * 2.0)
+			mesh.material = mat
+			mi.mesh = mesh
+			_gen.add_child(mi)
+			mi.position = Vector3(0, 0.012, offset) if axis == 0 \
+				else Vector3(offset, 0.012, 0)
+		i += 1
+
+## Grime patches — deterministic per site, so the editor preview is stable.
+func _ground_stains() -> void:
+	var half := arena_half()
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = ground_color().darkened(0.22)
+	mat.roughness = 0.9
+	var count := int(half / 3.0)
+	for i in count:
+		var h := hash(site_id() + str(i))
+		var x := float(h % 1000) / 1000.0 * (half * 2.0 - 6.0) - half + 3.0
+		var z := float((h / 1000) % 1000) / 1000.0 * (half * 2.0 - 6.0) - half + 3.0
+		var size := 1.2 + float(h % 7) * 0.25
+		var mi := MeshInstance3D.new()
+		var plane := PlaneMesh.new()
+		plane.size = Vector2(size, size * (0.6 + float(h % 5) * 0.15))
+		plane.material = mat
+		mi.mesh = plane
+		_gen.add_child(mi)
+		mi.position = Vector3(x, 0.008, z)
+		mi.rotation.y = deg_to_rad(float(h % 360))
 
 func _setup_cover() -> void:
 	for entry in cover_layout():
@@ -252,11 +306,29 @@ func _bounds_wall(side: String, from: float, to: float) -> void:
 	col.shape = box
 	wall.add_child(col)
 	_gen.add_child(wall)
+	# Visible face: TALL on the camera-far sides (n, w), a knee curb on the
+	# near sides — the same iso trick as the corridors, so sites read as
+	# rooms without ever blinding the camera.
+	var tall := side == "n" or side == "w"
+	var face_h := 3.2 if tall else 0.9
+	var mi := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(length, face_h, 0.5) if side == "n" or side == "s" \
+		else Vector3(0.5, face_h, length)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = wall_color()
+	mat.roughness = 0.85
+	mesh.material = mat
+	mi.mesh = mesh
+	wall.add_child(mi)
+	mi.position = Vector3(0, face_h * 0.5 - WALL_H * 0.5, 0)
 
 # ── Site-geometry helpers (chunk-local positions) ────────────────────────────
 
 ## Small shadowless practical light — fixtures, signs, machine glow.
-func add_practical_light(pos: Vector3, color: Color, energy := 1.6, reach := 7.0) -> void:
+## `flicker`: dying-neon jitter (registered with the chunk's flicker tick).
+func add_practical_light(pos: Vector3, color: Color, energy := 1.6, reach := 7.0,
+		flicker := false) -> void:
 	var light := OmniLight3D.new()
 	light.light_color = color
 	light.light_energy = energy
@@ -265,6 +337,110 @@ func add_practical_light(pos: Vector3, color: Color, energy := 1.6, reach := 7.0
 	light.shadow_enabled = false
 	_gen.add_child(light)
 	light.position = pos
+	if flicker:
+		_flickers.append({"node": light, "base": energy,
+			"phase": float(_flickers.size()) * 1.73})
+
+## Visual-only dressing prop — no collider, no cover, no navmesh carve.
+## For streetlights, signs, wires, junk: things bullets and bodies ignore.
+func add_decor(mesh_path: String, pos: Vector3, yaw := 0.0, extra_scale := 1.0) -> void:
+	var scene = load(mesh_path)
+	if scene == null:
+		return
+	var visual: Node3D = scene.instantiate()
+	var s := extra_scale * cm_correction(visual)
+	visual.scale = Vector3(s, s * Character.VERTICAL_SQUASH, s)
+	_gen.add_child(visual)
+	visual.position = pos
+	visual.rotation.y = deg_to_rad(yaw)
+
+## Some cooked glTFs (the Buildings tree) ship RAW centimetre vertices with
+## no corrective child — a "tower" measures 1.5 km. Measure through the FULL
+## transform chain (correctives included) and shrink only the truly raw.
+## Nothing we dress with is legitimately longer than a truck (~15 m); raw-cm
+## meshes measure 100×, so 25 m splits the populations cleanly.
+static func cm_correction(visual: Node3D) -> float:
+	var aabb := AABB()
+	var found := false
+	for mi: MeshInstance3D in visual.find_children("*", "MeshInstance3D", true, false):
+		if mi.mesh == null:
+			continue
+		var a: AABB = _transform_to(mi, visual) * mi.mesh.get_aabb()
+		aabb = a if not found else aabb.merge(a)
+		found = true
+	if found and aabb.get_longest_axis_size() > 25.0:
+		return 0.01
+	return 1.0
+
+static func _transform_to(node: Node3D, root: Node3D) -> Transform3D:
+	var t := Transform3D()
+	var cur: Node = node
+	while cur != null and cur != root:
+		if cur is Node3D:
+			t = (cur as Node3D).transform * t
+		cur = cur.get_parent()
+	return t
+
+## Wall-mounted neon lettering — the district's voice. Glow env makes hot
+## colors bloom; `flicker` gives it the dying-tube stutter.
+func add_neon_sign(text: String, pos: Vector3, color: Color, yaw := 0.0,
+		font_size := 64, flicker := false) -> void:
+	var sign := Label3D.new()
+	sign.text = text
+	sign.font_size = font_size
+	sign.pixel_size = 0.012
+	sign.outline_size = 10
+	sign.modulate = color
+	_gen.add_child(sign)
+	sign.position = pos
+	sign.rotation.y = deg_to_rad(yaw)
+	if flicker:
+		_flickers.append({"node": sign, "base": 1.0,
+			"phase": float(_flickers.size()) * 2.31})
+
+## A slow steam column — vents, grates, cooling stacks. Idle life.
+func add_steam(pos: Vector3) -> void:
+	var p := CPUParticles3D.new()
+	p.amount = 14
+	p.lifetime = 2.8
+	p.preprocess = 2.0
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.34, 0.34)
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color = Color(0.7, 0.72, 0.76, 0.13)
+	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	quad.material = mat
+	p.mesh = quad
+	p.direction = Vector3.UP
+	p.spread = 10.0
+	p.gravity = Vector3(0.15, 0.5, 0.1)
+	p.initial_velocity_min = 0.5
+	p.initial_velocity_max = 1.0
+	p.scale_amount_min = 0.5
+	p.scale_amount_max = 1.7
+	_gen.add_child(p)
+	p.position = pos + Vector3(0, 0.2, 0)
+
+var _flickers: Array = []
+
+## Dying-neon tick: registered lights stutter, registered signs dim with
+## them. Deterministic waveform — no randf, so headless runs are stable.
+func _process(_delta: float) -> void:
+	if Engine.is_editor_hint() or _flickers.is_empty():
+		return
+	var t := Time.get_ticks_msec() / 1000.0
+	for f in _flickers:
+		var node = f["node"]
+		if not is_instance_valid(node):
+			continue
+		var wave := sin(t * 11.0 + f["phase"]) * sin(t * 5.7 + f["phase"] * 2.3)
+		var on := 0.62 + 0.38 * clampf(wave * 2.5 + 0.5, 0.0, 1.0)
+		if node is Light3D:
+			(node as Light3D).light_energy = f["base"] * on
+		elif node is Label3D:
+			(node as Label3D).modulate.a = 0.45 + 0.55 * on
 
 ## Walkable slab or ramp (decks, stairs): GROUND so it takes movement, the
 ## cursor ray, and the navmesh bake; COVER so elevation LOS is real — a deck

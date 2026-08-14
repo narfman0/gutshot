@@ -58,12 +58,30 @@ func crew_spawns() -> Array:
 		Vector3(-1.5, 0.1, 6.0), Vector3(1.5, 0.1, 6.0),
 	]
 
+const PROP_WORK_BENCH := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Work_Bench_01.gltf"
+const PROP_CHAIR := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Computer_Chair_01.gltf"
+const PROP_TABLE := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Small_Table_01.gltf"
+const PROP_TRASH_BIN := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Trash_Bin_02.gltf"
+const PROP_WIRES := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Wires_07.gltf"
+
+func wall_color() -> Color:
+	return Color(0.19, 0.16, 0.13)  # scavenged panelling, warm-ish
+
 func build_extra_geometry() -> void:
 	_build_map_console()
 	# Practicals: the console's glow, and warm lamps over the shelves.
 	add_practical_light(Vector3(0, 1.6, -5.5), Color(0.3, 0.9, 1.0), 1.6, 5.0)
 	add_practical_light(Vector3(-9.5, 2.0, -5.0), Color(1.0, 0.72, 0.42), 1.4, 6.0)
 	add_practical_light(Vector3(9.5, 1.8, -5.5), Color(1.0, 0.72, 0.42), 1.2, 5.0)
+	# Lived-in clutter — somebody actually sleeps here.
+	add_decor(PROP_WORK_BENCH, Vector3(-6.0, 0, -10.6), 5.0)
+	add_decor(PROP_TABLE, Vector3(4.2, 0, -8.8), 30.0)
+	add_decor(PROP_CHAIR, Vector3(3.2, 0, -7.6), 210.0)
+	add_decor(PROP_TRASH_BIN, Vector3(11.0, 0, 3.0), 80.0)
+	add_decor(PROP_WIRES, Vector3(-3.0, 2.2, -11.6), 0.0)
+	add_neon_sign("STAY LOW", Vector3(0.0, 2.6, -11.4), Color(1.0, 0.62, 0.3),
+		0.0, 48, true)
+	add_practical_light(Vector3(0.0, 2.4, -10.4), Color(1.0, 0.6, 0.3), 1.1, 5.0, true)
 
 ## The district-map console: a glowing terminal — the active character
 ## stepping up to it opens the map (M works anywhere too).
