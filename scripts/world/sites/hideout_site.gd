@@ -31,6 +31,9 @@ func sun_energy() -> float:
 func fog_density() -> float:
 	return 0.01  # close, smoky, safe
 
+func ambient() -> String:
+	return "ambient_hideout"  # the quietest air in the district
+
 func gates() -> Array:
 	return [{"side": "e", "center": 0.0}]  # the alley out toward the street
 

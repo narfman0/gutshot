@@ -49,6 +49,8 @@ func _ready() -> void:
 		"crew spawns inside the hideout bounds")
 	_check(_world.active_site_id() == "hideout",
 		"active site is the hideout (got %s)" % _world.active_site_id())
+	_check(AudioManager.ambient_name() == "ambient_hideout",
+		"hideout plays its own bed (got %s)" % AudioManager.ambient_name())
 
 	# 2. The walking chain is one navmesh: every leg paths through its corridor.
 	var map := _world.get_world_3d().navigation_map
@@ -69,6 +71,8 @@ func _ready() -> void:
 	await _settle(5)
 	_check(_world.active_site_id() == "skirmish",
 		"walking into the street flips the active site (got %s)" % _world.active_site_id())
+	_check(AudioManager.ambient_name() == "ambient_city",
+		"the street crossfades to the city bed (got %s)" % AudioManager.ambient_name())
 
 	# 4. Hideout rest: wounds close, grudges reset.
 	leader.receive_damage(30.0)

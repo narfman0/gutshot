@@ -37,6 +37,9 @@ func sun_energy() -> float:
 func fog_density() -> float:
 	return 0.004
 
+func ambient() -> String:
+	return "ambient_machine"  # maintained, not derelict — the Assembly's hum
+
 func gates() -> Array:
 	return [{"side": "n", "center": -14.0}]  # freight tunnel from Depot 9
 

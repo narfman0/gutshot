@@ -41,6 +41,9 @@ func fog_density() -> float:
 func floor_heights() -> Array:
 	return [0.0, MEZZ_H, TOP_H]
 
+func ambient() -> String:
+	return "ambient_hall"  # wind through the boarded skylights
+
 func gates() -> Array:
 	return [
 		{"side": "w", "center": 25.0},  # arcade from the street (south of the ramp)

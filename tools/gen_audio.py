@@ -202,7 +202,9 @@ def sfx_telegraph():
     return out
 
 
-# ── Ambient: hive city (10 s seamless) ───────────────────────────────────────
+# ── Ambients: one 10 s seamless bed per site mood ────────────────────────────
+# The street keeps the hive-city wash; the other sites get their own air.
+# AudioManager crossfades between beds as the crew crosses the district.
 
 def ambient_city():
     n = int(10.0 * SR)
@@ -222,6 +224,82 @@ def ambient_city():
     return seamless(out)
 
 
+def ambient_hideout():
+    """The safe room: warm low drone, a fridge-hum wobble, air that barely
+    moves. Deliberately the quietest bed — stepping in should feel like
+    pressure coming off."""
+    n = int(10.0 * SR)
+    out = []
+    for i in range(n):
+        t = i / SR
+        drone = math.sin(2 * math.pi * 55 * t) * 0.16
+        fridge = math.sin(2 * math.pi * 118 * t) * 0.06 \
+            * (0.8 + 0.2 * math.sin(2 * math.pi * 0.31 * t))
+        out.append(drone + fridge)
+    air = lowpass([rng.uniform(-1, 1) for _ in range(n)], 0.008)
+    breathe = [0.6 + 0.4 * math.sin(2 * math.pi * 0.05 * i / SR) for i in range(n)]
+    out = [o + a * b * 0.18 for o, a, b in zip(out, air, breathe)]
+    return seamless(out)
+
+
+def ambient_hall():
+    """The Exchange: a big hollow hall — gusting wash through broken boards,
+    a faint draft whistle, deep structural groan underneath."""
+    n = int(10.0 * SR)
+    wash = lowpass([rng.uniform(-1, 1) for _ in range(n)], 0.03)
+    out = []
+    for i, w in enumerate(wash):
+        t = i / SR
+        gust = 0.4 + 0.6 * (0.5 + 0.5 * math.sin(2 * math.pi * 0.11 * t + 1.7))
+        whistle = math.sin(2 * math.pi
+                           * (640 + 14 * math.sin(2 * math.pi * 0.09 * t)) * t) * 0.03
+        drone = math.sin(2 * math.pi * 41 * t) * 0.12
+        out.append(w * gust * 0.5 + whistle + drone)
+    return seamless(out)
+
+
+def ambient_industrial():
+    """Depot 9: machinery thrum, duct rumble, and a slow conveyor thud.
+    Thud period divides the post-seamless loop length exactly, so the
+    rhythm survives the loop point."""
+    n = int(10.0 * SR)
+    period = 9.5 / 8.0  # seamless() trims to 9.5 s → 8 even thuds
+    out = []
+    for i in range(n):
+        t = i / SR
+        thrum = math.sin(2 * math.pi * 60 * t) * 0.18 \
+            + math.sin(2 * math.pi * 90.5 * t) * 0.08
+        ph = (t % period) / period
+        thud = math.sin(2 * math.pi * 70 * t) * math.exp(-18 * ph) * 0.22
+        out.append(thrum + thud)
+    duct = lowpass([rng.uniform(-1, 1) for _ in range(n)], 0.02)
+    out = [o + d * 0.22 for o, d in zip(out, duct)]
+    return seamless(out)
+
+
+def ambient_machine():
+    """Fab Level: clean electrical harmonics — the Assembly's turf sounds
+    maintained, not derelict — with sparse servo chirps, curious rather
+    than alarming."""
+    n = int(10.0 * SR)
+    out = []
+    for i in range(n):
+        t = i / SR
+        hum = math.sin(2 * math.pi * 120 * t) * 0.10 \
+            + math.sin(2 * math.pi * 240 * t) * 0.05 \
+            + math.sin(2 * math.pi * 480 * t) * 0.02
+        drone = math.sin(2 * math.pi * 52 * t) * 0.10
+        out.append(hum + drone)
+    for start_s, f0, f1 in [(2.1, 900, 1300), (5.6, 1100, 800), (8.3, 750, 1150)]:
+        s0 = int(start_s * SR)
+        dur = int(0.09 * SR)
+        for j in range(dur):
+            t = j / SR
+            f = f0 + (f1 - f0) * j / dur
+            out[s0 + j] += math.sin(2 * math.pi * f * t) * math.exp(-30 * j / dur) * 0.10
+    return seamless(out)
+
+
 def main():
     write_wav("sfx_shot_smg.wav", sfx_shot_smg())
     write_wav("sfx_shot_rifle.wav", sfx_shot_rifle())
@@ -238,6 +316,10 @@ def main():
     write_wav("sfx_revive.wav", sfx_revive())
     write_wav("sfx_telegraph.wav", sfx_telegraph())
     write_wav("ambient_city.wav", ambient_city())
+    write_wav("ambient_hideout.wav", ambient_hideout())
+    write_wav("ambient_hall.wav", ambient_hall())
+    write_wav("ambient_industrial.wav", ambient_industrial())
+    write_wav("ambient_machine.wav", ambient_machine())
 
 
 if __name__ == "__main__":

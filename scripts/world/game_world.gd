@@ -117,8 +117,7 @@ func _ready() -> void:
 	_setup_camera()
 	($HUD as Hud).setup(_squad, _objectives, _camera, _start_chunk().site_name())
 	_objectives.mission_failed.connect(_show_wipe_screen)
-	AudioManager.play_ambient()
-	_tick_sites(0.0)  # register the arrival site now, not on the first frame
+	_tick_sites(0.0)  # register the arrival site (label, save, mood, ambient)
 	SceneManager.fade_in()
 
 func _collect_chunks() -> void:
@@ -534,6 +533,7 @@ func _enter_site(chunk: SiteChunk) -> void:
 	_active_site = chunk.site_id()
 	($HUD as Hud).set_site(chunk.site_name())
 	_apply_mood(chunk)
+	AudioManager.play_ambient(chunk.ambient())
 	if chunk.heals_crew():
 		_rest_crew()
 	# Autosave on arrival: snapshot the living bodies, stamp the site.

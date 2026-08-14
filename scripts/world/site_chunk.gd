@@ -70,6 +70,11 @@ func floor_heights() -> Array:
 func sun_energy() -> float:
 	return 1.5
 
+## Looping ambient bed for this site (assets/audio/<name>.wav) — crossfaded
+## on entry; corridors keep the last site's bed, like the HUD label.
+func ambient() -> String:
+	return "ambient_city"
+
 func fog_density() -> float:
 	return 0.0
 

@@ -132,10 +132,13 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       curb camera-near so the iso view stays open), junk-prop cover along
       the edges, overhead beams on covered styles, per-style floor/light/
       strip colors, destination signs at each mouth
-- [ ] Seamless-district follow-ups: zone-driven ambience (AudioManager can't
-      crossfade), spatial pruning for hostiles_of/hearing scans if rosters
-      grow past dozens, connector gameplay (fall back through the freight
-      tunnel into Assembly turf)
+- [x] Zone ambience: one synthesized bed per site mood (city / hideout room
+      tone / exchange hall wind / depot machinery / fab machine hum),
+      SiteChunk.ambient() hook, AudioManager two-player crossfade on site
+      entry (corridors keep the last site's bed, like the HUD label)
+- [ ] Seamless-district follow-ups: spatial pruning for hostiles_of/hearing
+      scans if rosters grow past dozens, connector gameplay (fall back
+      through the freight tunnel into Assembly turf)
 - [x] Save/load stub: crew hp/shields carried between sites (hideout heals),
       autosave on arrival, Continue on the main menu; debug/harness runs can
       never write a real slot (GameState.run_active gate + scratch-slot tests)

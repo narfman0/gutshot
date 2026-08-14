@@ -32,6 +32,9 @@ func sun_energy() -> float:
 func fog_density() -> float:
 	return 0.007  # warehouse dust hanging in the work-lights
 
+func ambient() -> String:
+	return "ambient_industrial"  # thrum, ducts, the conveyor's slow thud
+
 func gates() -> Array:
 	return [
 		{"side": "w", "center": 0.0},    # arcade from the Exchange

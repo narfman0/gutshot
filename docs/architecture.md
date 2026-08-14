@@ -299,8 +299,10 @@ world-space DOWN / REVIVING % label.
 - **Site tracking** (GameWorld `_tick_sites`): polls crew positions against
   chunk bounds each frame. The active character crossing into a site drives
   the HUD label, the autosave (`{site, crew_state}` shape unchanged — world
-  state needn't persist because sites repopulate), and the env mood lerp
-  (fog density + sun energy tween toward the site's values). Entering the
+  state needn't persist because sites repopulate), the env mood lerp
+  (fog density + sun energy tween toward the site's values), and the zone
+  ambience (`SiteChunk.ambient()` bed, crossfaded by AudioManager's two
+  players; corridors keep the last site's bed). Entering the
   hideout RESTS the crew: full heal, crew_state cleared,
   `Factions.reset_provocations()` — grudges reset on rest, not on travel.
 - **Respawn on re-entry**: when the last crew member leaves a non-hideout
