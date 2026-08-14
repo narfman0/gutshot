@@ -332,6 +332,17 @@ world-space DOWN / REVIVING % label.
   entries, which mutate the readable hooks on Character (`damage_mult`,
   `cooldown_mult`, `revive_frac`, max hp/shield). Save shape v2 adds
   xp/crew_level/perks/cleared_sites; v1 saves load as a fresh level-1 crew.
+- **Vantag Security** (Factions.CORP + EnemyController discipline): neutral
+  to the crew, base-hostile to gangs. `disciplined` controllers run bounding
+  overwatch in FIGHT — the pack's living members sort deterministically,
+  alternate suppressor/advancer by index, and swap roles every 6 s;
+  suppressors hold, face the LKP, and fire 3-round cadenced bursts.
+  A mender (GearItem `restores_shield` + `receive_shield_charge`) shepherds
+  pack shields in or out of combat (`_tick_support` preempts the state
+  machine). Heal gear can never fire in anger (`try_fire` refuses `heals`).
+  The tower is their turf: 3 floors by stairs (4 m mezzanine, 8 m exec,
+  elevators are dressing), gunfire inside provokes on the second shot,
+  climbing past the lobby provokes after a grace — both label-warned.
 - **Turf law** (fab_site): `GameState.shot_fired` fires for every round
   leaving any gun (emitted from Shooter's shared `_alert_hearing` path).
   The fab counts shots inside the sanctum guard ring (14 m) per faction:

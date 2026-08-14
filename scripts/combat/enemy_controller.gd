@@ -38,8 +38,17 @@ enum State { IDLE, SUSPICIOUS, FIGHT, FLEE }
 ## LKP, stand down, and walk home). Defensive packs (a vault crew guarding
 ## the take, the territorial Assembly) keep the leash instead.
 @export var pursue := true
+## Corp pack discipline: bounding overwatch. While FIGHTING, half the pack
+## SUPPRESSES the last-known position (cadenced bursts, trigger discipline)
+## while the other half works the brain's normal cover/flank game; roles
+## swap every few seconds. Feels like fighting a mirror of your own squad.
+@export var disciplined := false
 
 const PURSUIT_LEASH := 10000.0  # effectively unleashed while the chase is on
+const OVERWATCH_SWAP_SECS := 6.0
+const SUPPRESS_BURST := 3
+const SUPPRESS_PAUSE_SECS := 0.9
+const SUPPORT_RANGE := 11.0     # menders shepherd mates inside this
 
 var body: Character
 var brain: CombatBrain
@@ -88,6 +97,10 @@ func _count_pack() -> void:
 
 func _physics_process(delta: float) -> void:
 	if body == null or not body.is_alive():
+		return
+	# Support units shepherd the pack's shields whenever someone's low —
+	# in or out of a fight. Everything else waits.
+	if _tick_support(delta):
 		return
 	match state:
 		State.IDLE:
@@ -169,7 +182,10 @@ func _tick_suspicious(delta: float) -> void:
 		_wander_pause = 0.5
 
 func _tick_fight(delta: float) -> void:
-	brain.tick(delta)
+	if disciplined and _suppress_role():
+		_tick_suppress(delta)
+	else:
+		brain.tick(delta)
 	# The brain lost the track — the chase is over. Go poke at the last-known
 	# position, then stand down and walk home (IDLE wanders near spawn, and
 	# nav_to crosses the whole district to get there).
@@ -180,6 +196,94 @@ func _tick_fight(delta: float) -> void:
 		state = State.SUSPICIOUS
 		_investigate = lkp
 		_linger = SUSPICIOUS_LINGER_SECS
+
+# ── Corp discipline: bounding overwatch + the mender ─────────────────────────
+
+## Deterministic role split: sort the pack's living members, alternate
+## suppressor/advancer by index, swap the phase every few seconds. Adjacent
+## members always hold OPPOSITE roles — someone is always shooting while
+## someone is always moving.
+func _suppress_role() -> bool:
+	var alive: Array = []
+	for member in get_tree().get_nodes_in_group("pack_" + pack_id):
+		if is_instance_valid(member) and member is EnemyController:
+			var ec := member as EnemyController
+			if is_instance_valid(ec.body) and ec.body.is_alive():
+				alive.append(ec)
+	if alive.size() < 2:
+		return false  # alone: fight with the whole brain
+	alive.sort_custom(func(a, b): return a.get_instance_id() < b.get_instance_id())
+	var idx := alive.find(self)
+	var phase := int(Time.get_ticks_msec() / int(OVERWATCH_SWAP_SECS * 1000.0))
+	return (idx + phase) % 2 == 0
+
+var _suppress_fired := 0
+var _suppress_pause := 0.0
+
+## Overwatch: hold, face the believed position, cadenced bursts at it —
+## trigger discipline, not panic fire. The advancing element flanks under it.
+func _tick_suppress(delta: float) -> void:
+	brain.idle_stop(delta)
+	var aim := brain.threat_pos()
+	_face_point(aim)
+	_suppress_pause -= delta
+	if _suppress_pause > 0.0:
+		return
+	var fired := false
+	if brain.threat != null and body.get_node("Shooter").can_fire(brain.threat):
+		fired = (body.get_node("Shooter") as Shooter).try_fire(brain.threat)
+	else:
+		fired = (body.get_node("Shooter") as Shooter).fire_wild(aim)
+	if fired:
+		_suppress_fired += 1
+		if _suppress_fired >= SUPPRESS_BURST:
+			_suppress_fired = 0
+			_suppress_pause = SUPPRESS_PAUSE_SECS
+
+## The mender: any pack mate with a drained shield inside range gets the
+## beam before anything else happens. Returns true when supporting.
+func _tick_support(delta: float) -> bool:
+	var shooter := body.get_node("Shooter") as Shooter
+	var heal_slot := -1
+	for i in body.gear_slots.size():
+		var g: GearItem = body.gear_slots[i]
+		if g != null and g.heals:
+			heal_slot = i
+			break
+	if heal_slot < 0:
+		return false
+	var patient: Character = null
+	var worst := 0.85  # only bother below this shield fraction
+	for member in get_tree().get_nodes_in_group("pack_" + pack_id):
+		if not is_instance_valid(member) or not (member is EnemyController):
+			continue
+		var mate := (member as EnemyController).body
+		if mate == null or not is_instance_valid(mate) or mate == body \
+				or not mate.is_alive() or mate.max_shield <= 0.0:
+			continue
+		var frac := mate.shield / mate.max_shield
+		if frac < worst:
+			worst = frac
+			patient = mate
+	if patient == null:
+		return false
+	body.select_slot(heal_slot)
+	var dist := body.global_position.distance_to(patient.global_position)
+	var g: GearItem = body.gear_slots[heal_slot]
+	if dist <= g.fire_range and Cover.can_hit(body.muzzle_position(), patient):
+		brain.idle_stop(delta)
+		_face_point(patient.global_position)
+		shooter.try_heal(patient)
+	else:
+		brain.nav_to(patient.global_position, delta, INVESTIGATE_SPEED,
+			patient.global_position)
+	return true
+
+func _face_point(point: Vector3) -> void:
+	var dir := point - body.global_position
+	dir.y = 0.0
+	if dir.length_squared() > 0.01:
+		body.rotation.y = atan2(-dir.x, -dir.z)
 
 ## Morale test — called on every pack-mate death. Units with morale break
 ## when the pack is cut to MORALE_BREAK_FRAC of its spawn strength: they run,

@@ -96,6 +96,8 @@ func try_fire(target: Character) -> bool:
 	if not can_fire(target):
 		return false
 	var g := gear()
+	if g.heals:
+		return false  # heal beams never fire in anger (try_heal is their path)
 	if g.fire_mode == GearItem.FireMode.THROWN:
 		# Thrown gear routes through its ability (grenade belt et al).
 		if g.abilities.is_empty():
@@ -248,7 +250,13 @@ func try_heal(mate: Character) -> bool:
 		return false
 	if mate == null or not is_instance_valid(mate) or not mate.is_alive():
 		return false
-	if mate.team != character.team or mate == character or mate.hp >= mate.max_hp:
+	if mate.team != character.team or mate == character:
+		return false
+	# HP healer refuses the healthy; a shield mender refuses the charged.
+	if g.restores_shield:
+		if mate.max_shield <= 0.0 or mate.shield >= mate.max_shield:
+			return false
+	elif mate.hp >= mate.max_hp:
 		return false
 	if Time.get_ticks_msec() < _next_shot_ms or is_reloading():
 		return false
@@ -268,8 +276,14 @@ func try_heal(mate: Character) -> bool:
 	var scene := get_tree().current_scene
 	Vfx.tracer(scene, muzzle, mate.global_position + Vector3(0, 1.3 * Character.VERTICAL_SQUASH, 0),
 		Color(0.35, 1.0, 0.55))
-	DamageNumber.spawn(scene, mate.global_position, "+%d" % int(g.damage), Color(0.4, 1.0, 0.55))
-	mate.receive_heal(g.damage * character.damage_mult)
+	if g.restores_shield:
+		DamageNumber.spawn(scene, mate.global_position, "+%d" % int(g.damage),
+			Color(0.5, 0.8, 1.0))
+		mate.receive_shield_charge(g.damage * character.damage_mult)
+	else:
+		DamageNumber.spawn(scene, mate.global_position, "+%d" % int(g.damage),
+			Color(0.4, 1.0, 0.55))
+		mate.receive_heal(g.damage * character.damage_mult)
 	return true
 
 ## A point past the target, pushed sideways — where the missed shot "went".

@@ -264,11 +264,12 @@ static func add_aabb_collider(prop: StaticBody3D, visual: Node3D) -> void:
 	prop.add_child(col)
 
 ## Fill floods — each site brings its own light mood into the shared world.
+## Optional 3rd element: energy (the tower runs dimmer, contrastier pools).
 func _setup_floods() -> void:
 	for entry in flood_lights():
 		var flood := OmniLight3D.new()
 		flood.light_color = entry[1]
-		flood.light_energy = 2.5
+		flood.light_energy = entry[2] if entry.size() > 2 else 2.5
 		flood.omni_range = 30.0
 		flood.omni_attenuation = 1.2
 		flood.shadow_enabled = false

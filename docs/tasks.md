@@ -220,15 +220,16 @@ and onto systems that already exist (CombatBrain, awareness, packs).
       looted mixed guns (scrap pistols, looted rifles alongside SMGs), and
       shock-stick blade RUSHERS seeded in the street/exchange/depot packs —
       the first users of the melee path. Grenade-happiness still open.
-- [ ] **Corporate security / military** — the scary ones: full use of the
-      systems the player fights with. Shields (they already exist — just give
-      them max_shield), tight pack discipline (bounding overwatch: one element
-      suppresses the LKP while another flanks), disciplined trigger control,
-      flashlight/vision-cone patrols on real routes, and their own medic or
-      shield-restore support unit. Should feel like fighting a mirror of your
-      own squad. Asset candidates (verified): POLYGON_Spy_Kit,
-      POLYGON_BattleRoyale, POLYGON_Mech (heavy support walker?), with
-      POLYGON_Military_Warehouse for their turf.
+- [x] **Corporate security** — SHIPPED as Vantag Security (Factions.CORP):
+      neutral to the crew (the lobby is public), base-hostile to gangs.
+      Shields on every suit, bounding overwatch (`disciplined` — half the
+      pack suppresses the LKP in cadenced bursts while half advances, roles
+      swap every 6 s), and a shield-MENDER support unit (restores_shield
+      heal beam, shepherds the pack in or out of fights). Provocation on
+      their terms: gunfire in the tower (one warning, then the room) or
+      climbing past the lobby (grace, then SECURITY RESPONSE). No morale,
+      no pursuit — they hold the building. Still open: vision-cone patrols,
+      heavy support walker (POLYGON_Mech), response teams beyond the tower.
 - [~] **The Assembly (v1 SHIPPED on the Fab Level; below is the full
       vision)** — semi-sentient machine society —
       neutral-alignment robots, not anyone's foot soldiers. Territorial, not

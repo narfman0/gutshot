@@ -585,6 +585,7 @@ func _spawn_enemy(chunk: SiteChunk, entry: Dictionary, generation := 0) -> Chara
 		0.6 if entry.get("morale", false) else EnemyController.MORALE_BREAK_FRAC)
 	controller.aggro_radius = entry.get("aggro", controller.aggro_radius)
 	controller.pursue = entry.get("pursue", true)
+	controller.disciplined = entry.get("disciplined", false)
 	if entry.has("gear"):
 		c.equip(load(entry["gear"]))
 		c.select_slot(0)

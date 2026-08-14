@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="GearItem" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/gear_item.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Mender Beam"
+slot_type = 0
+fire_mode = 0
+heals = true
+restores_shield = true
+damage = 10.0
+fire_range = 9.0
+fire_rate = 2.0
+base_accuracy = 1.0
+mag_size = 0
+shot_sfx = "heal"
+mesh_path = "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Weapons/SM_Wep_Laser_Gun_01.gltf"

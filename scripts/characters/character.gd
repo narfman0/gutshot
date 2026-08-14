@@ -195,6 +195,13 @@ func receive_heal(amount: float) -> void:
 	hp = minf(max_hp, hp + amount)
 	hp_changed.emit(hp, max_hp)
 
+## Shield top-up from a mender beam — the corp support unit's whole job.
+func receive_shield_charge(amount: float) -> void:
+	if not is_alive() or downed or max_shield <= 0.0:
+		return
+	shield = minf(max_shield, shield + amount)
+	shield_changed.emit(shield, max_shield)
+
 func notify_shot_at(attacker: Character) -> void:
 	if is_alive():
 		shot_at.emit(attacker)

@@ -15,6 +15,8 @@ enum FireMode { HITSCAN, PROJECTILE, THROWN, MELEE }
 ## Heal weapon: fires at squadmates and restores `damage` HP per shot instead
 ## of hurting enemies (medic's heal gun).
 @export var heals := false
+## Heal variant that tops up SHIELDS instead of HP (the corp mender beam).
+@export var restores_shield := false
 
 @export var damage := 10.0
 @export var fire_range := 20.0

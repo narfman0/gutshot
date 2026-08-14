@@ -6,19 +6,22 @@
 ## visit (GameWorld resets provocations on level load).
 class_name Factions
 
-enum { CREW = 0, GANGS = 1, ASSEMBLY = 2 }
+enum { CREW = 0, GANGS = 1, ASSEMBLY = 2, CORP = 3 }
 
-const NAMES := {CREW: "Crew", GANGS: "Gangs", ASSEMBLY: "The Assembly"}
+const NAMES := {CREW: "Crew", GANGS: "Gangs", ASSEMBLY: "The Assembly", CORP: "Vantag Security"}
 
 ## Overhead-bar / UI tint per faction.
 const COLORS := {
 	CREW: Color(0.20, 0.85, 0.45),
 	GANGS: Color(0.90, 0.22, 0.25),
 	ASSEMBLY: Color(1.0, 0.65, 0.2),
+	CORP: Color(0.55, 0.75, 1.0),
 }
 
-## Base war: the gangs and the crew are at it from the first frame.
-const _BASE_HOSTILE := [[CREW, GANGS]]
+## Base wars: the gangs and the crew are at it from the first frame, and
+## corporate security exists to keep the gangs out. The crew and CORP start
+## neutral — the lobby is public until you start something.
+const _BASE_HOSTILE := [[CREW, GANGS], [CORP, GANGS]]
 
 static var _provoked: Dictionary = {}
 
