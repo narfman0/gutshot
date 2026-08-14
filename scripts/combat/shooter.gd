@@ -167,9 +167,9 @@ func fire_wild(at_point: Vector3) -> bool:
 	return true
 
 func _alert_hearing() -> void:
-	for node in get_tree().get_nodes_in_group("team_%d" % (1 - character.team)):
+	for node in get_tree().get_nodes_in_group("characters"):
 		var enemy := node as Character
-		if enemy == null or not enemy.is_alive():
+		if enemy == null or enemy.team == character.team or not enemy.is_alive():
 			continue
 		if character.global_position.distance_to(enemy.global_position) > HEARING_RADIUS:
 			continue

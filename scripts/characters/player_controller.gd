@@ -62,7 +62,7 @@ func _physics_process(delta: float) -> void:
 			if ally != null:
 				shooter.try_heal(ally)
 		else:
-			var enemy := _acquire_in_cone(1 - body.team, aim)
+			var enemy := _acquire_hostile_in_cone(aim)
 			if enemy != null:
 				shooter.try_fire(enemy)
 			else:
@@ -96,9 +96,18 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("reload"):
 		shooter.start_reload()
 
-## Living character on `team` nearest the body among those inside the aim
-## cone toward `aim_point`. Null when the cone is empty.
-func _acquire_in_cone(team: int, aim_point: Vector3) -> Character:
+## Nearest target along the aim line: hostiles first; with no hostile on the
+## line, a NEUTRAL under the cursor cone is a deliberate act — shooting the
+## Assembly is allowed, and it provokes them.
+func _acquire_hostile_in_cone(aim_point: Vector3) -> Character:
+	var hostile := _acquire_in_cone(-1, aim_point, true)
+	if hostile != null:
+		return hostile
+	return _acquire_in_cone(-1, aim_point, false)
+
+## Living character nearest the body inside the aim cone. team >= 0 filters
+## one faction (heal gun); team -1 + hostile_only filters by hostility.
+func _acquire_in_cone(team: int, aim_point: Vector3, hostile_only := true) -> Character:
 	var aim_dir := aim_point - body.global_position
 	aim_dir.y = 0.0
 	if aim_dir.length_squared() < 0.04:
@@ -107,10 +116,15 @@ func _acquire_in_cone(team: int, aim_point: Vector3) -> Character:
 	var cone := deg_to_rad(AIM_CONE_DEG)
 	var best: Character = null
 	var best_d := INF
-	for node in body.get_tree().get_nodes_in_group("team_%d" % team):
+	for node in body.get_tree().get_nodes_in_group("characters" if team < 0 else "team_%d" % team):
 		var c := node as Character
 		if c == null or c == body or not c.is_alive():
 			continue
+		if team < 0:
+			if c.team == body.team:
+				continue
+			if hostile_only != Factions.hostile(body.team, c.team):
+				continue
 		var to_c := c.global_position - body.global_position
 		to_c.y = 0.0
 		var d := to_c.length()

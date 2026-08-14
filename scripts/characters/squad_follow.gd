@@ -123,12 +123,9 @@ func _in_combat() -> bool:
 	var anchors: Array = [body]
 	if leader != null and is_instance_valid(leader):
 		anchors.append(leader)
-	for node in body.get_tree().get_nodes_in_group("team_%d" % (1 - body.team)):
-		var enemy := node as Character
-		if enemy == null or not enemy.is_alive():
-			continue
+	for enemy in Factions.hostiles_of(body.get_tree(), body.team):
 		for anchor in anchors:
-			if enemy.global_position.distance_to(anchor.global_position) <= ENGAGE_DIST:
+			if (enemy as Character).global_position.distance_to(anchor.global_position) <= ENGAGE_DIST:
 				return true
 	return false
 

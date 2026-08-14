@@ -146,6 +146,17 @@ def sfx_down():
     return out
 
 
+def sfx_shot_laser():
+    n = int(0.14 * SR)
+    out = []
+    for i in range(n):
+        t = i / SR
+        zap = math.sin(2 * math.pi * (1900 - 1300 * i / n) * t) * env_exp(n, i, 12) * 0.6
+        body = math.sin(2 * math.pi * 300 * t) * env_exp(n, i, 10) * 0.3
+        out.append(zap + body)
+    return out
+
+
 def sfx_land():
     n = int(0.16 * SR)
     out = []
@@ -222,6 +233,7 @@ def main():
     write_wav("sfx_switch.wav", sfx_switch())
     write_wav("sfx_heal.wav", sfx_heal())
     write_wav("sfx_land.wav", sfx_land())
+    write_wav("sfx_shot_laser.wav", sfx_shot_laser())
     write_wav("sfx_down.wav", sfx_down())
     write_wav("sfx_revive.wav", sfx_revive())
     write_wav("sfx_telegraph.wav", sfx_telegraph())

@@ -235,6 +235,25 @@ world-space DOWN / REVIVING % label.
 
 ---
 
+## Phase 2 As-Built — Factions
+
+- **`Character.team` is a faction id** (`scripts/core/factions.gd`): CREW,
+  GANGS, ASSEMBLY. Hostility is a matrix: base war (crew↔gangs) plus runtime
+  **provocations** — damage between non-hostile factions provokes
+  (`Factions.note_attack` in `receive_damage`), and the Fab Level's sanctum
+  provokes on trespass after one warning. Provocations reset per site load.
+- All "1 - team" binary math is gone: AI threat acquisition, sight, engage
+  checks, and the player's aim cone go through `Factions.hostile` /
+  `hostiles_of` (global "characters" group). Hearing alerts every OTHER
+  faction — hostiles fight, neutrals investigate.
+- The player cone acquires hostiles first; a neutral under the cursor with
+  no hostile on the line is a deliberate act (and a provocation when it
+  lands). Grenade blasts hit every faction but the thrower's.
+- `ObjectiveManager.register(c, required)` — neutral-faction characters can
+  join fights but never gate mission completion.
+- Neutral factions radiate no HUD heat until they actually enter a fight;
+  overhead bars tint per faction (crew green, gangs red, Assembly amber).
+
 ## Phase 2 As-Built (Depot 9)
 
 - **GameWorld is a base class**: levels subclass it and override the data

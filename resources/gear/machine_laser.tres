@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="GearItem" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/gear_item.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Arc Cutter"
+slot_type = 0
+fire_mode = 0
+damage = 10.0
+fire_range = 18.0
+fire_rate = 1.2
+base_accuracy = 0.9
+moving_accuracy_mult = 0.9
+mag_size = 8
+reload_secs = 2.5
+shot_sfx = "shot_laser"
+mesh_path = "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Weapons/SM_Wep_Laser_Gun_01.gltf"

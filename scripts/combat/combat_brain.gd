@@ -116,10 +116,8 @@ func acquire_threat() -> Character:
 		return threat
 	threat = null
 	var best_d := ENGAGE_RANGE
-	for node in body.get_tree().get_nodes_in_group("team_%d" % (1 - body.team)):
+	for node in Factions.hostiles_of(body.get_tree(), body.team):
 		var c := node as Character
-		if c == null or not c.is_alive():
-			continue
 		var d := body.global_position.distance_to(c.global_position)
 		if d < best_d:
 			best_d = d

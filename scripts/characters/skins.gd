@@ -19,6 +19,12 @@ const ENEMIES := {
 	"punk_girl": {"path": "res://assets/meshes/POLYGON_City_Characters_SourceFiles_v2/Source_Files/Characters/SK_Character_PunkGirl.gltf", "set": "femn"},
 }
 
+## The Assembly — semi-sentient machines (Scifi_Space rigged robots).
+const MACHINES := {
+	"war_robot": {"path": "res://assets/meshes/POLYGON_Scifi_Space_SourceFiles_v2/SourceFiles/Characters/SK_Chr_BR_War_Robot_01.gltf", "set": "masc"},
+	"robot_f": {"path": "res://assets/meshes/POLYGON_Scifi_Space_SourceFiles_v2/SourceFiles/Characters/SK_Chr_RobotFemale_01.gltf", "set": "femn"},
+}
+
 static func crew_names() -> Array:
 	return CREW.keys()
 

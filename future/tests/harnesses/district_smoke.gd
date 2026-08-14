@@ -45,7 +45,7 @@ func _ready() -> void:
 				if not (button as Button).disabled and (button as Button).text != "Close  (M)":
 					travelable += 1
 	_check(buttons >= DistrictMap.SITES.size(), "district map lists every site")
-	_check(travelable == 2, "two other sites travelable from the hideout (got %d)" % travelable)
+	_check(travelable == 3, "three other sites travelable from the hideout (got %d)" % travelable)
 	world.free()
 
 	# Save/load stub: round trip on a SCRATCH slot; debug sessions refuse.

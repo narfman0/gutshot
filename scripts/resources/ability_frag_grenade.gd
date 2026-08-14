@@ -59,10 +59,9 @@ func _land(scene: Node, thrower: Character, nade: Node3D, at: Vector3) -> void:
 			nade.queue_free()
 		Vfx.explosion(scene, at, blast_radius)
 		Juice.hit_stop(scene.get_tree(), 0.04, 0.1)
-		var enemy_team := 1 - thrower.team
-		for body in scene.get_tree().get_nodes_in_group("team_%d" % enemy_team):
+		for body in scene.get_tree().get_nodes_in_group("characters"):
 			var target := body as Character
-			if target == null or not target.is_alive():
+			if target == null or target.team == thrower.team or not target.is_alive():
 				continue
 			if telegraph.contains(target.global_position):
 				DamageNumber.hit(scene, target.global_position, int(damage))

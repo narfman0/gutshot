@@ -85,6 +85,15 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       map overlay — M anywhere, console walk-up, travel to unlocked sites;
       locked entries tease Little Japan / Fab Level / Tower
 - [x] Main menu (boot scene: title, Enter the District → hideout, Quit)
+- [x] Faction refactor: Factions hostility matrix (base war + runtime
+      provocation, reset per site), all binary-team math swept; damage
+      between neutral factions provokes; player cone targets hostiles first
+      with deliberate-neutral fallback; HUD heat/overheads faction-aware;
+      ObjectiveManager `required` flag so neutrals never gate missions
+- [x] Fab Level: the Assembly v1 — neutral machine custodians (Arc Cutter
+      lasers, patrols, no morale), a fabricator sanctum with trespass
+      warning → provocation, bandit salvage crew as the objective, freight
+      tunnel from Depot 9; district map unlocked
 - [ ] Two-floor hand-crafted level: stairs/ladder transitions between
       per-floor navmeshes (teleport waypoints per architecture.md)
 - [ ] Destructible doors + breach points
@@ -126,7 +135,8 @@ and onto systems that already exist (CombatBrain, awareness, packs).
       own squad. Asset candidates (verified): POLYGON_Spy_Kit,
       POLYGON_BattleRoyale, POLYGON_Mech (heavy support walker?), with
       POLYGON_Military_Warehouse for their turf.
-- [ ] **The Assembly (working name) — semi-sentient machine society** —
+- [~] **The Assembly (v1 SHIPPED on the Fab Level; below is the full
+      vision)** — semi-sentient machine society —
       neutral-alignment robots, not anyone's foot soldiers. Territorial, not
       hostile: they hold zones (salvage fields, maintenance levels), warn
       trespassers off (posturing/escort behavior before violence), and only

@@ -49,6 +49,7 @@ func _ready() -> void:
 	brain = body.get_node("CombatBrain")
 	brain.leash_radius = leash_radius
 	_spawn = body.global_position
+	add_to_group("enemy_ai")
 	if pack_id != "":
 		add_to_group("pack_" + pack_id)
 	body.character_died.connect(func(_c):
@@ -198,10 +199,8 @@ func _tick_flee(delta: float) -> void:
 func _nearest_hostile_pos() -> Vector3:
 	var best := body.global_position + Vector3.FORWARD
 	var best_d := INF
-	for node in get_tree().get_nodes_in_group("team_%d" % (1 - body.team)):
+	for node in Factions.hostiles_of(get_tree(), body.team):
 		var c := node as Character
-		if c == null or not c.is_alive():
-			continue
 		var d := body.global_position.distance_to(c.global_position)
 		if d < best_d:
 			best_d = d
@@ -210,10 +209,8 @@ func _nearest_hostile_pos() -> Vector3:
 
 ## A player-team character visible inside sight range → fight, tell the pack.
 func _check_sight() -> bool:
-	for node in get_tree().get_nodes_in_group("team_%d" % (1 - body.team)):
+	for node in Factions.hostiles_of(get_tree(), body.team):
 		var c := node as Character
-		if c == null or not c.is_alive():
-			continue
 		if body.global_position.distance_to(c.global_position) > aggro_radius:
 			continue
 		if Cover.exposure(body.muzzle_position(), c) > Cover.FULL_COVER_MAX:

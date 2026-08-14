@@ -12,14 +12,17 @@ var _squad: Array = []
 var _enemies: Array = []
 var _over := false
 
-func register(character: Character) -> void:
+## `required`: false for neutral-faction characters — they can join fights
+## but never gate mission completion.
+func register(character: Character, required := true) -> void:
 	if character.team == 0:
 		_squad.append(character)
 		# Crew go DOWN instead of dying; all-downed is still a wipe (nobody
 		# left standing to revive).
 		character.character_downed.connect(_on_character_out)
 	else:
-		_enemies.append(character)
+		if required:
+			_enemies.append(character)
 		character.character_died.connect(_on_character_out)
 	objective_updated.emit(_living(_squad), _living(_enemies))
 

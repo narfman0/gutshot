@@ -13,6 +13,7 @@ func _init() -> void:
 	var all := {}
 	all.merge(Skins.CREW)
 	all.merge(Skins.ENEMIES)
+	all.merge(Skins.MACHINES)
 	for skin_name in all:
 		var info: Dictionary = all[skin_name]
 		var scene = load(info["path"])

@@ -98,6 +98,7 @@ var _rebake_queued := false
 
 func _ready() -> void:
 	add_to_group("nav_owner")
+	Factions.reset_provocations()  # grudges don't cross site loads (yet)
 	_setup_environment()
 	_setup_ground()
 	_setup_cover()
@@ -304,9 +305,12 @@ func _spawn_enemies() -> void:
 	var smg: GearItem = load("res://resources/gear/enemy_smg.tres")
 	var belt: GearItem = load("res://resources/gear/grenade_belt.tres")
 	for entry in _enemy_spawns():
-		var info: Dictionary = Skins.ENEMIES[entry["skin"]]
+		var all_skins := {}
+		all_skins.merge(Skins.ENEMIES)
+		all_skins.merge(Skins.MACHINES)
+		var info: Dictionary = all_skins[entry["skin"]]
 		var c: Character = CharacterScene.instantiate()
-		c.team = 1
+		c.team = entry.get("faction", Factions.GANGS)
 		c.display_name = String(entry["skin"]).capitalize()
 		c.anim_set = info["set"]
 		c.max_hp = 60.0
@@ -323,8 +327,11 @@ func _spawn_enemies() -> void:
 		controller.pack_id = entry["pack"]
 		controller.patrol_points = entry.get("patrol", [])
 		controller.has_morale = entry.get("morale", false)
+		if entry.has("gear"):
+			c.equip(load(entry["gear"]))
+			c.select_slot(0)
 		c.add_child(controller)
-		_objectives.register(c)
+		_objectives.register(c, entry.get("required", true))
 		# Enemies get the full send-off; crew corpses stay for the squad read.
 		c.character_died.connect(func(body): Juice.death_collapse(body, true))
 

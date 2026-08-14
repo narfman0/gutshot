@@ -70,6 +70,7 @@ func _ready() -> void:
 	shield = max_shield
 	collision_layer = Layers.body_layer(team)
 	add_to_group("team_%d" % team)
+	add_to_group("characters")
 	weapon_changed.connect(func(_slot): _refresh_held_weapon())
 	_apply_squash()
 
@@ -194,8 +195,11 @@ func receive_damage(amount: float, attacker: Node = null) -> void:
 	if not is_alive():
 		return
 	_last_damage_ms = Time.get_ticks_msec()
-	# Taking damage reveals the source — grenades included, not just gunfire.
+	# Taking damage reveals the source — grenades included, not just gunfire —
+	# and damage between non-hostile factions IS a provocation (shoot the
+	# machines and the machines are in the fight).
 	if attacker is Character:
+		Factions.note_attack(team, (attacker as Character).team)
 		shot_at.emit(attacker)
 	if shield > 0.0:
 		var absorbed := minf(shield, amount)

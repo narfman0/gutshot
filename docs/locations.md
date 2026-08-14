@@ -112,8 +112,8 @@ this; add one entry per site).
    elevation, bandit morale fights).
 2. **Hideout + district map** — trivial scene + UI; makes the locality real
    the moment there are two sites to pick between.
-3. **Fab Level** — flat but faction-novel (needs the faction/hostility
-   refactor from docs/tasks.md).
+3. **Fab Level** — SHIPPED: neutral Assembly custodians, sanctum trespass
+   rules, bandit salvage crew objective, freight tunnel from Depot 9.
 4. **Vantag Tower** — the capstone: full multi-floor, all factions, portal
    finale. Likely several sub-scenes (lobby / mid / upper) linked by the
    elevator rather than one giant scene.

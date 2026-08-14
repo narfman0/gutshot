@@ -49,9 +49,8 @@ func setup(squad: Squad, objectives: ObjectiveManager, camera: Camera3D,
 		(member as Character).hp_changed.connect(func(_h, _m): _refresh_portraits())
 		(member as Character).shield_changed.connect(func(_s, _m): _refresh_portraits())
 		(member as Character).weapon_changed.connect(func(_s): _refresh_slots())
-	for team in [0, 1]:
-		for c in _squad.get_tree().get_nodes_in_group("team_%d" % team):
-			_add_overhead(c as Character)
+	for c in _squad.get_tree().get_nodes_in_group("characters"):
+		_add_overhead(c as Character)
 	_refresh_portraits()
 	_refresh_slots()
 
@@ -263,20 +262,21 @@ func _update_pressure(delta: float) -> void:
 	if _pressure_fill == null:
 		return
 	var heat := 0.0
-	for node in get_tree().get_nodes_in_group("team_1"):
-		var enemy := node as Character
-		if enemy == null or not enemy.is_alive():
+	for node in get_tree().get_nodes_in_group("enemy_ai"):
+		var controller := node as EnemyController
+		if controller == null or controller.body == null or not controller.body.is_alive():
 			continue
-		for child in enemy.get_children():
-			if child is EnemyController:
-				match (child as EnemyController).state:
-					EnemyController.State.FIGHT:
-						heat += 1.0
-					EnemyController.State.SUSPICIOUS:
-						heat += 0.35
-					EnemyController.State.FLEE:
-						heat += 0.1
-				break
+		# Neutral factions radiate no heat until they're actually in it.
+		if not Factions.hostile(Factions.CREW, controller.body.team) \
+				and controller.state != EnemyController.State.FIGHT:
+			continue
+		match controller.state:
+			EnemyController.State.FIGHT:
+				heat += 1.0
+			EnemyController.State.SUSPICIOUS:
+				heat += 0.35
+			EnemyController.State.FLEE:
+				heat += 0.1
 	var target := clampf(heat / _PRESSURE_FULL, 0.0, 1.0)
 	_pressure = lerpf(_pressure, target, minf(1.0, 3.0 * delta))
 	_pressure_fill.size.x = 278.0 * _pressure
@@ -314,7 +314,7 @@ func _add_overhead(character: Character) -> void:
 	trough.size = OVERHEAD_SIZE
 	trough.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var fill := ColorRect.new()
-	fill.color = UITheme.C_HP_ENEMY if character.team == 1 else UITheme.C_HP
+	fill.color = Factions.COLORS.get(character.team, UITheme.C_HP_ENEMY)
 	fill.position = Vector2.ONE
 	fill.size = OVERHEAD_SIZE - Vector2(2, 2)
 	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
