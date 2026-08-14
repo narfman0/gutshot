@@ -127,10 +127,15 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       hideout rest (heal + provocation reset — grudges now reset on rest,
       not travel). Cleared sites repopulate after ~5 s vacant; per-site
       objectives emit site_cleared. HEAT scoped to enemies within 40 m
+- [x] Corridor dressing: per-connector identities (alley / arcade / service
+      passage / freight tunnel) — visible walls (tall camera-far side, low
+      curb camera-near so the iso view stays open), junk-prop cover along
+      the edges, overhead beams on covered styles, per-style floor/light/
+      strip colors, destination signs at each mouth
 - [ ] Seamless-district follow-ups: zone-driven ambience (AudioManager can't
       crossfade), spatial pruning for hostiles_of/hearing scans if rosters
-      grow past dozens, corridor dressing (bare strips today), connector
-      gameplay (fall back through the freight tunnel into Assembly turf)
+      grow past dozens, connector gameplay (fall back through the freight
+      tunnel into Assembly turf)
 - [x] Save/load stub: crew hp/shields carried between sites (hideout heals),
       autosave on arrival, Continue on the main menu; debug/harness runs can
       never write a real slot (GameState.run_active gate + scratch-slot tests)

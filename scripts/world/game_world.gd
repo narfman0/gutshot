@@ -29,15 +29,52 @@ var _zoom := 17.0  # close enough that sprinting reads fast; wheel adjusts
 
 const CharacterScene := preload("res://scenes/characters/character.tscn")
 
-## Connector graph: [site_id_a, gate_index_a, site_id_b, gate_index_b].
+## Connector graph: [site_id_a, gate_index_a, site_id_b, gate_index_b, style].
 ## Gate positions come from the chunks' transforms + gate specs, so moving a
 ## site instance in the editor moves its corridors with it (on rebuild).
 const CONNECTORS := [
-	["hideout", 0, "skirmish", 0],   # the alley
-	["skirmish", 1, "exchange", 0],  # the arcade
-	["exchange", 1, "depot", 0],     # under the east gallery
-	["depot", 1, "fab", 0],          # the freight tunnel
+	["hideout", 0, "skirmish", 0, "alley"],
+	["skirmish", 1, "exchange", 0, "arcade"],
+	["exchange", 1, "depot", 0, "service"],
+	["depot", 1, "fab", 0, "tunnel"],
 ]
+
+# Corridor dressing props — full res:// literals for fetch_assets.sh's scan.
+const _CRATE_01 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Crate_01.gltf"
+const _CRATE_04 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Crate_04.gltf"
+const _CRATE_06 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Crate_06.gltf"
+const _VENDING := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Vending_Machine_01.gltf"
+const _EBOX := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Electrical_Box_01.gltf"
+const _SHELF := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Shelf_01.gltf"
+const _CONTAINER_SMALL := "res://assets/meshes/POLYGON_Military_Warehouse_SourceFiles_v1/SourceFiles/FBX/SM_Prop_Shipping_Container_Small_01.gltf"
+
+## Each corridor has an identity: wall/floor tone, light colors (pools
+## alternate through the list), edge-strip glow, junk along the walls, and
+## whether overhead beams span it. Props are real cover — corridor fights
+## have something to duck behind.
+const CORRIDOR_STYLES := {
+	"alley": {  # hideout ↔ street: the crew's grimy back way, sodium-lit
+		"wall": Color(0.15, 0.14, 0.13), "floor": Color(0.12, 0.12, 0.13),
+		"lights": [Color(1.0, 0.6, 0.25)], "strip": Color(1.0, 0.7, 0.3),
+		"props": [_CRATE_06, _CRATE_01, _VENDING, _CRATE_04], "beams": false,
+	},
+	"arcade": {  # street ↔ exchange: dead shopfronts, neon still buzzing
+		"wall": Color(0.15, 0.16, 0.19), "floor": Color(0.16, 0.16, 0.18),
+		"lights": [Color(0.2, 0.8, 1.0), Color(0.95, 0.3, 0.75)],
+		"strip": Color(0.2, 0.8, 1.0),
+		"props": [_VENDING, _CRATE_01, _VENDING, _SHELF], "beams": true,
+	},
+	"service": {  # exchange ↔ depot: maintenance passage behind the hall
+		"wall": Color(0.18, 0.18, 0.17), "floor": Color(0.15, 0.15, 0.14),
+		"lights": [Color(1.0, 0.65, 0.25)], "strip": Color(1.0, 0.65, 0.3),
+		"props": [_EBOX, _CRATE_04, _EBOX, _SHELF], "beams": false,
+	},
+	"tunnel": {  # depot ↔ fab: the freight tunnel, cold and echoing
+		"wall": Color(0.14, 0.15, 0.17), "floor": Color(0.13, 0.14, 0.16),
+		"lights": [Color(0.35, 0.6, 1.0)], "strip": Color(0.4, 0.7, 1.0),
+		"props": [_CONTAINER_SMALL, _CRATE_01, _EBOX], "beams": true,
+	},
+}
 
 ## Seconds a cleared site must sit vacated before its packs repopulate.
 ## Harnesses shrink this to test the respawn cycle quickly.
@@ -204,16 +241,23 @@ func _build_connectors() -> void:
 	var root := Node3D.new()
 	root.name = "GeneratedConnectors"
 	_level.add_child(root)
-	for link in CONNECTORS:
+	for i in CONNECTORS.size():
+		var link: Array = CONNECTORS[i]
 		var a: SiteChunk = _chunks_by_id.get(link[0])
 		var b: SiteChunk = _chunks_by_id.get(link[2])
 		if a == null or b == null:
 			continue
-		_build_corridor(root, a.gate_info(link[1]), b.gate_info(link[3]))
+		_build_corridor(root, a.gate_info(link[1]), b.gate_info(link[3]),
+			CORRIDOR_STYLES[link[4]], a.site_name(), b.site_name(), i)
 
 ## A straight corridor between two gates: lit floor strip (into the navmesh),
-## invisible barrier walls, edge glow so the path reads in the dark.
-func _build_corridor(root: Node3D, ga: Dictionary, gb: Dictionary) -> void:
+## invisible barrier walls, edge glow so the path reads in the dark — plus
+## the dressing that gives it an identity: visible walls (TALL on the
+## camera-far side, a low curb on the camera-near side, so the iso camera is
+## never blinded), junk-prop cover along the edges, overhead beams on the
+## covered styles, per-style light pools, and destination signs at each end.
+func _build_corridor(root: Node3D, ga: Dictionary, gb: Dictionary,
+		style: Dictionary, name_a: String, name_b: String, index: int) -> void:
 	var pa: Vector3 = ga["pos"] - ga["dir"] * 1.0  # tuck 1 m into each site —
 	var pb: Vector3 = gb["pos"] - gb["dir"] * 1.0  # no navmesh crack at the wall
 	var along: Vector3 = pb - pa
@@ -247,7 +291,7 @@ func _build_corridor(root: Node3D, ga: Dictionary, gb: Dictionary) -> void:
 	var mesh := BoxMesh.new()
 	mesh.size = _axis_size(axis, length, 0.1, width)
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.14, 0.15, 0.17)  # service-passage concrete
+	mat.albedo_color = style["floor"]
 	mat.roughness = 0.6
 	mesh.material = mat
 	mi.mesh = mesh
@@ -255,7 +299,10 @@ func _build_corridor(root: Node3D, ga: Dictionary, gb: Dictionary) -> void:
 	floor_body.add_child(mi)
 	root.add_child(floor_body)
 	floor_body.global_position = center
-	# Barrier walls flanking the strip.
+	# Barrier walls flanking the strip (invisible, full height) + visible
+	# wall meshes: TALL on the camera-far side, a knee-high curb on the
+	# camera-near side — a tall near wall would occlude the whole corridor
+	# at the iso pitch. Camera sits toward +x/+z (yaw 45°, pitch -30°).
 	for side in [-1.0, 1.0]:
 		var wall := StaticBody3D.new()
 		wall.collision_layer = Layers.BARRIERS
@@ -267,6 +314,19 @@ func _build_corridor(root: Node3D, ga: Dictionary, gb: Dictionary) -> void:
 		root.add_child(wall)
 		wall.global_position = center + cross * side * (width * 0.5 + 0.5) \
 			+ Vector3(0, SiteChunk.WALL_H * 0.5, 0)
+		var camera_near: bool = (cross * side).dot(Vector3(1, 0, 1)) > 0.0
+		var wall_h := 0.85 if camera_near else 3.4
+		var wmesh_i := MeshInstance3D.new()
+		var wmesh := BoxMesh.new()
+		wmesh.size = _axis_size(axis, length + 1.0, wall_h, 0.5)
+		var wmat := StandardMaterial3D.new()
+		wmat.albedo_color = style["wall"]
+		wmat.roughness = 0.85
+		wmesh.material = wmat
+		wmesh_i.mesh = wmesh
+		root.add_child(wmesh_i)
+		wmesh_i.global_position = center + cross * side * (width * 0.5 + 0.5) \
+			+ Vector3(0, wall_h * 0.5, 0)
 	# Edge glow strips — the path reads even between the light pools.
 	for side in [-1.0, 1.0]:
 		var strip := MeshInstance3D.new()
@@ -275,24 +335,77 @@ func _build_corridor(root: Node3D, ga: Dictionary, gb: Dictionary) -> void:
 		var smat := StandardMaterial3D.new()
 		smat.albedo_color = Color(0.2, 0.5, 0.6)
 		smat.emission_enabled = true
-		smat.emission = Color(0.2, 0.8, 1.0)
+		smat.emission = style["strip"]
 		smat.emission_energy_multiplier = 0.5
 		smesh.material = smat
 		strip.mesh = smesh
 		root.add_child(strip)
 		strip.global_position = center + cross * side * (width * 0.5 - 0.25) + Vector3(0, 0.03, 0)
-	# Light pools every ~12 m.
+	# Overhead beams on the covered styles — tunnel structure the iso camera
+	# can live with (thin, high, no colliders).
+	if style["beams"]:
+		var beams := maxi(1, int(length / 8.0))
+		for i in beams:
+			var beam := MeshInstance3D.new()
+			var bmesh := BoxMesh.new()
+			bmesh.size = _axis_size(axis, 0.5, 0.35, width + 1.6)
+			var bmat := StandardMaterial3D.new()
+			bmat.albedo_color = Color(0.10, 0.11, 0.13)
+			bmat.metallic = 0.6
+			bmat.roughness = 0.5
+			bmesh.material = bmat
+			beam.mesh = bmesh
+			root.add_child(beam)
+			beam.global_position = pa.lerp(pb, (float(i) + 0.5) / float(beams)) \
+				+ Vector3(0, 3.3, 0)
+	# Light pools — per-style colors, alternating through the list.
+	var colors: Array = style["lights"]
 	var pools := maxi(1, int(length / 12.0))
 	for i in pools:
 		var t := (float(i) + 0.5) / float(pools)
 		var light := OmniLight3D.new()
-		light.light_color = Color(0.4, 0.8, 1.0)
+		light.light_color = colors[i % colors.size()]
 		light.light_energy = 1.3
 		light.omni_range = 8.0
 		light.omni_attenuation = 1.4
 		light.shadow_enabled = false
 		root.add_child(light)
 		light.global_position = pa.lerp(pb, t) + Vector3(0, 2.6, 0)
+	# Junk along the walls — real cover, alternating sides, clear of the
+	# gate mouths. Yaw is index-hashed so the editor preview is stable.
+	var props: Array = style["props"]
+	var slots := maxi(0, int((length - 8.0) / 7.0))
+	for j in slots:
+		var t := (float(j) + 0.5) / float(slots)
+		var side := -1.0 if j % 2 == 0 else 1.0
+		var prop := StaticBody3D.new()
+		prop.collision_layer = Layers.COVER
+		prop.add_to_group("cover")
+		prop.add_to_group(NavRuntime.SOURCE_GROUP)
+		var visual: Node3D = null
+		var scene = load(props[j % props.size()])
+		if scene != null:
+			visual = scene.instantiate()
+			visual.scale.y = Character.VERTICAL_SQUASH
+			prop.add_child(visual)
+		root.add_child(prop)
+		prop.global_position = pa.lerp(pb, t) + cross * side * (width * 0.5 - 1.0)
+		prop.rotation.y = deg_to_rad(float((j * 67 + index * 131) % 360))
+		SiteChunk.add_aabb_collider(prop, visual)
+	# Destination signs just inside each mouth — wayfinding without a map.
+	_corridor_sign(root, pa + axis * 2.2, "→ " + name_b, style)
+	_corridor_sign(root, pb - axis * 2.2, "→ " + name_a, style)
+
+func _corridor_sign(root: Node3D, pos: Vector3, text: String, style: Dictionary) -> void:
+	var sign := Label3D.new()
+	sign.text = text
+	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sign.font_size = 40
+	sign.pixel_size = 0.004
+	sign.outline_size = 8
+	sign.modulate = (style["lights"][0] as Color).lightened(0.35)
+	root.add_child(sign)
+	sign.global_position = pos + Vector3(0, 2.3, 0)
 
 ## Box size with `length` along the corridor axis and `width` across it.
 func _axis_size(axis: Vector3, length: float, height: float, width: float) -> Vector3:

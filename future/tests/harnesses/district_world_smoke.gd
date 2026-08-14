@@ -37,7 +37,9 @@ func _ready() -> void:
 		print("DISTRICT_WORLD_SMOKE: 1 FAILURES")
 		get_tree().quit(1)
 		return
-	await _settle(5)
+	# Nav queries need the map's first synchronization after region
+	# registration — give boot a proper beat, not a token one.
+	await _settle(15)
 
 	# 1. Crew starts inside the hideout, and the tracker knows it.
 	var hideout := _chunk("Hideout")

@@ -175,12 +175,13 @@ func _setup_cover() -> void:
 		# Optional 5th element: floor height — cover on upper decks.
 		prop.position = Vector3(entry[1], entry[4] if entry.size() > 4 else 0.0, entry[2])
 		prop.rotation.y = deg_to_rad(entry[3])
-		_add_aabb_collider(prop, visual)
+		add_aabb_collider(prop, visual)
 
 ## Box collider sized from the prop's visual AABB — boxes (not trimesh) so
 ## CombatBrain's cover-ring extent math has a shape it understands, and so a
 ## missing mesh (assets not fetched, headless CI) still produces usable cover.
-func _add_aabb_collider(prop: StaticBody3D, visual: Node3D) -> void:
+## Static — GameWorld's corridor dressing builds props the same way.
+static func add_aabb_collider(prop: StaticBody3D, visual: Node3D) -> void:
 	var aabb := AABB(Vector3(-0.6, 0.0, -0.6), Vector3(1.2, 1.2, 1.2))
 	if visual != null:
 		var inv := prop.global_transform.affine_inverse()

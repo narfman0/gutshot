@@ -17,16 +17,20 @@ func _ready() -> void:
 			break
 	DirAccess.make_dir_recursive_absolute("res://.screenshots")
 	await _shot("district_1_hideout.png", 30)
-	_teleport(Vector3(-33.0, 0.1, 15.0))  # the alley corridor
-	await _shot("district_2_corridor.png", 30)
+	_teleport(Vector3(-33.0, 0.1, 15.0))  # the alley
+	await _shot("district_2_alley.png", 30)
 	_teleport((_chunk("Street") as Node3D).global_position + Vector3(0, 0.1, 8))
 	await _shot("district_3_street.png", 50)
+	_teleport(Vector3(42.0, 0.1, 10.0))  # the arcade
+	await _shot("district_4_arcade.png", 30)
 	_teleport(_chunk("Exchange").to_global(Vector3(-26, 3.05, -5)))
-	await _shot("district_4_exchange_gallery.png", 60)
+	await _shot("district_5_exchange_gallery.png", 60)
+	_teleport(Vector3(171.0, 0.1, 36.0))  # the freight tunnel
+	await _shot("district_6_tunnel.png", 30)
 	_teleport(_chunk("Depot").to_global(Vector3(0, 0.1, 12)))
-	await _shot("district_5_depot.png", 60)
+	await _shot("district_7_depot.png", 60)
 	_teleport(_chunk("Fab").to_global(Vector3(0, 0.1, 10)))
-	await _shot("district_6_fab.png", 60)
+	await _shot("district_8_fab.png", 60)
 	print("DISTRICT_SHOTS: DONE")
 	get_tree().quit(0)
 
