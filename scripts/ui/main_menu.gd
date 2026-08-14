@@ -26,9 +26,20 @@ func _ready() -> void:
 	var spacer := Control.new()
 	spacer.custom_minimum_size = Vector2(0, 16)
 	vbox.add_child(spacer)
+	if SaveManager.has_save():
+		var cont := Button.new()
+		cont.text = "Continue"
+		cont.pressed.connect(func():
+			GameState.new_run()
+			var site := GameState.load_game()
+			SceneManager.change_level(site if site != "" else "hideout"))
+		vbox.add_child(cont)
 	var enter := Button.new()
-	enter.text = "Enter the District"
-	enter.pressed.connect(func(): SceneManager.change_level("hideout"))
+	enter.text = "New Run"
+	enter.pressed.connect(func():
+		GameState.new_run()
+		GameState.crew_state = {}
+		SceneManager.change_level("hideout"))
 	vbox.add_child(enter)
 	var quit := Button.new()
 	quit.text = "Quit"

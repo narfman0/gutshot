@@ -48,6 +48,36 @@ func _ready() -> void:
 	_check(travelable == 2, "two other sites travelable from the hideout (got %d)" % travelable)
 	world.free()
 
+	# Save/load stub: round trip on a SCRATCH slot; debug sessions refuse.
+	const TEST_SLOT := 9
+	GameState.debug_session = true
+	_check(not GameState.save_game("skirmish", TEST_SLOT), "debug sessions never save")
+	GameState.debug_session = false
+	GameState.crew_state = {"leader": {"hp": 42.0, "shield": 10.0}}
+	_check(GameState.save_game("depot", TEST_SLOT), "real runs save")
+	GameState.crew_state = {}
+	var site := GameState.load_game(TEST_SLOT)
+	_check(site == "depot", "load returns the saved site (got %s)" % site)
+	_check(float(GameState.crew_state.get("leader", {}).get("hp", 0.0)) == 42.0,
+		"crew condition survives the round trip")
+	DirAccess.remove_absolute(SaveManager._path(TEST_SLOT))
+
+	# Carried wounds apply on spawn. Squad cleared → the debug fallback flags
+	# the session, so this boot can't autosave over anyone's real slot.
+	GameState.squad = []
+	var wounded: GameWorld = load("res://scenes/levels/skirmish.tscn").instantiate()
+	add_child(wounded)
+	for i in 10:
+		await get_tree().physics_frame
+	_check(GameState.debug_session, "harness boot flags debug (no autosave)")
+	var leader := GameState.squad[0] as Character
+	# The medic starts beaming the wounded leader immediately (working as
+	# intended) — assert the wound carried, not an exact number.
+	_check(leader.hp >= 42.0 and leader.hp < leader.max_hp * 0.7,
+		"carried hp applies at a combat site (hp %.0f)" % leader.hp)
+	wounded.free()
+	await get_tree().physics_frame
+
 	if _failures.is_empty():
 		print("DISTRICT_SMOKE: ALL PASS")
 		get_tree().quit(0)

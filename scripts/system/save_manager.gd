@@ -1,0 +1,31 @@
+## JSON saves in user://saves/ (wayfarer lineage). The stub persists the
+## run's shape — current site + crew condition — not derived state.
+class_name SaveManager
+extends RefCounted
+
+const SAVE_DIR := "user://saves"
+const SAVE_VERSION := 1
+
+static func _path(slot: int) -> String:
+	return "%s/slot_%d.json" % [SAVE_DIR, slot]
+
+static func has_save(slot: int = 0) -> bool:
+	return FileAccess.file_exists(_path(slot))
+
+static func save_game(slot: int, data: Dictionary) -> bool:
+	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
+	var file := FileAccess.open(_path(slot), FileAccess.WRITE)
+	if file == null:
+		return false
+	data["version"] = SAVE_VERSION
+	file.store_string(JSON.stringify(data, "\t"))
+	return true
+
+static func load_game(slot: int = 0) -> Dictionary:
+	if not has_save(slot):
+		return {}
+	var file := FileAccess.open(_path(slot), FileAccess.READ)
+	if file == null:
+		return {}
+	var parsed = JSON.parse_string(file.get_as_text())
+	return parsed if parsed is Dictionary else {}

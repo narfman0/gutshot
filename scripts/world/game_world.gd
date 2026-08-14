@@ -64,8 +64,16 @@ func _site_name() -> String:
 func _site_id() -> String:
 	return ""
 
+## Safe rooms restore the crew on arrival (the hideout's whole job).
+func _heals_crew() -> bool:
+	return false
+
 func _sun_energy() -> float:
 	return 1.5
+
+## Depth fog density (0 = off) — interiors read dustier than the street.
+func _fog_density() -> float:
+	return 0.0
 
 ## Array of [position, color] corner/fill lights — the level's light mood.
 func _flood_lights() -> Array:
@@ -105,6 +113,9 @@ func _ready() -> void:
 	_objectives.mission_complete.connect(func(): _show_end_screen(true))
 	_objectives.mission_failed.connect(func(): _show_end_screen(false))
 	AudioManager.play_ambient()
+	if _heals_crew():
+		GameState.crew_state = {}  # patched up — wounds don't follow you out
+	GameState.save_game(_site_id())  # autosave on arrival (no-op in debug runs)
 	SceneManager.fade_in()
 
 ## Re-bake the navmesh after geometry changes (a breached door opening a
@@ -136,6 +147,17 @@ func _setup_environment() -> void:
 	env.glow_enabled = true
 	env.glow_intensity = 0.6
 	env.glow_bloom = 0.1
+	# Lighting pass: contact shadows in the corners of low-poly geometry and
+	# a filmic curve so the neon doesn't clip to white.
+	env.ssao_enabled = true
+	env.ssao_intensity = 1.6
+	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.tonemap_exposure = 1.05
+	if _fog_density() > 0.0:
+		env.fog_enabled = true
+		env.fog_density = _fog_density()
+		env.fog_light_color = Color(0.05, 0.06, 0.08)
+		env.fog_sky_affect = 0.0
 	($Environment as WorldEnvironment).environment = env
 	var sun := $Sun as DirectionalLight3D
 	sun.rotation = Vector3(deg_to_rad(-55.0), deg_to_rad(30.0), 0.0)
@@ -243,7 +265,7 @@ func _setup_bounds() -> void:
 # ── Spawning ─────────────────────────────────────────────────────────────────
 
 func _spawn_crew() -> void:
-	if GameState.squad.is_empty():
+	if GameState.squad.is_empty() and not GameState.run_active:
 		GameState.debug_session = true
 	var smg: GearItem = load("res://resources/gear/smg.tres")
 	var rifle: GearItem = load("res://resources/gear/rifle.tres")
@@ -267,6 +289,11 @@ func _spawn_crew() -> void:
 		c.equip(rifle if key == "gunner" else smg)
 		c.equip(heal_gun if key == "medic" else pistol)
 		c.equip(belt)
+		# Crew condition carried from the previous site (travel keeps wounds).
+		var carried: Dictionary = GameState.crew_state.get(key, {})
+		if not carried.is_empty() and not _heals_crew():
+			c.hp = clampf(float(carried.get("hp", c.max_hp)), 1.0, c.max_hp)
+			c.shield = clampf(float(carried.get("shield", 0.0)), 0.0, c.max_shield)
 		_squad.add_member(c)
 		_objectives.register(c)
 		members.append(c)
@@ -300,6 +327,18 @@ func _spawn_enemies() -> void:
 		_objectives.register(c)
 		# Enemies get the full send-off; crew corpses stay for the squad read.
 		c.character_died.connect(func(body): Juice.death_collapse(body, true))
+
+## Small shadowless practical light — fixtures, signs, machine glow. The
+## light-mood floods paint the room; practicals pin light to THINGS.
+func add_practical_light(pos: Vector3, color: Color, energy := 1.6, reach := 7.0) -> void:
+	var light := OmniLight3D.new()
+	light.light_color = color
+	light.light_energy = energy
+	light.omni_range = reach
+	light.omni_attenuation = 1.6
+	light.shadow_enabled = false
+	_level.add_child(light)
+	light.global_position = pos
 
 ## A glowing floor pad that travels to another site when the crew's active
 ## character steps on it — the district's instant-travel connectors.

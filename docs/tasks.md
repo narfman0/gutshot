@@ -73,10 +73,14 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       strip glows toward failure), catwalk railings, sodium interior light
       mood; usability: pause menu (Esc), site-name label, crosshair cursor,
       active-character-only transit pads, followers auto-revive downed mates
-- [ ] **Lighting pass** (dedicated): per-level mood beyond corner floods —
-      practical light sources (signs, fixtures, machines), shadow budget,
-      light cookies/IES looks, occlusion culling check, darkness as gameplay
-      (sight ranges shrink in unlit aisles?)
+- [x] Lighting pass, first slice: SSAO + filmic tonemap globally, per-level
+      depth fog (dusty depot, night haze street, smoky hideout), practical
+      lights pinned to things (vending storefront glow, under-catwalk strips,
+      aisle sodium pools, hideout lamps), red warning lamps on sealed breach
+      doors that die with the door
+- [ ] Lighting pass, later: shadow budget beyond the sun, light cookies/IES
+      looks, occlusion culling check, darkness as gameplay (sight ranges
+      shrink in unlit aisles?)
 - [x] Hideout (safe room: warm light, no enemies, map console) + district
       map overlay — M anywhere, console walk-up, travel to unlocked sites;
       locked entries tease Little Japan / Fab Level / Tower
@@ -88,7 +92,9 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
 - [ ] Proper patrol ROUTES (waypoint paths; IDLE wander + alert states are in)
 - [ ] Camera floor transitions; hide geometry above active floor
 - [ ] Audio pass (AudioManager autoload, wayfarer `gen_audio.py` lineage)
-- [ ] Save/load stub honoring `GameState.debug_session` (menu + pause done)
+- [x] Save/load stub: crew hp/shields carried between sites (hideout heals),
+      autosave on arrival, Continue on the main menu; debug/harness runs can
+      never write a real slot (GameState.run_active gate + scratch-slot tests)
 
 ## Deferred — enemy factions
 

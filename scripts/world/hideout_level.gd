@@ -20,8 +20,14 @@ func _site_name() -> String:
 func _site_id() -> String:
 	return "hideout"
 
+func _heals_crew() -> bool:
+	return true  # the safe room patches everyone up
+
 func _sun_energy() -> float:
 	return 0.5
+
+func _fog_density() -> float:
+	return 0.01  # close, smoky, safe
 
 ## Warm low light — the one place in the district that isn't hostile.
 func _flood_lights() -> Array:
@@ -49,6 +55,10 @@ func _enemy_spawns() -> Array:
 
 func _build_extra_geometry() -> void:
 	_build_map_console()
+	# Practicals: the console's glow, and warm lamps over the shelves.
+	add_practical_light(Vector3(0, 1.6, -5.5), Color(0.3, 0.9, 1.0), 1.6, 5.0)
+	add_practical_light(Vector3(-9.5, 2.0, -5.0), Color(1.0, 0.72, 0.42), 1.4, 6.0)
+	add_practical_light(Vector3(9.5, 1.8, -5.5), Color(1.0, 0.72, 0.42), 1.2, 5.0)
 
 ## The district-map console: a glowing terminal — the active character
 ## stepping up to it opens the map (M works anywhere too).

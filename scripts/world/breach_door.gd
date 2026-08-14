@@ -91,6 +91,16 @@ func _add_visual(size: Vector3) -> void:
 	strip.mesh = bar
 	strip.position.y = size.y + 0.1
 	add_child(strip)
+	# Warning lamp: a red pool at the sealed door — dies with the door, so a
+	# dark doorway means the way is open.
+	var lamp := OmniLight3D.new()
+	lamp.light_color = Color(1.0, 0.25, 0.15)
+	lamp.light_energy = 1.4
+	lamp.omni_range = 4.5
+	lamp.omni_attenuation = 1.6
+	lamp.shadow_enabled = false
+	lamp.position.y = size.y + 0.4
+	add_child(lamp)
 
 func receive_damage(amount: float) -> void:
 	if hp <= 0.0:

@@ -32,6 +32,9 @@ func _site_id() -> String:
 func _sun_energy() -> float:
 	return 0.9  # dimmer skylight leak — this is an interior
 
+func _fog_density() -> float:
+	return 0.007  # warehouse dust hanging in the work-lights
+
 ## Sodium work-lights over the aisles, one cold blue over the yard gate.
 func _flood_lights() -> Array:
 	return [
@@ -85,6 +88,12 @@ func _build_extra_geometry() -> void:
 	_build_catwalk()
 	add_transit_zone(Vector3(22.0, 0.0, 22.0), "skirmish", "→ STREET")
 	add_transit_zone(Vector3(-22.0, 0.0, 22.0), "hideout", "→ HIDEOUT")
+	# Practicals: cyan strips under the catwalk deck, glow pooled in the
+	# container aisles where the fights happen.
+	add_practical_light(Vector3(0, 1.8, -7.5), Color(0.25, 0.85, 1.0), 1.2, 5.0)
+	add_practical_light(Vector3(0, 1.8, -0.5), Color(0.25, 0.85, 1.0), 1.2, 5.0)
+	add_practical_light(Vector3(-12, 2.5, -16), Color(1.0, 0.6, 0.25), 1.8, 8.0)
+	add_practical_light(Vector3(12, 2.5, -16), Color(1.0, 0.6, 0.25), 1.8, 8.0)
 
 ## Full-height wall across the arena at WALL_Z with two door gaps; the doors
 ## are BreachDoors. Wall sits UNDER the catwalk crossing at x = 0.

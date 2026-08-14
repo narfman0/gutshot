@@ -36,6 +36,15 @@ func _site_name() -> String:
 func _site_id() -> String:
 	return "skirmish"
 
+func _fog_density() -> float:
+	return 0.0025  # thin night haze around the neon
+
 func _build_extra_geometry() -> void:
 	add_transit_zone(Vector3(20.0, 0.0, 20.0), "depot", "→ DEPOT 9")
 	add_transit_zone(Vector3(-20.0, 0.0, 20.0), "hideout", "→ HIDEOUT")
+	# Practicals: the vending machines throw light like storefronts, and the
+	# central crate cluster gets a magenta wash.
+	add_practical_light(Vector3(0.7, 1.6, 4.6), Color(0.3, 0.9, 1.0), 1.6, 6.0)
+	add_practical_light(Vector3(-9.0, 1.6, -7.4), Color(0.3, 0.9, 1.0), 1.4, 6.0)
+	add_practical_light(Vector3(3.0, 1.6, -14.4), Color(0.95, 0.3, 0.75), 1.4, 6.0)
+	add_practical_light(Vector3(0, 1.2, -8.0), Color(0.95, 0.3, 0.75), 1.0, 7.0)

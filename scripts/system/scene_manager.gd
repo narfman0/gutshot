@@ -27,6 +27,8 @@ func change_level(mission_id: String) -> void:
 	if _busy:
 		return
 	_busy = true
+	# Crew condition rides along — the scene change frees the bodies.
+	GameState.capture_crew()
 	var tween := create_tween()
 	tween.tween_property(_fade, "color:a", 1.0, 0.25)
 	await tween.finished
