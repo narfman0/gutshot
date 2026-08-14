@@ -5,7 +5,9 @@ class_name GearItem
 extends Resource
 
 enum SlotType { PRIMARY, SECONDARY, HEAVY }
-enum FireMode { HITSCAN, PROJECTILE, THROWN }
+## MELEE: reach-gated swings (fire_range is arm's length), no ammo, QUIET —
+## steel never trips hearing alerts, turf law, or muzzle-flash pins.
+enum FireMode { HITSCAN, PROJECTILE, THROWN, MELEE }
 
 @export var display_name := "Gear"
 @export var slot_type: SlotType = SlotType.PRIMARY

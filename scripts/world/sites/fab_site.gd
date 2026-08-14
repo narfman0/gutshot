@@ -93,7 +93,8 @@ func enemy_spawns() -> Array:
 		# The job: a bandit salvage crew stripping the east assembly line.
 		{"skin": "biker", "pos": Vector3(11.0, 0.1, 13.0), "pack": "salvage", "morale": true},
 		{"skin": "punk", "pos": Vector3(13.0, 0.1, 10.0), "pack": "salvage", "morale": true},
-		{"skin": "gangster", "pos": Vector3(8.0, 0.1, 14.0), "pack": "salvage", "morale": true},
+		{"skin": "gangster", "pos": Vector3(8.0, 0.1, 14.0), "pack": "salvage", "morale": true,
+			"gear": "res://resources/gear/enemy_pistol.tres"},
 		# The Assembly: neutral custodians. Not your mission — unless you make
 		# them your problem.
 		{"skin": "war_robot", "pos": Vector3(-3.0, 0.1, -10.0), "pack": "assembly",

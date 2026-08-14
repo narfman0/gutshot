@@ -101,6 +101,8 @@ func try_fire(target: Character) -> bool:
 		if g.abilities.is_empty():
 			return false
 		return character.activate_ability(g.abilities[0], target.global_position)
+	if g.fire_mode == GearItem.FireMode.MELEE:
+		return _swing(target, g)
 	_next_shot_ms = Time.get_ticks_msec() + int(1000.0 / maxf(g.fire_rate, 0.1))
 	if g.mag_size > 0:
 		var slot := character.active_slot
@@ -128,6 +130,31 @@ func try_fire(target: Character) -> bool:
 	_alert_hearing()
 	return true
 
+## One melee swing at a target already inside reach (can_fire gated the rate
+## and full-cover cases). Steel is QUIET: the victim knows — receive_damage
+## pins the attacker — but there is no muzzle flash and no bang, so no
+## hearing alert, no shot_fired, no turf heat. That silence is the whole
+## identity of the melee factions to come.
+func _swing(target: Character, g: GearItem) -> bool:
+	if character.global_position.distance_to(target.global_position) > g.fire_range:
+		return false
+	_next_shot_ms = Time.get_ticks_msec() + int(1000.0 / maxf(g.fire_rate, 0.1))
+	AudioManager.play_sfx(g.shot_sfx)  # the whoosh
+	CharacterAnimator.oneshot(character, "attack", 1.5, 0.55)
+	var moving := Vector2(character.velocity.x, character.velocity.z).length() > 0.5
+	var accuracy := g.base_accuracy * (g.moving_accuracy_mult if moving else 1.0)
+	var hit := randf() < accuracy
+	last_shot_hit = hit
+	if hit:
+		AudioManager.play_sfx("slash")
+		Juice.impact_burst(get_tree().current_scene,
+			target.global_position + Vector3(0, 1.0 * Character.VERTICAL_SQUASH, 0),
+			Color(0.9, 0.25, 0.2))
+		target.receive_damage(g.damage, character)
+	else:
+		target.notify_shot_at(character)  # they still saw the lunge
+	return true
+
 ## Fire with nobody on the line — the round still leaves the gun (rate, mag,
 ## flash, tracer into the dark) and the noise still carries. Cursor-direction
 ## shooting calls this when the aim cone is empty.
@@ -140,6 +167,12 @@ func fire_wild(at_point: Vector3) -> bool:
 	if Time.get_ticks_msec() < _next_shot_ms or is_reloading():
 		return false
 	_finish_reload_if_due()
+	if g.fire_mode == GearItem.FireMode.MELEE:
+		# Swing at the air — whoosh and follow-through, nothing else.
+		_next_shot_ms = Time.get_ticks_msec() + int(1000.0 / maxf(g.fire_rate, 0.1))
+		AudioManager.play_sfx(g.shot_sfx)
+		CharacterAnimator.oneshot(character, "attack", 1.5, 0.55)
+		return true
 	_next_shot_ms = Time.get_ticks_msec() + int(1000.0 / maxf(g.fire_rate, 0.1))
 	if g.mag_size > 0:
 		var slot := character.active_slot

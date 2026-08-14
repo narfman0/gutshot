@@ -21,6 +21,9 @@ func _ready() -> void:
 	await _shot("district_2_alley.png", 30)
 	_teleport((_chunk("Street") as Node3D).global_position + Vector3(0, 0.1, 8))
 	await _shot("district_3_street.png", 50)
+	# Walk into the west pack's lap so the blade rusher charges for the camera.
+	_teleport(Vector3(-9.0, 0.1, -8.0))
+	await _shot("district_3b_rusher.png", 100)
 	_teleport(Vector3(42.0, 0.1, 10.0))  # the arcade
 	await _shot("district_4_arcade.png", 30)
 	_teleport(_chunk("Exchange").to_global(Vector3(-26, 3.05, -5)))

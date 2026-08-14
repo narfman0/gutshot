@@ -89,8 +89,12 @@ func enemy_spawns() -> Array:
 		{"skin": "punk", "pos": Vector3(-8.0, 0.1, 2.0), "pack": "floor", "morale": true,
 			"patrol": [Vector3(-12.0, 0.1, 6.0), Vector3(10.0, 0.1, 4.0), Vector3(0.0, 0.1, -8.0)]},
 		{"skin": "biker", "pos": Vector3(8.0, 0.1, -2.0), "pack": "floor", "morale": true,
+			"gear": "res://resources/gear/enemy_pistol.tres",
 			"patrol": [Vector3(12.0, 0.1, -6.0), Vector3(-10.0, 0.1, -4.0)]},
 		{"skin": "gangster", "pos": Vector3(0.0, 0.1, -12.0), "pack": "floor", "morale": true},
+		# The stall-jumper: a blade rusher hiding among the crates.
+		{"skin": "punk", "pos": Vector3(4.0, 0.1, 2.0), "pack": "floor", "morale": true,
+			"gear": "res://resources/gear/scrap_blade.tres"},
 		# Gallery watch — fires down over the rails; longer sight so the
 		# atrium below is actually watched.
 		{"skin": "gangster", "pos": Vector3(-26.0, 3.1, -10.0), "pack": "gallery",

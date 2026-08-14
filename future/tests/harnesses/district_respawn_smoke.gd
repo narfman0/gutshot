@@ -56,7 +56,7 @@ func _ready() -> void:
 	objectives.site_cleared.connect(func(site_id): _cleared.append(site_id))
 
 	# 1. Clearing the street fires site_cleared.
-	_check(_street_alive() == 7, "street starts with 7 gang members")
+	_check(_street_alive() == 8, "street starts with 8 gang members")
 	_kill_street()
 	await _settle(3)
 	_check(_cleared.has("skirmish"), "clearing the street fires site_cleared")
@@ -65,7 +65,7 @@ func _ready() -> void:
 	# 2. Crew is at the hideout (not present) → the site repopulates.
 	await get_tree().create_timer(2.0).timeout
 	await _settle(3)
-	_check(_street_alive() == 7, "vacated street repopulates (%d alive)" % _street_alive())
+	_check(_street_alive() == 8, "vacated street repopulates (%d alive)" % _street_alive())
 	_check(not objectives.site_clear("skirmish"), "repop un-clears the site")
 
 	# 3. Crew standing IN the site blocks the repop until they leave.
@@ -82,7 +82,7 @@ func _ready() -> void:
 		(member as Character).global_position = _chunk("Hideout").to_global(Vector3(0, 0.1, 5))
 	await get_tree().create_timer(2.0).timeout
 	await _settle(3)
-	_check(_street_alive() == 7, "leaving lets the street refill (%d alive)" % _street_alive())
+	_check(_street_alive() == 8, "leaving lets the street refill (%d alive)" % _street_alive())
 
 	if _failures.is_empty():
 		print("DISTRICT_RESPAWN_SMOKE: ALL PASS")

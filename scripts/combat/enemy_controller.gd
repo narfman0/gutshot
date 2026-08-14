@@ -27,8 +27,11 @@ enum State { IDLE, SUSPICIOUS, FIGHT, FLEE }
 @export var leash_radius := 25.0
 ## Waypoint loop walked while IDLE (empty → amble near spawn instead).
 @export var patrol_points: Array = []
-## Morale units (bandits) break and flee when the pack is cut to half.
+## Morale units (bandits) break and flee when the pack thins to this
+## fraction of spawn strength. Space-bandit nerve: their packs default to
+## 0.6 via GameWorld's spawner — they crack EARLY, scatter, and slink back.
 @export var has_morale := false
+@export var morale_break_frac := MORALE_BREAK_FRAC
 ## Fighting packs with pursue break the spawn leash and chase across the
 ## seamless district — through corridors, into other sites, into other
 ## factions' turf. Losing the track ends the chase (they investigate the
@@ -189,7 +192,7 @@ func check_morale() -> void:
 	for member in get_tree().get_nodes_in_group("pack_" + pack_id):
 		if member is EnemyController and (member as EnemyController).body.is_alive():
 			alive += 1
-	if float(alive) / float(_pack_initial) <= MORALE_BREAK_FRAC:
+	if float(alive) / float(_pack_initial) <= morale_break_frac:
 		state = State.FLEE
 		brain.leash_radius = _base_leash  # broken nerve ends the chase too
 		_flee_timer = FLEE_RECOVER_SECS

@@ -167,7 +167,13 @@ Not implemented yet. Planned approach:
 ### Combat model
 - **Accuracy per shot** = weapon `base_accuracy` × `moving_accuracy_mult`
   (while the shooter moves) × cover tier × range falloff
-  (`scripts/combat/shooter.gd`). There is **no hard range cap** — `fire_range`
+  (`scripts/combat/shooter.gd`). MELEE gear swings instead: reach-gated by
+  `fire_range`, no ammo, accuracy without the cover tier (you're past cover
+  at arm's length), and QUIET — no hearing alert, no `shot_fired`, no turf
+  heat; the victim still learns the attacker (`receive_damage` pins).
+  CombatBrain skips the cover state machine for melee wielders and runs
+  them straight at the threat at `MELEE_RUSH_MULT`.
+  For guns there is **no hard range cap** — `fire_range`
   is the optimal range, with hyperbolic falloff beyond it (2× range → half
   accuracy, floored at 5%). Misses render as deflected tracers; hits land
   instantly for hitscan.

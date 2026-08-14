@@ -488,6 +488,11 @@ func _spawn_enemy(chunk: SiteChunk, entry: Dictionary) -> Character:
 		patrol.append(chunk.to_global(p))
 	controller.patrol_points = patrol
 	controller.has_morale = entry.get("morale", false)
+	# Bandit nerve: morale packs crack at 60% strength unless a site says
+	# otherwise — scrappy raiders scatter early and slink back, they don't
+	# stand and die.
+	controller.morale_break_frac = entry.get("morale_frac",
+		0.6 if entry.get("morale", false) else EnemyController.MORALE_BREAK_FRAC)
 	controller.aggro_radius = entry.get("aggro", controller.aggro_radius)
 	controller.pursue = entry.get("pursue", true)
 	if entry.has("gear"):

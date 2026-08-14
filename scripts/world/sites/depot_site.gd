@@ -79,12 +79,16 @@ func enemy_spawns() -> Array:
 			"patrol": [Vector3(-14.0, 0.1, 2.0), Vector3(14.0, 0.1, 2.0), Vector3(0.0, 0.1, 8.0)]},
 		{"skin": "biker", "pos": Vector3(10.0, 0.1, 2.0), "pack": "yard", "morale": true,
 			"patrol": [Vector3(14.0, 0.1, 2.0), Vector3(-14.0, 0.1, 2.0)]},
+		# Shock-stick rusher loitering by the gate — the yard's teeth.
+		{"skin": "punk", "pos": Vector3(0.0, 0.1, 4.0), "pack": "yard", "morale": true,
+			"gear": "res://resources/gear/scrap_blade.tres"},
 		# Catwalk watch — owns the high route.
 		{"skin": "gangster", "pos": Vector3(0.0, 0.1, -9.0), "pack": "walk", "morale": true,
 			"patrol": [Vector3(0.0, DECK_H, -9.0), Vector3(0.0, DECK_H, 1.0)]},
 		{"skin": "punk_girl", "pos": Vector3(2.0, 0.1, -11.0), "pack": "walk", "morale": true},
 		# Back-room crew among the containers.
-		{"skin": "biker", "pos": Vector3(-12.0, 0.1, -16.0), "pack": "back", "morale": true},
+		{"skin": "biker", "pos": Vector3(-12.0, 0.1, -16.0), "pack": "back", "morale": true,
+			"gear": "res://resources/gear/enemy_rifle.tres"},
 		{"skin": "gangster", "pos": Vector3(4.0, 0.1, -18.0), "pack": "back", "morale": true},
 		{"skin": "punk", "pos": Vector3(12.0, 0.1, -17.0), "pack": "back", "morale": true},
 	]

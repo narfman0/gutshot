@@ -139,6 +139,33 @@ func _ready() -> void:
 		% [Character.REVIVE_HP_FRAC * 100.0, shielded.downed, shielded.hp])
 	mate.free()
 
+	# 7. Melee: reach-gated, and QUIET — steel never emits shot_fired.
+	var blade := GearItem.new()
+	blade.display_name = "TestBlade"
+	blade.fire_mode = GearItem.FireMode.MELEE
+	blade.damage = 15.0
+	blade.fire_range = 1.9
+	blade.fire_rate = 100000.0
+	blade.base_accuracy = 1.0
+	blade.moving_accuracy_mult = 1.0
+	blade.mag_size = 0
+	var rusher := _make_character(1, Vector3(20, 0, 0))
+	var victim := _make_character(0, Vector3(20, 0, -6))
+	rusher.equip(blade)
+	var rusher_shooter: Shooter = rusher.get_node("Shooter")
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var shots_heard := [0]
+	GameState.shot_fired.connect(func(_s): shots_heard[0] += 1)
+	_check(not rusher_shooter.try_fire(victim), "blade refuses a target beyond reach")
+	victim.global_position = Vector3(20, 0, -1.5)
+	await get_tree().physics_frame
+	var hp_pre_swing := victim.hp
+	_check(rusher_shooter.try_fire(victim), "blade swings inside reach")
+	_check(is_equal_approx(victim.hp, hp_pre_swing - 15.0),
+		"swing lands full damage (hp %.1f -> %.1f)" % [hp_pre_swing, victim.hp])
+	_check(shots_heard[0] == 0, "steel is quiet — no shot_fired emitted")
+
 	if _failures.is_empty():
 		print("COMBAT_SMOKE: ALL PASS")
 		get_tree().quit(0)

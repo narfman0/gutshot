@@ -43,15 +43,21 @@ func cover_layout() -> Array:
 		[PROP_CRATE_04, 0.0, -12.0, 60.0], [PROP_VENDING, 3.0, -15.0, 0.0],
 	]
 
+## Space-bandit flavor: looted mixed guns, a blade rusher in the west pack,
+## and morale (they crack early — the spawner's bandit nerve default).
 func enemy_spawns() -> Array:
 	return [
-		{"skin": "punk", "pos": Vector3(-6.0, 0.1, -6.0), "pack": "mid"},
-		{"skin": "biker", "pos": Vector3(-3.5, 0.1, -7.0), "pack": "mid"},
-		{"skin": "gangster", "pos": Vector3(9.0, 0.1, -12.0), "pack": "east"},
-		{"skin": "punk_girl", "pos": Vector3(11.0, 0.1, -11.0), "pack": "east"},
-		{"skin": "punk", "pos": Vector3(-10.0, 0.1, -12.0), "pack": "west"},
-		{"skin": "biker", "pos": Vector3(-12.0, 0.1, -14.0), "pack": "west"},
-		{"skin": "gangster", "pos": Vector3(0.0, 0.1, -17.0), "pack": "west"},
+		{"skin": "punk", "pos": Vector3(-6.0, 0.1, -6.0), "pack": "mid", "morale": true},
+		{"skin": "biker", "pos": Vector3(-3.5, 0.1, -7.0), "pack": "mid", "morale": true},
+		{"skin": "gangster", "pos": Vector3(9.0, 0.1, -12.0), "pack": "east", "morale": true},
+		{"skin": "punk_girl", "pos": Vector3(11.0, 0.1, -11.0), "pack": "east", "morale": true,
+			"gear": "res://resources/gear/enemy_pistol.tres"},
+		{"skin": "punk", "pos": Vector3(-10.0, 0.1, -12.0), "pack": "west", "morale": true},
+		{"skin": "biker", "pos": Vector3(-12.0, 0.1, -14.0), "pack": "west", "morale": true,
+			"gear": "res://resources/gear/enemy_rifle.tres"},
+		{"skin": "gangster", "pos": Vector3(0.0, 0.1, -17.0), "pack": "west", "morale": true},
+		{"skin": "punk", "pos": Vector3(-14.0, 0.1, -10.0), "pack": "west", "morale": true,
+			"gear": "res://resources/gear/scrap_blade.tres"},
 	]
 
 func build_extra_geometry() -> void:

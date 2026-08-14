@@ -146,6 +146,13 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       clever crew can bait a gang pack into machine turf and walk away from
       the three-way fight (district_pursuit_smoke proves the whole play).
       Global `GameState.shot_fired` signal is the district's ears
+- [x] Melee attack path: GearItem MELEE fire mode — reach-gated swings
+      (fire_range = arm's length), no ammo, sword-pack attack anim, swing/
+      slash sfx, and QUIET by design: steel never trips hearing alerts,
+      shot_fired, or turf heat (the ninja identity, pre-built). CombatBrain
+      melee tick = run the threat down at 1.35× and swing (the demon-horde
+      recipe). Gear: scrap_blade (shock stick), katana (for the clan later).
+      Unblocks: demon hordes, cyber-ninja clan, Little Japan
 - [ ] Seamless-district follow-ups: spatial pruning for hostiles_of/hearing
       scans if rosters grow past dozens
 - [x] Save/load stub: crew hp/shields carried between sites (hideout heals),
@@ -167,12 +174,12 @@ and onto systems that already exist (CombatBrain, awareness, packs).
       (verified on the asset server): POLYGON_SciFi_Horror,
       POLYGON_CityZombies / BossZombies (horde bodies + big bruisers),
       POLYGON_Apocalypse.
-- [ ] **Space bandits** — scrappy mid-tier raiders: current street-gang AI
-      but with personality — looser packs, cowardice (morale breaks when the
-      pack thins → flee/regroup instead of fighting to the last), looted mix
-      of weapons, maybe grenade-happy. Mostly tuning + a morale layer on
-      EnemyController. Asset candidates: POLYGON_Spy_Kit / Gang_Warfare /
-      Sci-Fi Worlds gear.
+- [x] **Space bandits** — SHIPPED as the district-wide bandit personality:
+      every gang pack has morale and cracks EARLY (bandit nerve — packs
+      break at 60% strength via `morale_break_frac`, flee, slink back),
+      looted mixed guns (scrap pistols, looted rifles alongside SMGs), and
+      shock-stick blade RUSHERS seeded in the street/exchange/depot packs —
+      the first users of the melee path. Grenade-happiness still open.
 - [ ] **Corporate security / military** — the scary ones: full use of the
       systems the player fights with. Shields (they already exist — just give
       them max_shield), tight pack discipline (bounding overwatch: one element

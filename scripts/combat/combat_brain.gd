@@ -24,6 +24,7 @@ const BURST_SHOTS := 3            # shots per pop-out window
 const FLANK_TRIGGER_SECS := 4.0   # no damage dealt this long → go around
 const FLANK_ARC_DEG := 90.0
 const GRENADE_STARVE_SECS := 2.5  # dug-in target this long → try a grenade first
+const MELEE_RUSH_MULT := 1.35     # blades close FAST — the rush must be scary
 const ARRIVE_DIST := 0.6
 const WAYPOINT_DIST := 0.5        # advance to the next path corner inside this
 const REPATH_DIST := 1.0          # re-query when the destination drifts this far
@@ -146,6 +147,12 @@ func tick(delta: float) -> void:
 		threat_lkp = Vector3.INF
 		idle_stop(delta)
 		return
+	# Blades don't shop cover — a melee brain is a guided missile with legs:
+	# run the threat down, swing when close. (The demon-horde/ninja recipe.)
+	var g := shooter.gear()
+	if g != null and g.fire_mode == GearItem.FireMode.MELEE:
+		_tick_melee(delta)
+		return
 	_starve_timer += delta
 	_state_timer -= delta
 	match state:
@@ -165,6 +172,17 @@ func tick(delta: float) -> void:
 			_starve_timer = 0.0
 	if _starve_timer >= FLANK_TRIGGER_SECS and state != State.FLANK:
 		_enter_flank()
+
+func _tick_melee(delta: float) -> void:
+	var reach: float = shooter.gear().fire_range
+	var flat := threat_pos() - body.global_position
+	flat.y = 0.0
+	if flat.length() > reach * 0.8:
+		nav_to(_clamp_to_leash(threat_pos()), delta, SPEED * MELEE_RUSH_MULT, threat_pos())
+	else:
+		idle_stop(delta)
+		_face(threat_pos())
+		shooter.try_fire(threat)
 
 ## Throw a frag at the threat if we carry one, it's off cooldown, and the
 ## threat is inside throw range. Both followers and enemies use this — cover

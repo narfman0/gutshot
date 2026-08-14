@@ -190,6 +190,27 @@ def sfx_revive():
     return out
 
 
+def sfx_swing():
+    """Melee whoosh — bandpassed air with a swept envelope, no bang at all
+    (steel is quiet; that's the melee identity)."""
+    n = int(0.16 * SR)
+    noise = lowpass([rng.uniform(-1, 1) for _ in range(n)], 0.25)
+    return [x * (math.sin(math.pi * i / n) ** 2) * 0.7 for i, x in enumerate(noise)]
+
+
+def sfx_slash():
+    """Blade connect: metallic ring + bite + body thack."""
+    n = int(0.13 * SR)
+    out = []
+    for i in range(n):
+        t = i / SR
+        ring = math.sin(2 * math.pi * (2400 - 900 * i / n) * t) * env_exp(n, i, 18) * 0.4
+        bite = rng.uniform(-1, 1) * env_exp(n, i, 30) * 0.6
+        thack = math.sin(2 * math.pi * 140 * t) * env_exp(n, i, 14) * 0.4
+        out.append(ring + bite + thack)
+    return out
+
+
 def sfx_telegraph():
     n = int(0.45 * SR)
     out = []
@@ -315,6 +336,8 @@ def main():
     write_wav("sfx_down.wav", sfx_down())
     write_wav("sfx_revive.wav", sfx_revive())
     write_wav("sfx_telegraph.wav", sfx_telegraph())
+    write_wav("sfx_swing.wav", sfx_swing())
+    write_wav("sfx_slash.wav", sfx_slash())
     write_wav("ambient_city.wav", ambient_city())
     write_wav("ambient_hideout.wav", ambient_hideout())
     write_wav("ambient_hall.wav", ambient_hall())

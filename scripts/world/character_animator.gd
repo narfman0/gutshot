@@ -33,6 +33,9 @@ const CLIPS := {
 const COMBAT_CLIPS := {
 	"hit": "res://assets/meshes/ANIMATION_Sword_Combat_SourceFiles_v5/SourceFiles/Animations/Polygon/Hit/HitReact/A_Hit_F_React_Sword.gltf",
 	"death": "res://assets/meshes/ANIMATION_Sword_Combat_SourceFiles_v5/SourceFiles/Animations/Polygon/Death/A_Death_F_01_Sword.gltf",
+	# Melee swing — the light combo opener, non-root-motion so the body
+	# stays where physics put it.
+	"attack": "res://assets/meshes/ANIMATION_Sword_Combat_SourceFiles_v5/SourceFiles/Animations/Polygon/Attack/LightCombo01/A_Attack_LightCombo01A_Sword.gltf",
 }
 
 const _RUN_THRESHOLD := 0.5  # m/s below which locomotion is idle
