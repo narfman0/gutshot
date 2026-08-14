@@ -37,6 +37,7 @@ const CONNECTORS := [
 	["skirmish", 1, "exchange", 0, "arcade"],
 	["exchange", 1, "depot", 0, "service"],
 	["depot", 1, "fab", 0, "tunnel"],
+	["skirmish", 2, "tower", 0, "plaza"],
 ]
 
 # Corridor dressing props — full res:// literals for fetch_assets.sh's scan.
@@ -73,6 +74,11 @@ const CORRIDOR_STYLES := {
 		"wall": Color(0.14, 0.15, 0.17), "floor": Color(0.13, 0.14, 0.16),
 		"lights": [Color(0.35, 0.6, 1.0)], "strip": Color(0.4, 0.7, 1.0),
 		"props": [_CONTAINER_SMALL, _CRATE_01, _EBOX], "beams": true,
+	},
+	"plaza": {  # street ↔ tower: the corporate approach — swept, lit, watched
+		"wall": Color(0.42, 0.44, 0.45), "floor": Color(0.36, 0.38, 0.38),
+		"lights": [Color(0.85, 0.92, 1.0)], "strip": Color(0.7, 0.9, 1.0),
+		"props": [], "beams": false,
 	},
 }
 
@@ -376,8 +382,9 @@ func _build_corridor(root: Node3D, ga: Dictionary, gb: Dictionary,
 		light.global_position = pa.lerp(pb, t) + Vector3(0, 2.6, 0)
 	# Junk along the walls — real cover, alternating sides, clear of the
 	# gate mouths. Yaw is index-hashed so the editor preview is stable.
+	# (The plaza keeps its props list empty — corporate approaches are swept.)
 	var props: Array = style["props"]
-	var slots := maxi(0, int((length - 8.0) / 7.0))
+	var slots := maxi(0, int((length - 8.0) / 7.0)) if not props.is_empty() else 0
 	for j in slots:
 		var t := (float(j) + 0.5) / float(slots)
 		var side := -1.0 if j % 2 == 0 else 1.0
@@ -545,12 +552,14 @@ func _spawn_enemy(chunk: SiteChunk, entry: Dictionary, generation := 0) -> Chara
 	var all_skins := {}
 	all_skins.merge(Skins.ENEMIES)
 	all_skins.merge(Skins.MACHINES)
+	all_skins.merge(Skins.CORP)
 	var info: Dictionary = all_skins[entry["skin"]]
 	var c: Character = CharacterScene.instantiate()
 	c.team = entry.get("faction", Factions.GANGS)
 	c.display_name = String(entry["skin"]).capitalize()
 	c.anim_set = info["set"]
 	c.max_hp = 60.0
+	c.max_shield = entry.get("shield", 0.0)  # corp-lite guards get the layer
 	_enemy_squad.add_child(c)
 	c.global_position = chunk.to_global(entry["pos"])
 	c.setup_skin(info["path"])

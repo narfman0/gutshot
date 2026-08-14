@@ -34,6 +34,10 @@ func _ready() -> void:
 	await _shot("district_7_depot.png", 60)
 	_teleport(_chunk("Fab").to_global(Vector3(0, 0.1, 10)))
 	await _shot("district_8_fab.png", 60)
+	_teleport(_chunk("Tower").to_global(Vector3(0, 0.1, 14)))
+	await _shot("district_9_tower_lobby.png", 60)
+	_teleport(_chunk("Tower").to_global(Vector3(-22, 4.2, -2)))
+	await _shot("district_10_tower_mezz.png", 60)
 	print("DISTRICT_SHOTS: DONE")
 	get_tree().quit(0)
 

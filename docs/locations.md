@@ -143,6 +143,8 @@ foot through walled connector corridors between the sites' gates:
 4. **The Exchange** — SHIPPED: the three-floor testbed (mezzanine gallery
    overwatch, closed counting house) that proved the FloorSystem reveal
    state and single-navmesh ramp stairs.
-5. **Vantag Tower** — the capstone: full multi-floor, all factions, portal
-   finale. Likely several sub-scenes (lobby / mid / upper) linked by the
-   elevator rather than one giant scene.
+5. **Vantag Tower** — LOBBY SHIPPED (the Matrix-lobby slice: marble column
+   grid, security desk, sealed elevator bank, mezzanine balcony with
+   corp-lite suit guards; plaza corridor up from the street). The capstone
+   still to come: the floors above the sealed elevators — full multi-floor,
+   all factions, portal finale.

@@ -96,6 +96,11 @@ func wall_color() -> Color:
 func ground_detail() -> bool:
 	return true
 
+## Ground surface roughness — 0.4 reads as worn concrete; the tower lobby
+## drops it for the polished-marble sheen.
+func ground_roughness() -> float:
+	return 0.4
+
 # ── Build ────────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
@@ -165,7 +170,7 @@ func _setup_ground() -> void:
 	plane.size = Vector2(arena_half() * 2.0, arena_half() * 2.0)
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = ground_color()
-	mat.roughness = 0.4
+	mat.roughness = ground_roughness()
 	mat.metallic = 0.15
 	plane.material = mat
 	mi.mesh = plane
@@ -474,16 +479,18 @@ func add_walkable_box(pos: Vector3, size: Vector3, tilt_x_deg := 0.0, tilt_z_deg
 	body.rotation.z = deg_to_rad(tilt_z_deg)
 
 ## Railing: visual only (no collider) — shots pass, and dropping off a deck
-## stays a legal shortcut down.
-func add_rail(pos: Vector3, size: Vector3) -> void:
+## stays a legal shortcut down. Default is the district's hazard-yellow
+## glow; the tower's balustrade passes marble and barely any.
+func add_rail(pos: Vector3, size: Vector3,
+		color := Color(0.7, 0.6, 0.15), glow := 0.4) -> void:
 	var mi := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
 	mesh.size = size
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.7, 0.6, 0.15)
+	mat.albedo_color = color
 	mat.emission_enabled = true
-	mat.emission = Color(0.9, 0.75, 0.2)
-	mat.emission_energy_multiplier = 0.4
+	mat.emission = color.lightened(0.25)
+	mat.emission_energy_multiplier = glow
 	mesh.material = mat
 	mi.mesh = mesh
 	_gen.add_child(mi)

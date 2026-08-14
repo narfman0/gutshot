@@ -333,6 +333,29 @@ def ambient_machine():
     return seamless(out)
 
 
+def ambient_lobby():
+    """Vantag Tower lobby: conditioned air, a soft power-hum, and glassy
+    chime swells — money keeping the grime outside."""
+    n = int(10.0 * SR)
+    out = []
+    for i in range(n):
+        t = i / SR
+        hvac = 0.7 + 0.3 * math.sin(2 * math.pi * 0.05 * t)
+        hum = math.sin(2 * math.pi * 100 * t) * 0.06 \
+            + math.sin(2 * math.pi * 200 * t) * 0.03
+        out.append(hum * hvac)
+    air = lowpass([rng.uniform(-1, 1) for _ in range(n)], 0.06)
+    out = [o + a * 0.10 for o, a in zip(out, air)]
+    for start_s, f in [(1.0, 523.25), (4.0, 659.25), (7.0, 783.99)]:
+        s0 = int(start_s * SR)
+        dur = int(2.4 * SR)
+        for j in range(min(dur, n - s0)):
+            t = j / SR
+            env = math.sin(math.pi * j / dur) ** 2
+            out[s0 + j] += math.sin(2 * math.pi * f * t) * env * 0.045
+    return seamless(out)
+
+
 def main():
     write_wav("sfx_shot_smg.wav", sfx_shot_smg())
     write_wav("sfx_shot_rifle.wav", sfx_shot_rifle())
@@ -356,6 +379,7 @@ def main():
     write_wav("ambient_hall.wav", ambient_hall())
     write_wav("ambient_industrial.wav", ambient_industrial())
     write_wav("ambient_machine.wav", ambient_machine())
+    write_wav("ambient_lobby.wav", ambient_lobby())
 
 
 if __name__ == "__main__":

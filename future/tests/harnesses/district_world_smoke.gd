@@ -65,6 +65,14 @@ func _ready() -> void:
 			chain[i + 1], path.size(),
 			Vector2(end.x - to.x, end.z - to.z).length() if path.size() > 0 else -1.0])
 
+	# 2b. The tower branches off the street — the plaza is walkable too.
+	var t_from := (_chunk("Street") as Node3D).global_position + Vector3(0, 0.1, 0)
+	var t_to := (_chunk("Tower") as Node3D).global_position + Vector3(0, 0.1, 0)
+	var t_path := NavigationServer3D.map_get_path(map, t_from, t_to, true)
+	var t_end := t_path[t_path.size() - 1] if t_path.size() > 0 else Vector3.INF
+	_check(t_path.size() > 1 and Vector2(t_end.x - t_to.x, t_end.z - t_to.z).length() < 6.0,
+		"Street → Tower is walkable (path %d pts)" % t_path.size())
+
 	# 3. Site tracking follows the active character across the district.
 	var street := _chunk("Street")
 	leader.global_position = street.to_global(Vector3(0, 0.1, 18))

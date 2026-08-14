@@ -19,6 +19,12 @@ const ENEMIES := {
 	"punk_girl": {"path": "res://assets/meshes/POLYGON_City_Characters_SourceFiles_v2/Source_Files/Characters/SK_Character_PunkGirl.gltf", "set": "femn"},
 }
 
+## Corp-lite: tower lobby security placeholders until the real corp faction
+## lands (suits — the Matrix-lobby read).
+const CORP := {
+	"suit": {"path": "res://assets/meshes/POLYGON_Apocalypse_SourceFiles_v3/Source_Files/Characters/SK_Chr_Business_Male_01.gltf", "set": "masc"},
+}
+
 ## The Assembly — semi-sentient machines (Scifi_Space rigged robots).
 const MACHINES := {
 	"war_robot": {"path": "res://assets/meshes/POLYGON_Scifi_Space_SourceFiles_v2/SourceFiles/Characters/SK_Chr_BR_War_Robot_01.gltf", "set": "masc"},

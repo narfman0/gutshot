@@ -181,6 +181,15 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       glTF corrector (Buildings-tree meshes ship uncorrected — a "tower"
       measures 1.5 km). Chase AI fix rode along: cover only matters inside
       engage range — pursuers close the gap instead of camping
+- [x] Vantag Tower — LOBBY slice, styled on THE lobby scene: marble column
+      grid (real chewable cover), polished floor (ground_roughness hook),
+      security desk, metal-detector arch, sealed elevator bank, VANTAG
+      signage, and a formal mezzanine balcony at 4 m (FloorSystem) with
+      marble balustrade + twin staircases. Corp-lite security: "suit" skin
+      (Apocalypse business male), spawn-entry `shield` key (30), no morale,
+      no pursuit — they hold the lobby. Plaza corridor from the street
+      (swept, white-lit, no junk), ambient_lobby bed (HVAC + glassy
+      chimes). Upper floors stay sealed — the campaign's problem
 - [ ] Polish round v2 ideas: facade pieces on the tall walls, ground
       texture decals (real textures over seam boxes), animated holograms,
       district-edge fog wall, rain
