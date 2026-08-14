@@ -150,7 +150,7 @@ func _swing(target: Character, g: GearItem) -> bool:
 		Juice.impact_burst(get_tree().current_scene,
 			target.global_position + Vector3(0, 1.0 * Character.VERTICAL_SQUASH, 0),
 			Color(0.9, 0.25, 0.2))
-		target.receive_damage(g.damage, character)
+		target.receive_damage(g.damage * character.damage_mult, character)
 	else:
 		target.notify_shot_at(character)  # they still saw the lunge
 	return true
@@ -222,7 +222,7 @@ func _resolve_hitscan(target: Character, muzzle: Vector3, hit: bool, g: GearItem
 		Vfx.tracer(scene, muzzle, chest)
 		Juice.impact_burst(scene, target.global_position)
 		DamageNumber.hit(scene, target.global_position, int(g.damage))
-		target.receive_damage(g.damage, character)
+		target.receive_damage(g.damage * character.damage_mult, character)
 	else:
 		Vfx.tracer(scene, muzzle, _deflected(muzzle, chest))
 		DamageNumber.miss(scene, target.global_position)
@@ -236,7 +236,7 @@ func _fire_projectile(target: Character, muzzle: Vector3, hit: bool, g: GearItem
 			var scene := get_tree().current_scene
 			Juice.impact_burst(scene, body.global_position)
 			DamageNumber.hit(scene, body.global_position, int(g.damage))
-			body.receive_damage(g.damage, character),
+			body.receive_damage(g.damage * character.damage_mult, character),
 		g.projectile_speed)
 
 ## Heal-gun path: beam a squadmate back up. Needs LOS and optimal range (no
@@ -269,7 +269,7 @@ func try_heal(mate: Character) -> bool:
 	Vfx.tracer(scene, muzzle, mate.global_position + Vector3(0, 1.3 * Character.VERTICAL_SQUASH, 0),
 		Color(0.35, 1.0, 0.55))
 	DamageNumber.spawn(scene, mate.global_position, "+%d" % int(g.damage), Color(0.4, 1.0, 0.55))
-	mate.receive_heal(g.damage)
+	mate.receive_heal(g.damage * character.damage_mult)
 	return true
 
 ## A point past the target, pushed sideways — where the missed shot "went".

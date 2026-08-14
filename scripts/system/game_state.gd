@@ -8,6 +8,8 @@ signal mission_ended(victory: bool)
 ## Every round leaving a gun, hit or wild — the district's ears (turf rules,
 ## future noise systems) listen here rather than patching every fire path.
 signal shot_fired(shooter: Character)
+signal xp_changed(total: int)
+signal crew_leveled(new_level: int)
 
 ## Characters in the player squad, in portrait order. Set by GameWorld.
 var squad: Array = []
@@ -29,10 +31,72 @@ var run_active := false
 ## SceneManager.start_world (menu New Run / Continue).
 var start_site := "hideout"
 
-## Menu entry point: this is a real run — saves may write.
+# ── Progression: one squad XP pool → one crew level → per-member perks ───────
+
+const LEVEL_CAP := 10
+## Per-level flat curves applied at spawn and on live level-ups.
+const HP_PER_LEVEL := 6.0
+const SHIELD_PER_LEVEL := 4.0
+
+var xp := 0
+var crew_level := 1
+## member key ("leader"…) → Array of taken perk ids (Perks.CATALOG).
+var perks := {}
+## Sites whose first-clear milestone already paid this run.
+var cleared_sites: Array = []
+
+## XP needed to go from `level` to level+1 (front-loaded early dings).
+func xp_to_next(level: int = crew_level) -> int:
+	return 200 * level
+
+## Bank XP into the squad pool; levels resolve immediately (stat curves), but
+## perk PICKS are only spendable at the hideout console — become stronger by
+## making it home.
+func add_xp(amount: int) -> void:
+	if amount <= 0:
+		return
+	xp += amount
+	xp_changed.emit(xp)
+	while crew_level < LEVEL_CAP and xp >= threshold_for(crew_level + 1):
+		crew_level += 1
+		crew_leveled.emit(crew_level)
+
+## Total XP required to HOLD `level` (HUD shows progress toward the next).
+func threshold_for(level: int) -> int:
+	var total := 0
+	for l in range(1, level):
+		total += xp_to_next(l)
+	return total
+
+## Unspent perk picks across the whole crew (HUD nudge + console gate).
+func total_picks_owed() -> int:
+	var total := 0
+	for key in Skins.crew_names():
+		total += picks_owed(key)
+	return total
+
+## Perk picks a member has earned but not spent (one pick per level past 1).
+func picks_owed(member_key: String) -> int:
+	return (crew_level - 1) - (perks.get(member_key, []) as Array).size()
+
+func take_perk(member_key: String, perk_id: String) -> bool:
+	if picks_owed(member_key) <= 0 or not Perks.CATALOG.has(perk_id):
+		return false
+	var taken: Array = perks.get_or_add(member_key, [])
+	if taken.has(perk_id):
+		return false
+	taken.append(perk_id)
+	return true
+
+## Menu entry point: this is a real run — saves may write. Progression
+## resets here; Continue restores it right after via load_game.
 func new_run() -> void:
 	run_active = true
 	debug_session = false
+	xp = 0
+	crew_level = 1
+	perks = {}
+	cleared_sites = []
 
 func set_squad(characters: Array) -> void:
 	squad = characters
@@ -62,13 +126,25 @@ func capture_crew() -> void:
 func save_game(site_id: String, slot: int = 0) -> bool:
 	if debug_session or site_id == "":
 		return false
-	return SaveManager.save_game(slot, {"site": site_id, "crew_state": crew_state})
+	return SaveManager.save_game(slot, {
+		"site": site_id,
+		"crew_state": crew_state,
+		"xp": xp,
+		"crew_level": crew_level,
+		"perks": perks,
+		"cleared_sites": cleared_sites,
+	})
 
-## Restore a run: seeds crew_state and reports the site to travel to.
-## Empty string = no usable save.
+## Restore a run: seeds crew_state + progression and reports the site to
+## travel to. Empty string = no usable save. Version-1 saves simply lack the
+## progression keys — defaults make them a fresh level-1 crew.
 func load_game(slot: int = 0) -> String:
 	var data := SaveManager.load_game(slot)
 	if data.is_empty() or not data.has("site"):
 		return ""
 	crew_state = data.get("crew_state", {})
+	xp = int(data.get("xp", 0))
+	crew_level = int(data.get("crew_level", 1))
+	perks = data.get("perks", {})
+	cleared_sites = data.get("cleared_sites", [])
 	return str(data["site"])

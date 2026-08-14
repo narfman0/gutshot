@@ -323,6 +323,15 @@ world-space DOWN / REVIVING % label.
   home across the district, meeting whatever's on the way. Defensive packs
   (`pursue: false` in the spawn dict — the exchange vault crew, the
   Assembly) stay territorial.
+- **Progression** (GameState + Perks + TrainingPanel): one squad XP pool —
+  any kill a crew member last touched pays its `xp_value` (spawn-entry `xp`,
+  default 10, ×0.5 per respawn generation); `site_cleared` first-clears pay
+  120 once per run. One crew level (cap 10, 200×level): flat hp/shield
+  curves land live via `crew_leveled`; perk picks (one per member per level)
+  spend at the hideout console — TrainingPanel applies `Perks.CATALOG`
+  entries, which mutate the readable hooks on Character (`damage_mult`,
+  `cooldown_mult`, `revive_frac`, max hp/shield). Save shape v2 adds
+  xp/crew_level/perks/cleared_sites; v1 saves load as a fresh level-1 crew.
 - **Turf law** (fab_site): `GameState.shot_fired` fires for every round
   leaving any gun (emitted from Shooter's shared `_alert_hearing` path).
   The fab counts shots inside the sanctum guard ring (14 m) per faction:

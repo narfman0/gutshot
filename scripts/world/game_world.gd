@@ -117,6 +117,8 @@ func _ready() -> void:
 	_setup_camera()
 	($HUD as Hud).setup(_squad, _objectives, _camera, _start_chunk().site_name())
 	_objectives.mission_failed.connect(_show_wipe_screen)
+	_objectives.site_cleared.connect(_on_site_cleared)
+	GameState.crew_leveled.connect(_on_crew_leveled)
 	_tick_sites(0.0)  # register the arrival site (label, save, mood, ambient)
 	SceneManager.fade_in()
 
@@ -432,7 +434,10 @@ func _spawn_crew() -> void:
 		c.team = 0
 		c.display_name = key.capitalize()
 		c.anim_set = info["set"]
-		c.max_shield = 40.0  # crew get the regenerating layer; enemies don't
+		# Crew stat curves: modest flat growth per crew level; the chunky
+		# power comes from perk picks, not number inflation.
+		c.max_hp = 100.0 + GameState.HP_PER_LEVEL * (GameState.crew_level - 1)
+		c.max_shield = 40.0 + GameState.SHIELD_PER_LEVEL * (GameState.crew_level - 1)
 		_squad.add_child(c)
 		var spawns := start.crew_spawns()
 		c.global_position = start.to_global(spawns[i % spawns.size()])
@@ -440,6 +445,8 @@ func _spawn_crew() -> void:
 		c.equip(rifle if key == "gunner" else smg)
 		c.equip(heal_gun if key == "medic" else pistol)
 		c.equip(belt)
+		for perk_id in GameState.perks.get(key, []):
+			Perks.apply(c, perk_id)
 		# Crew condition carried from the save (the hideout rest heals anyway).
 		var carried: Dictionary = GameState.crew_state.get(key, {})
 		if not carried.is_empty():
@@ -458,7 +465,7 @@ func _spawn_all_enemies() -> void:
 			records.append({"entry": entry, "body": _spawn_enemy(chunk, entry)})
 		_site_state[chunk.site_id()]["records"] = records
 
-func _spawn_enemy(chunk: SiteChunk, entry: Dictionary) -> Character:
+func _spawn_enemy(chunk: SiteChunk, entry: Dictionary, generation := 0) -> Character:
 	var smg: GearItem = load("res://resources/gear/enemy_smg.tres")
 	var belt: GearItem = load("res://resources/gear/grenade_belt.tres")
 	var all_skins := {}
@@ -500,9 +507,47 @@ func _spawn_enemy(chunk: SiteChunk, entry: Dictionary) -> Character:
 		c.select_slot(0)
 	c.add_child(controller)
 	_objectives.register(c, chunk.site_id(), entry.get("required", true))
+	# Kill value for the squad XP pool — respawned packs pay half per repop
+	# cycle, so pushing somewhere new always beats farming the refill.
+	c.set_meta("xp_value", int(float(entry.get("xp", 10)) * pow(0.5, generation)))
 	# Enemies get the full send-off; crew corpses stay for the squad read.
-	c.character_died.connect(func(body): Juice.death_collapse(body, true))
+	c.character_died.connect(func(body):
+		_award_kill_xp(body)
+		Juice.death_collapse(body, true))
 	return c
+
+## The squad pool credits any kill a crew member last touched — one pool,
+## one crew level; the medic's revives count by keeping the shooters alive.
+func _award_kill_xp(body: Character) -> void:
+	if body.last_attacker != null and is_instance_valid(body.last_attacker) \
+			and body.last_attacker.team == 0:
+		GameState.add_xp(int(body.get_meta("xp_value", 10)))
+
+## First-clear milestone: each site pays big ONCE per run — respawns
+## un-clear the site but never re-arm the bonus.
+const FIRST_CLEAR_XP := 120
+
+func _on_site_cleared(site_id: String) -> void:
+	if GameState.cleared_sites.has(site_id):
+		return
+	GameState.cleared_sites.append(site_id)
+	GameState.add_xp(FIRST_CLEAR_XP)
+
+## Level-up lands immediately on the live crew (curves); the perk PICKS
+## wait for the hideout console — you get stronger by making it home.
+func _on_crew_leveled(_new_level: int) -> void:
+	for member in _squad.members:
+		var c := member as Character
+		if c == null or not is_instance_valid(c):
+			continue
+		c.max_hp += GameState.HP_PER_LEVEL
+		c.max_shield += GameState.SHIELD_PER_LEVEL
+		if c.is_alive():
+			c.hp += GameState.HP_PER_LEVEL
+			c.shield += GameState.SHIELD_PER_LEVEL
+		c.hp_changed.emit(c.hp, c.max_hp)
+		c.shield_changed.emit(c.shield, c.max_shield)
+	AudioManager.play_sfx("levelup")
 
 func _setup_floor_systems() -> void:
 	for chunk in _chunks:
@@ -583,6 +628,7 @@ func _respawn_site(chunk: SiteChunk) -> void:
 	var id := chunk.site_id()
 	var state: Dictionary = _site_state[id]
 	state["vacant"] = 0.0
+	state["gen"] = int(state.get("gen", 0)) + 1
 	_objectives.clear_site(id)
 	for rec in state["records"]:
 		var body = rec["body"]
@@ -591,7 +637,7 @@ func _respawn_site(chunk: SiteChunk) -> void:
 		else:
 			if is_instance_valid(body):
 				body.queue_free()
-			rec["body"] = _spawn_enemy(chunk, rec["entry"])
+			rec["body"] = _spawn_enemy(chunk, rec["entry"], state["gen"])
 
 # ── Camera ───────────────────────────────────────────────────────────────────
 

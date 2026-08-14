@@ -113,4 +113,8 @@ func _build_map_console() -> void:
 	zone.position = Vector3(0.0, 0.6, -4.0)
 	zone.body_entered.connect(func(body: Node3D):
 		if world != null and body is Character and body == world.active_character():
-			DistrictMap.toggle(self, site_id()))
+			# Owed perk picks take the console over; the map stays on M.
+			if GameState.total_picks_owed() > 0:
+				TrainingPanel.toggle(self, world)
+			else:
+				DistrictMap.toggle(self, site_id()))

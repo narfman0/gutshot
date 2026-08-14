@@ -211,6 +211,18 @@ def sfx_slash():
     return out
 
 
+def sfx_levelup():
+    """Crew level — a bright rising arpeggio, longer than the revive triad."""
+    n = int(0.8 * SR)
+    out = [0.0] * n
+    for k, f in enumerate([392, 523, 659, 784]):  # G4 C5 E5 G5
+        start = int(k * 0.08 * SR)
+        for i in range(start, n):
+            t = (i - start) / SR
+            out[i] += math.sin(2 * math.pi * f * t) * math.exp(-3.5 * t) * 0.28
+    return out
+
+
 def sfx_telegraph():
     n = int(0.45 * SR)
     out = []
@@ -338,6 +350,7 @@ def main():
     write_wav("sfx_telegraph.wav", sfx_telegraph())
     write_wav("sfx_swing.wav", sfx_swing())
     write_wav("sfx_slash.wav", sfx_slash())
+    write_wav("sfx_levelup.wav", sfx_levelup())
     write_wav("ambient_city.wav", ambient_city())
     write_wav("ambient_hideout.wav", ambient_hideout())
     write_wav("ambient_hall.wav", ambient_hall())

@@ -98,15 +98,15 @@ func enemy_spawns() -> Array:
 		# The Assembly: neutral custodians. Not your mission — unless you make
 		# them your problem.
 		{"skin": "war_robot", "pos": Vector3(-3.0, 0.1, -10.0), "pack": "assembly",
-			"faction": Factions.ASSEMBLY, "required": false, "pursue": false,
+			"faction": Factions.ASSEMBLY, "required": false, "pursue": false, "xp": 20,
 			"gear": "res://resources/gear/machine_laser.tres",
 			"patrol": [Vector3(-8.0, 0.1, -8.0), Vector3(8.0, 0.1, -8.0)]},
 		{"skin": "robot_f", "pos": Vector3(3.0, 0.1, -10.0), "pack": "assembly",
-			"faction": Factions.ASSEMBLY, "required": false, "pursue": false,
+			"faction": Factions.ASSEMBLY, "required": false, "pursue": false, "xp": 20,
 			"gear": "res://resources/gear/machine_laser.tres",
 			"patrol": [Vector3(10.0, 0.1, -2.0), Vector3(-10.0, 0.1, -2.0)]},
 		{"skin": "war_robot", "pos": Vector3(0.0, 0.1, -16.0), "pack": "assembly",
-			"faction": Factions.ASSEMBLY, "required": false, "pursue": false,
+			"faction": Factions.ASSEMBLY, "required": false, "pursue": false, "xp": 20,
 			"gear": "res://resources/gear/machine_laser.tres"},
 	]
 

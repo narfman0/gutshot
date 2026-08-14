@@ -215,8 +215,10 @@ func _refresh_slots() -> void:
 		box.modulate = Color(1, 1, 1) if i == active.active_slot else Color(0.6, 0.65, 0.7, 0.85)
 
 var _site_label: Label = null
+var _xp_label: Label = null
 
 ## Site name top-left — instant orientation as the crew crosses the district.
+## The XP line rides underneath: level, pool progress, and the train nudge.
 func _build_site_label(site_name: String) -> void:
 	_site_label = Label.new()
 	_site_label.theme = UITheme.theme
@@ -225,6 +227,29 @@ func _build_site_label(site_name: String) -> void:
 	_site_label.add_theme_color_override("font_color", UITheme.C_HEAD)
 	_site_label.position = Vector2(18, 12)
 	add_child(_site_label)
+	_xp_label = Label.new()
+	_xp_label.theme = UITheme.theme
+	_xp_label.add_theme_font_size_override("font_size", 13)
+	_xp_label.add_theme_color_override("font_color", UITheme.C_MUTED)
+	_xp_label.position = Vector2(18, 42)
+	add_child(_xp_label)
+	GameState.xp_changed.connect(func(_t): _refresh_xp())
+	GameState.crew_leveled.connect(func(_l): _refresh_xp())
+	_refresh_xp()
+
+func _refresh_xp() -> void:
+	if _xp_label == null:
+		return
+	var lvl := GameState.crew_level
+	var text := "LVL %d" % lvl
+	if lvl < GameState.LEVEL_CAP:
+		text += "  ·  XP %d / %d" % [GameState.xp, GameState.threshold_for(lvl + 1)]
+	if GameState.total_picks_owed() > 0:
+		text += "  ·  TRAIN AT THE HIDEOUT"
+		_xp_label.add_theme_color_override("font_color", UITheme.C_ACCENT)
+	else:
+		_xp_label.add_theme_color_override("font_color", UITheme.C_MUTED)
+	_xp_label.text = text
 
 ## GameWorld calls this when the active character crosses into a site.
 func set_site(site_name: String) -> void:

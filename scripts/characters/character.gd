@@ -53,6 +53,13 @@ var hp: float
 var shield: float
 var downed := false
 
+## Progression hooks (perks multiply these; see Perks.apply).
+var damage_mult := 1.0
+var cooldown_mult := 1.0
+var revive_frac := REVIVE_HP_FRAC
+## Who last hurt this character — kill credit for the squad XP pool.
+var last_attacker: Character = null
+
 ## Loadout: index 0 = primary, 1 = secondary, 2 = heavy/device. Slot keys 1-3.
 var gear_slots: Array = [null, null, null]
 var active_slot := 0
@@ -173,7 +180,8 @@ func activate_ability(ability: Ability, target_point: Vector3) -> bool:
 		return false
 	if not ability.activate(self, target_point):
 		return false
-	_cooldown_until[ability] = Time.get_ticks_msec() + int(ability.cooldown * 1000.0)
+	_cooldown_until[ability] = Time.get_ticks_msec() \
+		+ int(ability.cooldown * cooldown_mult * 1000.0)
 	ability_activated.emit(self, ability)
 	return true
 
@@ -199,6 +207,7 @@ func receive_damage(amount: float, attacker: Node = null) -> void:
 	# and damage between non-hostile factions IS a provocation (shoot the
 	# machines and the machines are in the fight).
 	if attacker is Character:
+		last_attacker = attacker
 		Factions.note_attack(team, (attacker as Character).team)
 		shot_at.emit(attacker)
 	if shield > 0.0:
@@ -267,7 +276,7 @@ func _tick_revive(delta: float) -> void:
 
 func _revive() -> void:
 	downed = false
-	hp = max_hp * REVIVE_HP_FRAC
+	hp = max_hp * revive_frac
 	shield = 0.0
 	_last_damage_ms = Time.get_ticks_msec()  # shields wait the full delay
 	collision_layer = Layers.body_layer(team)

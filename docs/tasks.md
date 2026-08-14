@@ -153,6 +153,25 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       melee tick = run the threat down at 1.35× and swing (the demon-horde
       recipe). Gear: scrap_blade (shock stick), katana (for the clan later).
       Unblocks: demon hordes, cyber-ninja clan, Little Japan
+- [x] Progression v1 — squad XP pool per crew-credited kill (last_attacker
+      tracking; grenades credit the thrower), machines pay double, respawned
+      packs pay half per repop generation (pushing new always beats farming
+      the refill), first-clear milestone 120 XP once per run per site. One
+      crew level (cap 10, 200×level thresholds): +6 hp / +4 shield lands
+      LIVE on level-up, but perk PICKS spend only at the hideout console
+      (TrainingPanel takes the console over while picks are owed; map stays
+      on M). Perks are chunky per-member choices (Perks registry: Capacitor
+      Rig, Scar Tissue, Dead Eye, Quick Hands, Combat Stims). HUD XP line
+      under the site label with the TRAIN nudge; save v2 persists
+      xp/level/perks/cleared (v1 saves load as fresh level 1)
+- [ ] Progression follow-ups: boss/objective XP when those systems land,
+      deeper per-member perk menus (role-exclusive picks), difficulty
+      scaling against crew level
+- [ ] World + aesthetic polish round — the district reads EMPTY: denser
+      site dressing (signage, debris, parked vehicles, stall clutter),
+      ground detail variation, a skyline/backdrop beyond the walls so sites
+      don't float in void, stronger per-site signage identity, idle-life
+      touches (flickering neon, steam, drips)
 - [ ] Seamless-district follow-ups: spatial pruning for hostiles_of/hearing
       scans if rosters grow past dozens
 - [x] Save/load stub: crew hp/shields carried between sites (hideout heals),
