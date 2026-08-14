@@ -310,6 +310,20 @@ world-space DOWN / REVIVING % label.
   and dead spawn slots re-spawn, re-registering with the ObjectiveManager
   (per-site rosters; `site_cleared(site_id)` fires when a site's required
   enemies hit zero — respawn un-clears it).
+- **Pursuit** (`EnemyController.pursue`, default true): entering FIGHT
+  breaks the spawn leash (`PURSUIT_LEASH`) — packs chase the crew through
+  corridors into other sites. Losing the track (or breaking morale)
+  restores the leash; after the LKP investigation they stand down and walk
+  home across the district, meeting whatever's on the way. Defensive packs
+  (`pursue: false` in the spawn dict — the exchange vault crew, the
+  Assembly) stay territorial.
+- **Turf law** (fab_site): `GameState.shot_fired` fires for every round
+  leaving any gun (emitted from Shooter's shared `_alert_hearing` path).
+  The fab counts shots inside the sanctum guard ring (14 m) per faction:
+  first shot draws a CEASE FIRE warning, heat decays at 0.25/s, and at 4
+  the machines are provoked against the SHOOTER'S faction — whoever they
+  were aiming at. This is the bait play: drag a pursuing gang pack into
+  the ring, let them shoot at you, leave them to the machines.
 - **Breach doors** (`scripts/world/breach_door.gd`): cover-layer slabs with
   HP. Wild gunfire raycasts cover geometry and damages them (aimed shots at
   enemies pass through the accuracy model instead); grenade blasts batter

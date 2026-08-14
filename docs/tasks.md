@@ -136,9 +136,18 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       tone / exchange hall wind / depot machinery / fab machine hum),
       SiteChunk.ambient() hook, AudioManager two-player crossfade on site
       entry (corridors keep the last site's bed, like the HUD label)
+- [x] Connector gameplay — the district reacts: fighting packs with
+      `pursue` (default) break the spawn leash and chase the crew through
+      corridors into other sites; losing the track ends the chase and they
+      walk home across the district. Defensive packs (vault crew, the
+      Assembly) hold their ground. Turf law: gunfire inside the fab's
+      sanctum guard ring (14 m) heats the SHOOTER'S faction toward
+      provocation — CEASE FIRE warning first, sporadic fire decays — so a
+      clever crew can bait a gang pack into machine turf and walk away from
+      the three-way fight (district_pursuit_smoke proves the whole play).
+      Global `GameState.shot_fired` signal is the district's ears
 - [ ] Seamless-district follow-ups: spatial pruning for hostiles_of/hearing
-      scans if rosters grow past dozens, connector gameplay (fall back
-      through the freight tunnel into Assembly turf)
+      scans if rosters grow past dozens
 - [x] Save/load stub: crew hp/shields carried between sites (hideout heals),
       autosave on arrival, Continue on the main menu; debug/harness runs can
       never write a real slot (GameState.run_active gate + scratch-slot tests)

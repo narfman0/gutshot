@@ -104,9 +104,9 @@ func enemy_spawns() -> Array:
 			"morale": true, "aggro": 16.0,
 			"patrol": [Vector3(18.0, MEZZ_H, -25.5), Vector3(-16.0, MEZZ_H, -25.5)]},
 		# Counting house — the take is up here. Cornered; no morale test.
-		{"skin": "biker", "pos": Vector3(-5.0, 6.1, -25.0), "pack": "vault"},
-		{"skin": "gangster", "pos": Vector3(5.0, 6.1, -27.0), "pack": "vault"},
-		{"skin": "punk", "pos": Vector3(0.0, 6.1, -23.0), "pack": "vault"},
+		{"skin": "biker", "pos": Vector3(-5.0, 6.1, -25.0), "pack": "vault", "pursue": false},
+		{"skin": "gangster", "pos": Vector3(5.0, 6.1, -27.0), "pack": "vault", "pursue": false},
+		{"skin": "punk", "pos": Vector3(0.0, 6.1, -23.0), "pack": "vault", "pursue": false},
 	]
 
 func build_extra_geometry() -> void:

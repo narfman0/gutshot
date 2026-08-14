@@ -5,6 +5,9 @@ extends Node
 
 signal squad_updated
 signal mission_ended(victory: bool)
+## Every round leaving a gun, hit or wild — the district's ears (turf rules,
+## future noise systems) listen here rather than patching every fire path.
+signal shot_fired(shooter: Character)
 
 ## Characters in the player squad, in portrait order. Set by GameWorld.
 var squad: Array = []

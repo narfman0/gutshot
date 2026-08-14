@@ -29,6 +29,14 @@ enum State { IDLE, SUSPICIOUS, FIGHT, FLEE }
 @export var patrol_points: Array = []
 ## Morale units (bandits) break and flee when the pack is cut to half.
 @export var has_morale := false
+## Fighting packs with pursue break the spawn leash and chase across the
+## seamless district — through corridors, into other sites, into other
+## factions' turf. Losing the track ends the chase (they investigate the
+## LKP, stand down, and walk home). Defensive packs (a vault crew guarding
+## the take, the territorial Assembly) keep the leash instead.
+@export var pursue := true
+
+const PURSUIT_LEASH := 10000.0  # effectively unleashed while the chase is on
 
 var body: Character
 var brain: CombatBrain
@@ -43,11 +51,13 @@ var _patrol_index := 0
 var _pack_initial := 0
 var _flee_timer := 0.0
 var _flee_target := Vector3.INF
+var _base_leash := 25.0
 
 func _ready() -> void:
 	body = get_parent() as Character
 	brain = body.get_node("CombatBrain")
 	brain.leash_radius = leash_radius
+	_base_leash = leash_radius
 	_spawn = body.global_position
 	add_to_group("enemy_ai")
 	if pack_id != "":
@@ -110,6 +120,8 @@ func _enter_fight() -> void:
 	if state == State.FIGHT:
 		return
 	state = State.FIGHT
+	if pursue:
+		brain.leash_radius = PURSUIT_LEASH  # the chase is on
 	# Drag the pack along, sharing the position fix we have.
 	if pack_id != "":
 		var fix := brain.threat_pos() if brain.threat != null else Vector3.INF
@@ -155,10 +167,13 @@ func _tick_suspicious(delta: float) -> void:
 
 func _tick_fight(delta: float) -> void:
 	brain.tick(delta)
-	# The brain lost the track — go poke at the last-known position.
+	# The brain lost the track — the chase is over. Go poke at the last-known
+	# position, then stand down and walk home (IDLE wanders near spawn, and
+	# nav_to crosses the whole district to get there).
 	if brain.lost_lkp != Vector3.INF:
 		var lkp := brain.lost_lkp
 		brain.lost_lkp = Vector3.INF
+		brain.leash_radius = _base_leash
 		state = State.SUSPICIOUS
 		_investigate = lkp
 		_linger = SUSPICIOUS_LINGER_SECS
@@ -176,6 +191,7 @@ func check_morale() -> void:
 			alive += 1
 	if float(alive) / float(_pack_initial) <= MORALE_BREAK_FRAC:
 		state = State.FLEE
+		brain.leash_radius = _base_leash  # broken nerve ends the chase too
 		_flee_timer = FLEE_RECOVER_SECS
 		var away := body.global_position - _nearest_hostile_pos()
 		away.y = 0.0

@@ -69,6 +69,10 @@ violence only if provoked — but Vantag wants the level "audited" and the
 cult wants its fabricators, so provocation is coming from all sides.
 - The three-way-fight sandbox: bait corp security or hordes into machine
   territory and let the district sort itself out.
+- Turf law (BUILT): gunfire inside the fabricator's guard ring provokes
+  the Assembly against the shooter's faction — one CEASE FIRE warning,
+  then the floor turns. Works on the gangs too: lure a pursuing pack in,
+  let them shoot, walk away.
 
 ### The Exchange (market hall)
 A shuttered vertical market hall in the district margins, bandit-run since

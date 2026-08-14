@@ -489,6 +489,7 @@ func _spawn_enemy(chunk: SiteChunk, entry: Dictionary) -> Character:
 	controller.patrol_points = patrol
 	controller.has_morale = entry.get("morale", false)
 	controller.aggro_radius = entry.get("aggro", controller.aggro_radius)
+	controller.pursue = entry.get("pursue", true)
 	if entry.has("gear"):
 		c.equip(load(entry["gear"]))
 		c.select_slot(0)

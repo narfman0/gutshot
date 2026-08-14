@@ -15,9 +15,26 @@ const SANCTUM_CENTER := Vector3(0, 0, -14)  # chunk-local
 const SANCTUM_RADIUS := 7.0
 const TRESPASS_GRACE_SECS := 6.0
 
+## Turf law: gunfire this close to the sanctum is a provocation in itself —
+## whoever pulls the trigger. One warning, then a few more shots turn the
+## machines on the SHOOTER'S faction. This is the bait play: lure a gang
+## pack into machine turf, let them shoot at you, and walk away from the
+## three-way fight. The salvage crew on the east line sits well outside the
+## ring, so a clean fight over there stays the crew's business.
+const TURF_GUARD_RADIUS := 14.0
+const TURF_HEAT_PROVOKE := 4.0   # shots (minus decay) that turn the machines
+const TURF_HEAT_DECAY := 0.25    # per second — sporadic fire is tolerated
+
 var _trespass_timer := 0.0
 var _trespass_warned := false
 var _sanctum_label: Label3D
+var _turf_heat := {}    # faction -> recent shots fired inside the ring
+var _turf_warned := {}  # faction -> warning already given
+
+func _ready() -> void:
+	super._ready()  # SiteChunk builds the geometry
+	if not Engine.is_editor_hint():
+		GameState.shot_fired.connect(_on_shot_fired)
 
 func site_id() -> String:
 	return "fab"
@@ -80,15 +97,15 @@ func enemy_spawns() -> Array:
 		# The Assembly: neutral custodians. Not your mission — unless you make
 		# them your problem.
 		{"skin": "war_robot", "pos": Vector3(-3.0, 0.1, -10.0), "pack": "assembly",
-			"faction": Factions.ASSEMBLY, "required": false,
+			"faction": Factions.ASSEMBLY, "required": false, "pursue": false,
 			"gear": "res://resources/gear/machine_laser.tres",
 			"patrol": [Vector3(-8.0, 0.1, -8.0), Vector3(8.0, 0.1, -8.0)]},
 		{"skin": "robot_f", "pos": Vector3(3.0, 0.1, -10.0), "pack": "assembly",
-			"faction": Factions.ASSEMBLY, "required": false,
+			"faction": Factions.ASSEMBLY, "required": false, "pursue": false,
 			"gear": "res://resources/gear/machine_laser.tres",
 			"patrol": [Vector3(10.0, 0.1, -2.0), Vector3(-10.0, 0.1, -2.0)]},
 		{"skin": "war_robot", "pos": Vector3(0.0, 0.1, -16.0), "pack": "assembly",
-			"faction": Factions.ASSEMBLY, "required": false,
+			"faction": Factions.ASSEMBLY, "required": false, "pursue": false,
 			"gear": "res://resources/gear/machine_laser.tres"},
 	]
 
@@ -140,6 +157,42 @@ func _build_fabricator() -> void:
 func _process(delta: float) -> void:
 	if not Engine.is_editor_hint():
 		_tick_trespass(delta)
+		_tick_turf_heat(delta)
+
+## Any round fired inside the guard ring heats the shooter's faction toward
+## provocation — the machines don't care who you were aiming at.
+func _on_shot_fired(shooter: Character) -> void:
+	if shooter == null or not is_instance_valid(shooter) \
+			or shooter.team == Factions.ASSEMBLY \
+			or Factions.hostile(shooter.team, Factions.ASSEMBLY):
+		return
+	var flat := shooter.global_position - to_global(SANCTUM_CENTER)
+	flat.y = 0.0
+	if flat.length() > TURF_GUARD_RADIUS:
+		return
+	var heat: float = _turf_heat.get(shooter.team, 0.0) + 1.0
+	_turf_heat[shooter.team] = heat
+	if not _turf_warned.get(shooter.team, false):
+		_turf_warned[shooter.team] = true
+		AudioManager.play_sfx("telegraph")
+		if _sanctum_label != null:
+			_sanctum_label.text = "CEASE FIRE"
+			_sanctum_label.modulate = Color(1.0, 0.5, 0.2)
+	if heat >= TURF_HEAT_PROVOKE:
+		Factions.provoke(shooter.team, Factions.ASSEMBLY)
+		if _sanctum_label != null:
+			_sanctum_label.text = "HOSTILE"
+			_sanctum_label.modulate = Color(1.0, 0.25, 0.15)
+
+func _tick_turf_heat(delta: float) -> void:
+	for faction in _turf_heat:
+		var heat: float = maxf(0.0, _turf_heat[faction] - TURF_HEAT_DECAY * delta)
+		_turf_heat[faction] = heat
+		if heat == 0.0 and _turf_warned.get(faction, false):
+			_turf_warned[faction] = false
+			if _sanctum_label != null and _sanctum_label.text == "CEASE FIRE":
+				_sanctum_label.text = "ASSEMBLY TERRITORY"
+				_sanctum_label.modulate = Color(0.4, 1.0, 0.9)
 
 ## Trespass: crew inside the sanctum ring get one warning; overstay the grace
 ## and the Assembly is provoked against the crew.

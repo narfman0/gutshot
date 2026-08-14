@@ -167,6 +167,7 @@ func fire_wild(at_point: Vector3) -> bool:
 	return true
 
 func _alert_hearing() -> void:
+	GameState.shot_fired.emit(character)
 	for node in get_tree().get_nodes_in_group("characters"):
 		var enemy := node as Character
 		if enemy == null or enemy.team == character.team or not enemy.is_alive():
