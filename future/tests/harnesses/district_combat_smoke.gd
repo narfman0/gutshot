@@ -78,9 +78,17 @@ func _ready() -> void:
 	var back := depot.to_global(Vector3(-8.0, 0.1, -12.0))
 	var before := _path_length(map, front, back)
 	_check(before > 25.0, "doors closed: yard→backroom detours (%.1f m)" % before)
-	var doors := get_tree().get_nodes_in_group("breach_doors")
-	_check(doors.size() == 2, "two breach doors stand (got %d)" % doors.size())
-	var door := doors[0] as BreachDoor
+	# Depot's doors only — the tower's Level 4 seal shares the group now.
+	var depot_bounds := depot.bounds_rect()
+	var doors: Array = []
+	for node in get_tree().get_nodes_in_group("breach_doors"):
+		var pos: Vector3 = (node as Node3D).global_position
+		if depot_bounds.has_point(Vector2(pos.x, pos.z)):
+			doors.append(node)
+	_check(doors.size() == 2, "two depot breach doors stand (got %d)" % doors.size())
+	doors.sort_custom(func(a, b):
+		return (a as Node3D).global_position.x < (b as Node3D).global_position.x)
+	var door := doors[0] as BreachDoor  # the western door (front/back test route)
 	while is_instance_valid(door) and door.hp > 0.0:
 		door.receive_damage(40.0)
 	var after := before

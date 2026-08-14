@@ -161,7 +161,15 @@ func _tick_idle(delta: float) -> void:
 		_stand(delta)
 		if _wander_pause <= 0.0:
 			var ang := randf() * TAU
-			_wander_target = _spawn + Vector3(cos(ang), 0, sin(ang)) * randf_range(1.5, WANDER_RADIUS)
+			var candidate := _spawn + Vector3(cos(ang), 0, sin(ang)) \
+				* randf_range(1.5, WANDER_RADIUS)
+			# Floor-aware wander: a ring point past a deck edge resolves to
+			# the floor BELOW, and the guard dutifully abandons his post to
+			# reach it. Reject cross-floor rolls; try again next beat.
+			var snapped := NavigationServer3D.map_get_closest_point(
+				body.get_world_3d().navigation_map, candidate)
+			if absf(snapped.y - _spawn.y) <= 1.5:
+				_wander_target = snapped
 		return
 	if not brain.nav_to(_wander_target, delta, INVESTIGATE_SPEED):
 		_wander_target = Vector3.INF

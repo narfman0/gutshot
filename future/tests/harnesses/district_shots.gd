@@ -38,6 +38,14 @@ func _ready() -> void:
 	await _shot("district_9_tower_lobby.png", 60)
 	_teleport(_chunk("Tower").to_global(Vector3(-22, 4.2, -2)))
 	await _shot("district_10_tower_mezz.png", 60)
+	# Break the seal and watch the Spawn pour onto the exec floor.
+	for node in get_tree().get_nodes_in_group("breach_doors"):
+		if (node as Node3D).global_position.y > 6.0:
+			var seal := node as BreachDoor
+			while is_instance_valid(seal) and seal.hp > 0.0:
+				seal.receive_damage(80.0)
+	_teleport(_chunk("Tower").to_global(Vector3(-2.5, 8.2, -13.0)))
+	await _shot("district_11_horde.png", 420)
 	print("DISTRICT_SHOTS: DONE")
 	get_tree().quit(0)
 

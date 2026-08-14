@@ -148,7 +148,11 @@ func _unstick_from_prop_tops() -> void:
 	if NavigationServer3D.map_get_regions(map).is_empty():
 		return  # no navmesh (bare harness scene) — nothing sane to snap to
 	var ground := NavigationServer3D.map_get_closest_point(map, global_position)
-	if ground.y < global_position.y - 0.5:
+	var drop := global_position.y - ground.y
+	# Prop-top scale only: a half-metre to ~3 m snap is a vending machine;
+	# more than that means the navmesh under our FEET is missing (mid-rebake
+	# region gap, upper floors) — never yank someone off a deck for that.
+	if drop > 0.5 and drop < 3.0:
 		global_position = ground + Vector3(0, 0.1, 0)
 		velocity = Vector3.ZERO
 

@@ -84,9 +84,9 @@ for base in ("scenes", "scripts", "resources"):
         if not os.path.isfile(f):
             continue
         txt = open(f, encoding="utf-8", errors="ignore").read()
-        for m in re.findall(r'res://assets/meshes/[^"\'\s]+?\.(?:gltf|glb|png)', txt):
+        for m in re.findall(r'res://assets/meshes/[^"\'\n]+?\.(?:gltf|glb|png)', txt):
             referenced.add(res_to_fs(m))
-        for m in re.findall(r'res://assets/ui/[^"\'\s]+?\.(?:png|jpg|svg)', txt):
+        for m in re.findall(r'res://assets/ui/[^"\'\n]+?\.(?:png|jpg|svg)', txt):
             referenced.add(res_to_fs(m))
 
 # 2) explicit animation clips ( _ANIM_ROOT + "…" ). Full-literal paths (e.g. the

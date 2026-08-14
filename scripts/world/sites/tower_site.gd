@@ -127,7 +127,8 @@ func enemy_spawns() -> Array:
 			"patrol": [Vector3(-14.0, EXEC_H, -14.0), Vector3(-6.0, EXEC_H, -22.0)]},
 		{"skin": "suit", "pos": Vector3(-2.0, 8.15, -22.0), "pack": "exec",
 			"faction": Factions.CORP, "required": false, "disciplined": true,
-			"shield": 40.0, "xp": 25, "aggro": 14.0, "pursue": false},
+			"shield": 40.0, "xp": 25, "aggro": 14.0, "pursue": false,
+			"patrol": [Vector3(-6.0, EXEC_H, -21.0), Vector3(2.0, EXEC_H, -22.0)]},
 		{"skin": "suit", "pos": Vector3(5.0, 8.15, -16.0), "pack": "exec",
 			"faction": Factions.CORP, "required": false, "disciplined": true,
 			"shield": 40.0, "xp": 25, "aggro": 14.0, "pursue": false,
@@ -135,6 +136,7 @@ func enemy_spawns() -> Array:
 		{"skin": "suit", "pos": Vector3(0.0, 8.15, -19.0), "pack": "exec",
 			"faction": Factions.CORP, "required": false,
 			"shield": 40.0, "xp": 25, "aggro": 14.0, "pursue": false,
+			"patrol": [Vector3(-3.0, EXEC_H, -17.0), Vector3(3.0, EXEC_H, -19.0)],
 			"gear": "res://resources/gear/corp_mender.tres"},
 	]
 
@@ -243,10 +245,14 @@ func _build_exec_floor() -> void:
 	desk_b.position.y = EXEC_H
 	add_practical_light(Vector3(-10, EXEC_H + 3.0, -18), Color(0.85, 0.9, 1.0), 1.3, 6.0)
 	add_practical_light(Vector3(6, EXEC_H + 3.0, -16), Color(0.85, 0.9, 1.0), 1.3, 6.0)
-	# The sealed way up — Level 4 is the campaign's problem.
-	var seal := _stone_box(Vector3(-2.5, 0, -24.6), Vector3(3.0, 2.6, 0.4),
-		Color(0.16, 0.17, 0.19), true)
-	seal.position.y = EXEC_H
+	# The sealed way up — a BREACHABLE slab, and what the cult left behind
+	# it. Blow it if you must; the horde is the answer.
+	var seal := BreachDoor.build(gen_root(), Vector3(-2.5, EXEC_H, -24.6),
+		Vector3(3.0, 2.6, 0.4))
+	seal.hp = 160.0
+	seal.max_hp = 160.0
+	if not Engine.is_editor_hint():
+		seal.breached.connect(_unleash_horde)
 	add_neon_sign("LEVEL 4 — SEALED", Vector3(-2.5, EXEC_H + 3.1, -24.2),
 		Color(1.0, 0.35, 0.3), 0.0, 40)
 	add_practical_light(Vector3(-2.5, EXEC_H + 2.4, -23.6), Color(1.0, 0.3, 0.25), 1.0, 4.0)
@@ -297,6 +303,48 @@ func _stone_box(pos: Vector3, size: Vector3, color: Color, solid: bool) -> Node3
 	gen_root().add_child(root)
 	root.position = pos
 	return root
+
+# ── The horde behind the seal ────────────────────────────────────────────────
+
+const HORDE_WAVES := 4
+const HORDE_PER_WAVE := 6
+const HORDE_WAVE_GAP := 3.0
+
+var _horde_released := false
+
+## Breach the Level 4 seal and the Spawn pours out: waves of husks — the
+## tower's own people, turned — capped by two brutes. Hostile to EVERYTHING;
+## Vantag Security becomes the containment team it always claimed to be.
+func _unleash_horde() -> void:
+	if _horde_released or world == null:
+		return
+	_horde_released = true
+	AudioManager.play_sfx("telegraph", 2.0, 0.0)
+	if _status_label != null:
+		_status_label.text = "CONTAINMENT FAILURE"
+		_status_label.modulate = Color(0.8, 0.35, 1.0)
+	_spawn_waves()
+
+func _spawn_waves() -> void:
+	var husks := ["husk_suit", "husk_shirt", "husk_exec", "husk_bellboy"]
+	for wave in HORDE_WAVES:
+		for i in HORDE_PER_WAVE:
+			world.spawn_event_enemy(self, {
+				"skin": husks[(wave + i) % husks.size()],
+				"pos": Vector3(-6.0 + float((wave * 7 + i * 3) % 8),
+					EXEC_H + 0.15, -24.0 + float(i % 3)),
+				"pack": "horde", "faction": Factions.HORDE,
+				"hp": 40.0, "xp": 5, "aggro": 30.0,
+				"gear": "res://resources/gear/claws.tres"})
+		if wave == HORDE_WAVES - 1:
+			for b in 2:
+				world.spawn_event_enemy(self, {
+					"skin": "brute",
+					"pos": Vector3(-4.5 + float(b) * 4.0, EXEC_H + 0.15, -23.0),
+					"pack": "horde", "faction": Factions.HORDE,
+					"hp": 320.0, "xp": 60, "aggro": 30.0,
+					"gear": "res://resources/gear/brute_claws.tres"})
+		await get_tree().create_timer(HORDE_WAVE_GAP).timeout
 
 # ── House rules: gunfire and the rope ────────────────────────────────────────
 

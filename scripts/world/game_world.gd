@@ -197,10 +197,16 @@ func _do_rebake(id: String) -> void:
 	var chunk: SiteChunk = _chunks_by_id[id]
 	var new_rid: RID = await NavRuntime.bake_async(
 		self, Layers.GROUND | Layers.COVER, 0.4, _chunk_aabb(chunk))
+	# Overlap-first swap: the new region must SYNC into the map before the
+	# old one goes — a one-frame region gap lets the prop-top unstick guard
+	# see "nearest navmesh = the floor below" and yank everyone standing on
+	# a deck down eight metres.
 	var old: RID = _nav_regions.get(id, RID())
+	_nav_regions[id] = new_rid
+	await get_tree().physics_frame
+	await get_tree().physics_frame
 	if old.is_valid():
 		NavigationServer3D.free_rid(old)
-	_nav_regions[id] = new_rid
 
 # ── Environment (one sky, per-site mood lerped on entry) ─────────────────────
 
@@ -553,13 +559,14 @@ func _spawn_enemy(chunk: SiteChunk, entry: Dictionary, generation := 0) -> Chara
 	all_skins.merge(Skins.ENEMIES)
 	all_skins.merge(Skins.MACHINES)
 	all_skins.merge(Skins.CORP)
+	all_skins.merge(Skins.HORDE)
 	var info: Dictionary = all_skins[entry["skin"]]
 	var c: Character = CharacterScene.instantiate()
 	c.team = entry.get("faction", Factions.GANGS)
 	c.display_name = String(entry["skin"]).capitalize()
 	c.anim_set = info["set"]
-	c.max_hp = 60.0
-	c.max_shield = entry.get("shield", 0.0)  # corp-lite guards get the layer
+	c.max_hp = entry.get("hp", 60.0)  # swarm trash runs lean, brutes deep
+	c.max_shield = entry.get("shield", 0.0)  # corp guards get the layer
 	_enemy_squad.add_child(c)
 	c.global_position = chunk.to_global(entry["pos"])
 	c.setup_skin(info["path"])
@@ -599,6 +606,11 @@ func _spawn_enemy(chunk: SiteChunk, entry: Dictionary, generation := 0) -> Chara
 		_award_kill_xp(body)
 		Juice.death_collapse(body, true))
 	return c
+
+## Event spawns (the horde behind the seal): sites call this for one-shot
+## releases — outside the respawn ledger, so once dead they stay dead.
+func spawn_event_enemy(chunk: SiteChunk, entry: Dictionary) -> Character:
+	return _spawn_enemy(chunk, entry)
 
 ## The squad pool credits any kill a crew member last touched — one pool,
 ## one crew level; the medic's revives count by keeping the shooters alive.

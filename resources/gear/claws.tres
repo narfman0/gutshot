@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="GearItem" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/gear_item.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Claws"
+slot_type = 0
+fire_mode = 3
+damage = 8.0
+fire_range = 1.7
+fire_rate = 1.5
+base_accuracy = 0.85
+moving_accuracy_mult = 0.85
+mag_size = 0
+shot_sfx = "swing"

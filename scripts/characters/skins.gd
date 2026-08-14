@@ -25,6 +25,16 @@ const CORP := {
 	"suit": {"path": "res://assets/meshes/POLYGON_Apocalypse_SourceFiles_v3/Source_Files/Characters/SK_Chr_Business_Male_01.gltf", "set": "masc"},
 }
 
+## The Spawn — what the cult made of the tower's upper floors. The horde
+## bodies ARE Vantag's people: staff, suits, the bellboy.
+const HORDE := {
+	"husk_suit": {"path": "res://assets/meshes/POLYGON_CityZombies_SourceFiles_v3/Source Files/Characters/SK_Zombie_Businessman_Male_01.gltf", "set": "masc"},
+	"husk_shirt": {"path": "res://assets/meshes/POLYGON_CityZombies_SourceFiles_v3/Source Files/Characters/SK_Zombie_BusinessShirt_Male_01.gltf", "set": "masc"},
+	"husk_exec": {"path": "res://assets/meshes/POLYGON_CityZombies_SourceFiles_v3/Source Files/Characters/SK_Zombie_Business_Female_01.gltf", "set": "femn"},
+	"husk_bellboy": {"path": "res://assets/meshes/POLYGON_CityZombies_SourceFiles_v3/Source Files/Characters/SK_Zombie_Bellboy_Male_01.gltf", "set": "masc"},
+	"brute": {"path": "res://assets/meshes/POLYGON_BossZombies_SourceFiles_v3/SourceFiles/Chr/SK_Chr_ZombieBoss_Brute_01.gltf", "set": "masc"},
+}
+
 ## The Assembly — semi-sentient machines (Scifi_Space rigged robots).
 const MACHINES := {
 	"war_robot": {"path": "res://assets/meshes/POLYGON_Scifi_Space_SourceFiles_v2/SourceFiles/Characters/SK_Chr_BR_War_Robot_01.gltf", "set": "masc"},

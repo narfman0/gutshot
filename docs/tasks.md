@@ -164,7 +164,7 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       Rig, Scar Tissue, Dead Eye, Quick Hands, Combat Stims). HUD XP line
       under the site label with the TRAIN nudge; save v2 persists
       xp/level/perks/cleared (v1 saves load as fresh level 1)
-- [ ] Progression follow-ups: boss/objective XP when those systems land,
+- [ ] Progression follow-ups: objective XP when the jobs system lands,
       deeper per-member perk menus (role-exclusive picks), difficulty
       scaling against crew level
 - [x] World + aesthetic polish round v1 — the district no longer floats in
@@ -205,15 +205,17 @@ Distinct enemy types with their own AI feel, not just stat swaps. Each maps
 onto the narrative's antagonist structure (cult muscle + corporate backer)
 and onto systems that already exist (CombatBrain, awareness, packs).
 
-- [ ] **Demon hordes** — the cult's expendables: lots of weak melee/close
-      rushers, high bodycount, spiced with a few strong bruisers. Needs a
-      swarm-flavored brain variant (charge, no cover use, maybe simple
-      flocking), a melee attack path (no melee system yet), performance check
-      at 20-40 bodies (docs say GDExtension only if it actually bottlenecks),
-      and horde-scale telegraphs so the strong ones read. Asset candidates
-      (verified on the asset server): POLYGON_SciFi_Horror,
-      POLYGON_CityZombies / BossZombies (horde bodies + big bruisers),
-      POLYGON_Apocalypse.
+- [x] **Demon hordes** — SHIPPED as The Spawn (Factions.HORDE, at war
+      with EVERYTHING): breach the tower's Level 4 seal (now a heavy
+      BreachDoor) and 24 husks — the tower's own staff, turned
+      (CityZombies suits/bellboys) — pour out in four waves, capped by two
+      ZombieBoss BRUTES (320 hp, heavy claws, and a Telegraph-circle SLAM
+      ability off their gear — dodge or eat 45). Swarm brain = the melee
+      charge tick; pursue on, no morale — they flood downstairs after you.
+      Vantag Security becomes the containment team; the exec-floor
+      three-way is the show. Perf check PASSED: 16.6 ms avg physics frame
+      with 26 extra bodies live (no GDExtension needed). Horde kills pay
+      5 XP (brutes 60); wiping the release clears the tower.
 - [x] **Space bandits** — SHIPPED as the district-wide bandit personality:
       every gang pack has morale and cracks EARLY (bandit nerve — packs
       break at 60% strength via `morale_break_frac`, flee, slink back),

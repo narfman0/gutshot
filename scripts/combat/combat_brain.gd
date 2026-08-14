@@ -182,6 +182,13 @@ func _tick_melee(delta: float) -> void:
 	else:
 		idle_stop(delta)
 		_face(threat_pos())
+		# Gear abilities first (the brute's telegraphed slam) — cooldown
+		# gating is activate_ability's job; a refused cast falls through to
+		# the ordinary swing.
+		for ability in body.action_slots:
+			if not (ability is FragGrenadeAbility) \
+					and body.activate_ability(ability, threat_pos()):
+				return
 		shooter.try_fire(threat)
 
 ## Throw a frag at the threat if we carry one, it's off cooldown, and the
@@ -314,6 +321,11 @@ func _pick_cover_point() -> Vector3:
 	var threat_eye: Vector3 = _threat_eye()
 	for prop in body.get_tree().get_nodes_in_group("cover"):
 		var prop_pos := (prop as Node3D).global_position
+		# Cover on another floor is not cover: a ground column 8 m straight
+		# DOWN reads as "nearby" in 3D and lures deck fighters off their
+		# floor to a phantom ring point. Same-floor props only.
+		if absf(prop_pos.y - body.global_position.y) > 2.0:
+			continue
 		if body.global_position.distance_to(prop_pos) > COVER_SEARCH_RADIUS:
 			continue
 		var ring := _prop_extent(prop) + COVER_STANDOFF
