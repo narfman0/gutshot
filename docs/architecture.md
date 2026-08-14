@@ -44,10 +44,16 @@ resources/
 
 ## Navigation
 
-- Uses **NavigationServer3D** with a baked `NavigationMesh` per floor.
-- Characters request paths via `NavigationAgent3D` components.
-- Floor transitions (stairs, ladders) use teleport waypoints between per-floor nav meshes.
+- Uses **NavigationServer3D** with ONE runtime-baked `NavigationMesh` per site — stacked
+  floors bake into the same mesh, connected by ramp stairs within the parser's max slope
+  (proven on the Depot 9 catwalk, then the Exchange's three floors). The per-floor-mesh +
+  teleport-waypoint scheme originally planned here was never needed; teleports stay in
+  reserve for ladders/vents.
+- Movement is manual waypoint-following over `NavigationServer3D.map_get_path` (see
+  CombatBrain notes below).
 - Line-of-sight checks: raycasting against a dedicated collision layer (layer 2 = cover/walls).
+  Walkable decks/ramps carry BOTH the ground and cover layers, so floor slabs block sight
+  and shots between floors — that IS the elevation-aware LOS/cover system.
 
 ---
 
@@ -56,8 +62,18 @@ resources/
 - `CameraRig` is a `Node3D` with a `Camera3D` child angled at ~60 degrees.
 - Camera follows the active character or squad centroid.
 - Orthographic projection for clean iso look (no perspective distortion).
-- Floor transitions: camera smoothly re-targets the new floor's centroid; geometry above the
-  active floor is hidden via a `VisibilityNotifier` or manual layer toggle.
+- Floor transitions: the camera keeps its continuous follow (the pivot lerps to the active
+  character's full 3D position); what transitions is the **FloorSystem reveal state**
+  (`scripts/world/floor_system.gd`). Floors at or below the active floor render solid, the
+  floor directly above materializes across the last quarter of the climb toward it
+  (`GeometryInstance3D.transparency` + light-energy fade), and higher floors stay hidden.
+  Active-floor flips are hysteretic (commit up at ~90% of the rise, revert down below ~60%)
+  so idling mid-stair can't flicker. Characters ONE floor above are drawn only while a
+  living crew member has a line on them (`Cover.exposure` raycasts) — the gallery-overlook
+  fight reads from below, but a guard with no line to any party member isn't rendered
+  floating in the dark. Deeper floors hide their occupants outright.
+  Rendering-only: AI, LOS, and audio never consult it (visibility READS the LOS rays,
+  never feeds back into them).
 
 ---
 
@@ -271,8 +287,17 @@ world-space DOWN / REVIVING % label.
 - **Catwalk elevation without multi-floor tech**: ramps + deck are static
   colliders on the ground layer baked into the SAME navmesh (slopes within
   the parser's max-slope walk up naturally). Elevation LOS/cover need no new
-  code — all rays were 3D already. Real per-floor navmeshes remain a tower
-  problem.
+  code — all rays were 3D already.
+- **Multi-floor (the Exchange, three floors)**: the catwalk recipe scaled
+  straight up — one navmesh spans ground, mezzanine gallery, and the
+  counting house via ramp stairs (`GameWorld.add_walkable_box`, now
+  GROUND|COVER so slabs block cross-floor LOS). `_floor_heights()` on a
+  level activates the **FloorSystem** (see Isometric Camera above): auto
+  floor assignment by height, climb-driven reveal fade, hysteretic active
+  floor, characters/overhead bars hidden with their floor (except one floor
+  up — the overlook rule). Cover layout entries take an optional 5th element
+  (floor y); enemy spawn dicts take optional `aggro` (gallery watch sees
+  further so the atrium below is actually watched).
 - **Morale** (`EnemyController.has_morale` + `check_morale`): every pack
   death runs the test; packs cut to `MORALE_BREAK_FRAC` break morale units —
   FLEE away from the nearest hostile, recover, slink back SUSPICIOUS.

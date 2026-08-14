@@ -36,7 +36,7 @@ echo "Build ready. Run: godot"
 # ── Optional: headless test suite ────────────────────────────────────────────
 if [[ "${1:-}" == "test" ]]; then
 	echo "== tests"
-	for t in resources_smoke combat_smoke ai_probe skirmish_smoke depot_smoke fab_smoke district_smoke m1_smoke; do
+	for t in resources_smoke combat_smoke ai_probe skirmish_smoke depot_smoke fab_smoke exchange_smoke district_smoke m1_smoke; do
 		echo "-- $t"
 		if ! out=$(godot --headless "res://future/tests/harnesses/$t.tscn" 2>&1); then
 			echo "$out" | grep -E "FAIL|FAILURES" || echo "$out" | tail -5

@@ -1,0 +1,184 @@
+## The Exchange — a shuttered vertical market hall in the district margins,
+## bandit-run since the traders pulled out. Phase 2's THREE-floor testbed for
+## the FloorSystem reveal state (docs/plan.md):
+##   · ground trading floor: stall/crate cover under an open atrium
+##   · mezzanine gallery (U along north/west/east walls) with guards firing
+##     DOWN over the railings — visible from below, per the overlook rule
+##   · the counting house up top — a closed-off third floor that stays
+##     hidden until you take the stairs
+## One navmesh spans all three floors: the stairs are ramps, same recipe as
+## Depot 9's catwalk. Deck slabs carry COVER, so floors block LOS for real.
+extends GameWorld
+
+const PROP_CRATE_01 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Crate_01.gltf"
+const PROP_CRATE_04 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Crate_04.gltf"
+const CONTAINER_SMALL := "res://assets/meshes/POLYGON_Military_Warehouse_SourceFiles_v1/SourceFiles/FBX/SM_Prop_Shipping_Container_Small_01.gltf"
+
+const MEZZ_H := 3.0   # gallery walk height
+const TOP_H := 6.0    # counting-house walk height
+const DECK_T := 0.3
+const RAMP_TILT := 26.57  # rise 3 over run 6 — same read as the depot ramps
+
+func _arena_half() -> float:
+	return 30.0
+
+func _ground_color() -> Color:
+	return Color(0.21, 0.19, 0.17)  # trampled market-hall flagstone
+
+func _site_name() -> String:
+	return "THE EXCHANGE"
+
+func _site_id() -> String:
+	return "exchange"
+
+func _sun_energy() -> float:
+	return 0.7  # skylights boarded over — this hall lights itself
+
+func _fog_density() -> float:
+	return 0.006
+
+func _floor_heights() -> Array:
+	return [0.0, MEZZ_H, TOP_H]
+
+## Dead neon over the stalls, one cold shaft where the skylight boards gape.
+func _flood_lights() -> Array:
+	return [
+		[Vector3(-14, 9, 4), Color(0.95, 0.3, 0.75)],
+		[Vector3(14, 9, 4), Color(0.2, 0.8, 1.0)],
+		[Vector3(0, 10, -12), Color(1.0, 0.65, 0.25)],
+		[Vector3(0, 9, 20), Color(0.35, 0.7, 1.0)],
+	]
+
+func _cover_layout() -> Array:
+	return [
+		# Ground: abandoned stalls and freight left mid-move.
+		[PROP_CRATE_01, -6.0, 8.0, 15.0], [PROP_CRATE_04, 5.0, 10.0, 40.0],
+		[PROP_CRATE_01, 12.0, 2.0, 70.0], [PROP_CRATE_04, -12.0, 0.0, 0.0],
+		[PROP_CRATE_01, 0.0, -4.0, 25.0], [PROP_CRATE_04, 8.0, -10.0, 55.0],
+		[PROP_CRATE_01, -9.0, -12.0, 10.0], [CONTAINER_SMALL, -2.0, 14.0, 90.0],
+		[PROP_CRATE_04, 14.0, 12.0, 20.0], [PROP_CRATE_01, -15.0, 8.0, 35.0],
+		# Mezzanine gallery: cover the guards pop from (5th element = floor y).
+		[PROP_CRATE_04, -26.0, -6.0, 20.0, MEZZ_H],
+		[PROP_CRATE_04, 26.0, -4.0, 70.0, MEZZ_H],
+		[PROP_CRATE_01, 6.0, -25.5, 10.0, MEZZ_H],
+		[PROP_CRATE_04, -12.0, -25.5, 45.0, MEZZ_H],
+		# Counting house: the last stand's furniture.
+		[PROP_CRATE_01, -4.0, -23.0, 30.0, TOP_H],
+		[PROP_CRATE_04, 6.0, -27.0, 60.0, TOP_H],
+	]
+
+func _crew_spawns() -> Array:
+	return [
+		Vector3(-2.5, 0.1, 25.0), Vector3(0.0, 0.1, 26.0),
+		Vector3(2.5, 0.1, 25.0), Vector3(0.0, 0.1, 23.5),
+	]
+
+func _enemy_spawns() -> Array:
+	return [
+		# Trading floor pack — works the stalls.
+		{"skin": "punk", "pos": Vector3(-8.0, 0.1, 2.0), "pack": "floor", "morale": true,
+			"patrol": [Vector3(-12.0, 0.1, 6.0), Vector3(10.0, 0.1, 4.0), Vector3(0.0, 0.1, -8.0)]},
+		{"skin": "biker", "pos": Vector3(8.0, 0.1, -2.0), "pack": "floor", "morale": true,
+			"patrol": [Vector3(12.0, 0.1, -6.0), Vector3(-10.0, 0.1, -4.0)]},
+		{"skin": "gangster", "pos": Vector3(0.0, 0.1, -12.0), "pack": "floor", "morale": true},
+		# Gallery watch — fires down over the rails; longer sight so the
+		# atrium below is actually watched.
+		{"skin": "gangster", "pos": Vector3(-26.0, 3.1, -10.0), "pack": "gallery",
+			"morale": true, "aggro": 16.0,
+			"patrol": [Vector3(-26.0, MEZZ_H, 10.0), Vector3(-26.0, MEZZ_H, -18.0),
+				Vector3(-12.0, MEZZ_H, -25.5)]},
+		{"skin": "punk_girl", "pos": Vector3(26.0, 3.1, -10.0), "pack": "gallery",
+			"morale": true, "aggro": 16.0,
+			"patrol": [Vector3(26.0, MEZZ_H, 8.0), Vector3(26.0, MEZZ_H, -18.0)]},
+		{"skin": "punk", "pos": Vector3(10.0, 3.1, -25.5), "pack": "gallery",
+			"morale": true, "aggro": 16.0,
+			"patrol": [Vector3(18.0, MEZZ_H, -25.5), Vector3(-16.0, MEZZ_H, -25.5)]},
+		# Counting house — the take is up here. Cornered; no morale test.
+		{"skin": "biker", "pos": Vector3(-5.0, 6.1, -25.0), "pack": "vault"},
+		{"skin": "gangster", "pos": Vector3(5.0, 6.1, -27.0), "pack": "vault"},
+		{"skin": "punk", "pos": Vector3(0.0, 6.1, -23.0), "pack": "vault"},
+	]
+
+func _build_extra_geometry() -> void:
+	_build_gallery()
+	_build_counting_house()
+	add_transit_zone(Vector3(-26.0, 0.0, 26.0), "hideout", "→ HIDEOUT")
+	add_transit_zone(Vector3(26.0, 0.0, 26.0), "skirmish", "→ STREET")
+	# Practicals — sodium pools over the stalls, cyan strips under the
+	# gallery decks (kept just below the assignment slack so they stay with
+	# the ground floor they light), warm lamps above.
+	add_practical_light(Vector3(0, 2.2, 5), Color(1.0, 0.6, 0.25), 1.8, 8.0)
+	add_practical_light(Vector3(-8, 2.2, -4), Color(1.0, 0.6, 0.25), 1.6, 7.0)
+	add_practical_light(Vector3(8, 2.2, -4), Color(1.0, 0.6, 0.25), 1.6, 7.0)
+	add_practical_light(Vector3(-21, 2.5, -3), Color(0.25, 0.85, 1.0), 1.2, 6.0)
+	add_practical_light(Vector3(21, 2.5, -3), Color(0.25, 0.85, 1.0), 1.2, 6.0)
+	add_practical_light(Vector3(0, 2.5, -20), Color(0.25, 0.85, 1.0), 1.2, 6.0)
+	add_practical_light(Vector3(-26, 4.5, -10), Color(1.0, 0.65, 0.3), 1.4, 7.0)
+	add_practical_light(Vector3(26, 4.5, -10), Color(1.0, 0.65, 0.3), 1.4, 7.0)
+	add_practical_light(Vector3(0, 4.5, -25.5), Color(1.0, 0.65, 0.3), 1.4, 7.0)
+	add_practical_light(Vector3(0.5, 7.5, -25), Color(1.0, 0.45, 0.3), 1.6, 8.0)
+
+## U-shaped gallery hugging the north, west, and east walls, one deck height
+## up, with ramps rising along the west and east walls. Railings on the inner
+## (atrium) edges are visual-only — guards shoot over them, bodies drop past.
+## Worn hall boards, not the depot's neon deck — the big slabs would scream
+## in full emissive cyan; the yellow rails carry the edge read instead.
+const DECK_COL := Color(0.30, 0.29, 0.27)
+const DECK_GLOW := 0.04
+
+func _build_gallery() -> void:
+	var deck_y := MEZZ_H - DECK_T * 0.5
+	add_walkable_box(Vector3(0.0, deck_y, -25.5), Vector3(60.0, DECK_T, 9.0),
+		0.0, 0.0, DECK_COL, DECK_GLOW)   # north
+	add_walkable_box(Vector3(-26.0, deck_y, -3.0), Vector3(8.0, DECK_T, 36.0),
+		0.0, 0.0, DECK_COL, DECK_GLOW)   # west
+	add_walkable_box(Vector3(26.0, deck_y, -3.0), Vector3(8.0, DECK_T, 36.0),
+		0.0, 0.0, DECK_COL, DECK_GLOW)   # east
+	# Ramps: ground at z≈21 rising north to the deck at z≈15.
+	add_walkable_box(Vector3(-26.0, MEZZ_H * 0.5 - 0.15, 18.0), Vector3(4.0, DECK_T, 6.7),
+		RAMP_TILT, 0.0, DECK_COL, DECK_GLOW)
+	add_walkable_box(Vector3(26.0, MEZZ_H * 0.5 - 0.15, 18.0), Vector3(4.0, DECK_T, 6.7),
+		RAMP_TILT, 0.0, DECK_COL, DECK_GLOW)
+	add_rail(Vector3(0.0, MEZZ_H + 0.35, -21.0), Vector3(44.0, 0.7, 0.06))
+	add_rail(Vector3(-22.0, MEZZ_H + 0.35, -3.0), Vector3(0.06, 0.7, 36.0))
+	add_rail(Vector3(22.0, MEZZ_H + 0.35, -3.0), Vector3(0.06, 0.7, 36.0))
+
+## The counting house: a walled room over the north gallery, reached by a
+## ramp on the deck below. Its slab and walls sit in the top floor group, so
+## the whole room stays hidden until the climb reveals it.
+func _build_counting_house() -> void:
+	# Slab spans x -12..13 (the extra metre takes the ramp landing), z -30..-20.
+	add_walkable_box(Vector3(0.5, TOP_H - DECK_T * 0.5, -25.0), Vector3(25.0, DECK_T, 10.0),
+		0.0, 0.0, DECK_COL, DECK_GLOW)
+	# Ramp on the north deck: deck at x≈19.4 rising west to the slab at x≈12.7.
+	add_walkable_box(Vector3(16.0, (MEZZ_H + TOP_H) * 0.5 - 0.15, -25.5),
+		Vector3(6.7, DECK_T, 4.0), 0.0, -RAMP_TILT, DECK_COL, DECK_GLOW)
+	# Walls — door gap on the east side where the ramp lands.
+	_house_wall(Vector3(0.5, 0.0, -20.2), Vector3(25.0, 2.4, 0.4))    # south
+	_house_wall(Vector3(0.5, 0.0, -29.8), Vector3(25.0, 2.4, 0.4))    # north
+	_house_wall(Vector3(-12.2, 0.0, -25.0), Vector3(0.4, 2.4, 10.0))  # west
+	_house_wall(Vector3(13.2, 0.0, -28.5), Vector3(0.4, 2.4, 3.0))    # east, north of the door
+	_house_wall(Vector3(13.2, 0.0, -22.0), Vector3(0.4, 2.4, 4.0))    # east, south of the door
+
+func _house_wall(pos: Vector3, size: Vector3) -> void:
+	var wall := StaticBody3D.new()
+	wall.collision_layer = Layers.COVER
+	wall.add_to_group(NavRuntime.SOURCE_GROUP)
+	var col := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = size
+	col.shape = box
+	col.position.y = size.y * 0.5
+	wall.add_child(col)
+	var mi := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.30, 0.28, 0.26)
+	mat.roughness = 0.8
+	mesh.material = mat
+	mi.mesh = mesh
+	mi.position.y = size.y * 0.5
+	wall.add_child(mi)
+	_level.add_child(wall)
+	wall.global_position = Vector3(pos.x, TOP_H, pos.z)

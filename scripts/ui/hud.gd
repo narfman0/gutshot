@@ -336,6 +336,11 @@ func _process(_delta: float) -> void:
 		var bar: ColorRect = _overheads[character]
 		if not is_instance_valid(character) or not is_instance_valid(bar) or not bar.visible:
 			continue
+		# A character on a hidden floor takes their overhead bar with them
+		# (modulate, not visible — death owns the visible flag).
+		bar.modulate.a = 1.0 if (character as Node3D).visible else 0.0
+		if bar.modulate.a == 0.0:
+			continue
 		var world := (character as Node3D).global_position \
 			+ Vector3(0, 2.1 * Character.VERTICAL_SQUASH, 0)
 		if _camera.is_position_behind(world):

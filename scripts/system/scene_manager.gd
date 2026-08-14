@@ -6,6 +6,7 @@ const LEVELS := {
 	"skirmish": "res://scenes/levels/skirmish.tscn",
 	"depot": "res://scenes/levels/depot.tscn",
 	"fab": "res://scenes/levels/fab.tscn",
+	"exchange": "res://scenes/levels/exchange.tscn",
 }
 
 var _fade: ColorRect

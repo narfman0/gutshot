@@ -94,13 +94,32 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       lasers, patrols, no morale), a fabricator sanctum with trespass
       warning → provocation, bandit salvage crew as the objective, freight
       tunnel from Depot 9; district map unlocked
-- [ ] Two-floor hand-crafted level: stairs/ladder transitions between
-      per-floor navmeshes (teleport waypoints per architecture.md)
-- [ ] Destructible doors + breach points
-- [ ] Elevation-aware LOS and cover
+- [x] Multi-floor hand-crafted level — went straight to THREE floors: the
+      Exchange (shuttered market hall): ground trading floor, mezzanine
+      gallery with guards firing down over the rails, closed-off counting
+      house up top. ONE navmesh spans all floors via ramp stairs (the
+      catwalk recipe scaled up — teleport waypoints never needed)
+- [ ] Destructible doors + breach points (Depot 9 has them; generalize)
+- [x] Elevation-aware LOS and cover: walkable decks/ramps carry GROUND|COVER
+      so floor slabs block sight and shots between floors
 - [ ] Proper patrol ROUTES (waypoint paths; IDLE wander + alert states are in)
-- [ ] Camera floor transitions; hide geometry above active floor
+- [x] Camera floor transitions: continuous camera follow kept; the
+      FloorSystem reveal state is what transitions — floor above fades in
+      across the last quarter of the climb (hidden <75%, solid by 95%),
+      active floor flips with hysteresis (up at 90%, down at 60%), higher
+      floors stay hidden, characters one floor up drawn only while a crew
+      member has a line on them (overlook rule), lights/overhead bars fade
+      with their floor
 - [ ] Audio pass (AudioManager autoload, wayfarer `gen_audio.py` lineage)
+- [x] Remove the "AREA CLEAR" end popup — victory now shows nothing; the
+      site falls quiet and the crew travels out (SQUAD WIPED popup stays)
+- [ ] Mission-complete feedback, the different way: HUD cue / objective
+      ping / district-map state — design open
+- [ ] Seamless district: one big connected world instead of discrete sites
+      with fade loads. Big refactor — GameWorld-per-site, per-site navmesh
+      bakes, provocation resets, and autosave-on-arrival all assume scene
+      swaps; sites would become regions (or streamed chunks) and transit
+      pads/district map become traversal aids
 - [x] Save/load stub: crew hp/shields carried between sites (hideout heals),
       autosave on arrival, Continue on the main menu; debug/harness runs can
       never write a real slot (GameState.run_active gate + scratch-slot tests)

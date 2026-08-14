@@ -68,6 +68,11 @@ func _site_id() -> String:
 func _heals_crew() -> bool:
 	return false
 
+## Walk heights of each floor, ground first. More than one entry activates
+## the FloorSystem reveal state (multi-floor sites only).
+func _floor_heights() -> Array:
+	return [0.0]
+
 func _sun_energy() -> float:
 	return 1.5
 
@@ -110,9 +115,15 @@ func _ready() -> void:
 	_spawn_crew()
 	_spawn_enemies()
 	_setup_camera()
+	if _floor_heights().size() > 1:
+		var floors := FloorSystem.new()
+		floors.name = "FloorSystem"
+		add_child(floors)
+		floors.setup(_squad, _level, _floor_heights())
 	($HUD as Hud).setup(_squad, _objectives, _camera, _site_name())
-	_objectives.mission_complete.connect(func(): _show_end_screen(true))
-	_objectives.mission_failed.connect(func(): _show_end_screen(false))
+	# Victory shows nothing — the site falls quiet and the crew travels out.
+	# (Mission-complete feedback returns another way; docs/tasks.md.)
+	_objectives.mission_failed.connect(_show_wipe_screen)
 	AudioManager.play_ambient()
 	if _heals_crew():
 		GameState.crew_state = {}  # patched up — wounds don't follow you out
@@ -217,7 +228,8 @@ func _setup_cover() -> void:
 			visual.scale.y = Character.VERTICAL_SQUASH  # squat world, squat props
 			prop.add_child(visual)
 		cover_root.add_child(prop)
-		prop.global_position = Vector3(entry[1], 0.0, entry[2])
+		# Optional 5th element: floor height — cover on upper decks.
+		prop.global_position = Vector3(entry[1], entry[4] if entry.size() > 4 else 0.0, entry[2])
 		prop.rotation.y = deg_to_rad(entry[3])
 		_add_aabb_collider(prop, visual)
 
@@ -327,6 +339,7 @@ func _spawn_enemies() -> void:
 		controller.pack_id = entry["pack"]
 		controller.patrol_points = entry.get("patrol", [])
 		controller.has_morale = entry.get("morale", false)
+		controller.aggro_radius = entry.get("aggro", controller.aggro_radius)
 		if entry.has("gear"):
 			c.equip(load(entry["gear"]))
 			c.select_slot(0)
@@ -346,6 +359,53 @@ func add_practical_light(pos: Vector3, color: Color, energy := 1.6, reach := 7.0
 	light.shadow_enabled = false
 	_level.add_child(light)
 	light.global_position = pos
+
+## Walkable slab or ramp (decks, stairs): GROUND so it takes movement, the
+## cursor ray, and the navmesh bake; COVER so elevation LOS is real — a deck
+## slab blocks sight and shots through the floor.
+func add_walkable_box(pos: Vector3, size: Vector3, tilt_x_deg := 0.0, tilt_z_deg := 0.0,
+		color := Color(0.25, 0.28, 0.30), glow := 0.15) -> void:
+	var body := StaticBody3D.new()
+	body.collision_layer = Layers.GROUND | Layers.COVER
+	body.add_to_group(NavRuntime.SOURCE_GROUP)
+	var col := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = size
+	col.shape = box
+	body.add_child(col)
+	var mi := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.roughness = 0.5
+	mat.metallic = 0.5
+	mat.emission_enabled = true
+	mat.emission = Color(0.2, 0.8, 1.0)
+	mat.emission_energy_multiplier = glow
+	mesh.material = mat
+	mi.mesh = mesh
+	body.add_child(mi)
+	_level.add_child(body)
+	body.global_position = pos
+	body.rotation.x = deg_to_rad(tilt_x_deg)
+	body.rotation.z = deg_to_rad(tilt_z_deg)
+
+## Railing: visual only (no collider) — shots pass, and dropping off a deck
+## stays a legal shortcut down.
+func add_rail(pos: Vector3, size: Vector3) -> void:
+	var mi := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.7, 0.6, 0.15)
+	mat.emission_enabled = true
+	mat.emission = Color(0.9, 0.75, 0.2)
+	mat.emission_energy_multiplier = 0.4
+	mesh.material = mat
+	mi.mesh = mesh
+	_level.add_child(mi)
+	mi.global_position = pos
 
 ## A glowing floor pad that travels to another site when the crew's active
 ## character steps on it — the district's instant-travel connectors.
@@ -474,7 +534,7 @@ func _close_pause() -> void:
 
 # ── End screen ───────────────────────────────────────────────────────────────
 
-func _show_end_screen(victory: bool) -> void:
+func _show_wipe_screen() -> void:
 	if _game_over:
 		return
 	_game_over = true
@@ -489,10 +549,9 @@ func _show_end_screen(victory: bool) -> void:
 	vbox.add_theme_constant_override("separation", 12)
 	panel.add_child(vbox)
 	var title := Label.new()
-	title.text = "AREA CLEAR" if victory else "SQUAD WIPED"
+	title.text = "SQUAD WIPED"
 	title.add_theme_font_size_override("font_size", 42)
-	title.add_theme_color_override("font_color",
-		UITheme.C_HEAD if victory else UITheme.C_HP_ENEMY)
+	title.add_theme_color_override("font_color", UITheme.C_HP_ENEMY)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 	var retry := Button.new()

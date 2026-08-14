@@ -8,6 +8,7 @@ const SITES := [
 	{"id": "hideout", "site_name": "The Hideout", "blurb": "Safe room. Catch your breath.", "locked": false},
 	{"id": "skirmish", "site_name": "The Street", "blurb": "Neon crossroads under the tower. Gang turf.", "locked": false},
 	{"id": "depot", "site_name": "Depot 9", "blurb": "Vantag's warehouse — bandit-run. Breach or take the catwalk.", "locked": false},
+	{"id": "exchange", "site_name": "The Exchange", "blurb": "Shuttered market hall — bandits hold the galleries.", "locked": false},
 	{"id": "littlejapan", "site_name": "Little Japan", "blurb": "Market alleys. Clan territory. [LOCKED]", "locked": true},
 	{"id": "fab", "site_name": "Fab Level", "blurb": "Assembly machine turf. Neutral — for now.", "locked": false},
 	{"id": "tower", "site_name": "Vantag Tower", "blurb": "Something upstairs got out. [LOCKED]", "locked": true},

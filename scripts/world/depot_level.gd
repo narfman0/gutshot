@@ -131,52 +131,10 @@ func _build_dividing_wall() -> void:
 ## Deck over the wall at x = 0 with ramps at both ends — the loud doors'
 ## quiet alternative, if you can take it from the watch.
 func _build_catwalk() -> void:
-	_walkable_box(Vector3(0, DECK_H - 0.15, -4.0), Vector3(3.0, 0.3, 12.0), 0.0)
+	add_walkable_box(Vector3(0, DECK_H - 0.15, -4.0), Vector3(3.0, 0.3, 12.0))
 	# South ramp: ground at z≈7 rising to the deck at z≈2.
-	_walkable_box(Vector3(0, DECK_H * 0.5 - 0.15, 4.6), Vector3(3.0, 0.3, 5.9), 27.5)
+	add_walkable_box(Vector3(0, DECK_H * 0.5 - 0.15, 4.6), Vector3(3.0, 0.3, 5.9), 27.5)
 	# North ramp: ground at z≈-15 rising to the deck at z≈-10.
-	_walkable_box(Vector3(0, DECK_H * 0.5 - 0.15, -12.6), Vector3(3.0, 0.3, 5.9), -27.5)
-	# Railings: visual only (no collider) — shots pass, and dropping off the
-	# deck stays a legal shortcut down.
+	add_walkable_box(Vector3(0, DECK_H * 0.5 - 0.15, -12.6), Vector3(3.0, 0.3, 5.9), -27.5)
 	for rail_x in [-1.5, 1.5]:
-		_rail(Vector3(rail_x, DECK_H + 0.35, -4.0), Vector3(0.06, 0.7, 12.0))
-
-func _rail(pos: Vector3, size: Vector3) -> void:
-	var mi := MeshInstance3D.new()
-	var mesh := BoxMesh.new()
-	mesh.size = size
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.7, 0.6, 0.15)
-	mat.emission_enabled = true
-	mat.emission = Color(0.9, 0.75, 0.2)
-	mat.emission_energy_multiplier = 0.4
-	mesh.material = mat
-	mi.mesh = mesh
-	_level.add_child(mi)
-	mi.global_position = pos
-
-func _walkable_box(pos: Vector3, size: Vector3, tilt_deg: float) -> void:
-	var body := StaticBody3D.new()
-	body.collision_layer = Layers.GROUND
-	body.add_to_group(NavRuntime.SOURCE_GROUP)
-	var col := CollisionShape3D.new()
-	var box := BoxShape3D.new()
-	box.size = size
-	col.shape = box
-	body.add_child(col)
-	var mi := MeshInstance3D.new()
-	var mesh := BoxMesh.new()
-	mesh.size = size
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.25, 0.28, 0.30)
-	mat.roughness = 0.5
-	mat.metallic = 0.5
-	mat.emission_enabled = true
-	mat.emission = Color(0.2, 0.8, 1.0)
-	mat.emission_energy_multiplier = 0.15
-	mesh.material = mat
-	mi.mesh = mesh
-	body.add_child(mi)
-	_level.add_child(body)
-	body.global_position = pos
-	body.rotation.x = deg_to_rad(tilt_deg)
+		add_rail(Vector3(rail_x, DECK_H + 0.35, -4.0), Vector3(0.06, 0.7, 12.0))

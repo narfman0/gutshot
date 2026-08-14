@@ -70,6 +70,20 @@ cult wants its fabricators, so provocation is coming from all sides.
 - The three-way-fight sandbox: bait corp security or hordes into machine
   territory and let the district sort itself out.
 
+### The Exchange (market hall)
+A shuttered vertical market hall in the district margins, bandit-run since
+the traders pulled out. Three floors under one roof — the multi-floor tech
+proving ground before the tower demands it at scale:
+- **Trading floor**: abandoned stalls and freight, cover-rich, open atrium
+  overhead.
+- **Mezzanine gallery**: a U of decks hugging the walls, guards firing down
+  over the railings at anything on the floor. Ramp stairs at the west and
+  east walls.
+- **The counting house**: a walled room over the north gallery — where the
+  take is. Closed off, hidden from below until you climb.
+- Bandit turf (morale fights); the counting-house crew is cornered and
+  doesn't test morale.
+
 ### Little Japan (street level)
 The street level under the tower's shadow: noodle stalls, neon signage,
 arcades, shrine alleys — the POLYGON_CyberCity pack's Japanese-cyberpunk
@@ -114,6 +128,9 @@ this; add one entry per site).
    the moment there are two sites to pick between.
 3. **Fab Level** — SHIPPED: neutral Assembly custodians, sanctum trespass
    rules, bandit salvage crew objective, freight tunnel from Depot 9.
-4. **Vantag Tower** — the capstone: full multi-floor, all factions, portal
+4. **The Exchange** — SHIPPED: the three-floor testbed (mezzanine gallery
+   overwatch, closed counting house) that proved the FloorSystem reveal
+   state and single-navmesh ramp stairs.
+5. **Vantag Tower** — the capstone: full multi-floor, all factions, portal
    finale. Likely several sub-scenes (lobby / mid / upper) linked by the
    elevator rather than one giant scene.
