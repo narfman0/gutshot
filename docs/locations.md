@@ -106,14 +106,22 @@ injuries, progression. No combat systems load here.
 
 ## Quick travel
 
-Distances are diegetic but travel is instant — pick a destination, fade,
-arrive (SceneManager.change_level + LEVELS registry already does exactly
-this; add one entry per site).
+The district is ONE seamless world (scenes/district.tscn) — travel is on
+foot through walled connector corridors between the sites' gates:
 
-- **District map** in the hideout = mission/site select.
-- **In-fiction connectors** double as level entrances/exits AND mid-mission
-  shortcuts once unlocked: the skybridge (tower ↔ depot roof), the freight
-  elevator (tower sub-level ↔ fab level), the freight tunnel (depot ↔ fab).
+    hideout ── alley ── street ── arcade ── exchange ──── depot
+                                                            │
+                                                     freight tunnel
+                                                            │
+                                                           fab
+
+- **District map** (M anywhere, or the hideout console) is informational:
+  where you are, what each site holds. No teleporting.
+- Cleared sites REPOPULATE once the crew has been gone a beat — the
+  district refills behind you. The hideout is the one site that never does;
+  entering it rests the crew (full heal, grudges forgiven).
+- **Future in-fiction connectors** for the sealed sites: the skybridge
+  (tower ↔ depot roof), the freight elevator (tower sub-level ↔ fab level).
 - Connectors are gameplay, not just doors: a crew being overrun in the
   depot can fall back through the freight tunnel into Assembly turf — and
   whatever chases them becomes the machines' problem.

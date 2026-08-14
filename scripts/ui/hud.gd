@@ -214,20 +214,30 @@ func _refresh_slots() -> void:
 		var box := entry["box"] as Control
 		box.modulate = Color(1, 1, 1) if i == active.active_slot else Color(0.6, 0.65, 0.7, 0.85)
 
-## Site name top-left — instant orientation after a transit pad.
+var _site_label: Label = null
+
+## Site name top-left — instant orientation as the crew crosses the district.
 func _build_site_label(site_name: String) -> void:
-	var label := Label.new()
-	label.theme = UITheme.theme
-	label.text = site_name
-	label.add_theme_font_size_override("font_size", 22)
-	label.add_theme_color_override("font_color", UITheme.C_HEAD)
-	label.position = Vector2(18, 12)
-	add_child(label)
+	_site_label = Label.new()
+	_site_label.theme = UITheme.theme
+	_site_label.text = site_name
+	_site_label.add_theme_font_size_override("font_size", 22)
+	_site_label.add_theme_color_override("font_color", UITheme.C_HEAD)
+	_site_label.position = Vector2(18, 12)
+	add_child(_site_label)
+
+## GameWorld calls this when the active character crosses into a site.
+func set_site(site_name: String) -> void:
+	if _site_label != null:
+		_site_label.text = site_name
 
 ## Pressure: how much heat is bearing down — not a count, a mood. Weighs
 ## every enemy's awareness state (fighting > suspicious > fleeing) and eases
 ## toward it; the bar drains cyan→red as the district turns on you.
 const _PRESSURE_FULL := 5.0  # weighted heat that pegs the bar
+## Heat only radiates from enemies near the crew — a fight (or a suspicious
+## wanderer) across the seamless district isn't pressure on YOU.
+const _PRESSURE_RANGE := 40.0
 
 var _pressure_fill: ColorRect
 var _pressure_label: Label
@@ -262,6 +272,7 @@ func _update_pressure(delta: float) -> void:
 	if _pressure_fill == null:
 		return
 	var heat := 0.0
+	var crew := GameState.living_squad()
 	for node in get_tree().get_nodes_in_group("enemy_ai"):
 		var controller := node as EnemyController
 		if controller == null or controller.body == null or not controller.body.is_alive():
@@ -269,6 +280,14 @@ func _update_pressure(delta: float) -> void:
 		# Neutral factions radiate no heat until they're actually in it.
 		if not Factions.hostile(Factions.CREW, controller.body.team) \
 				and controller.state != EnemyController.State.FIGHT:
+			continue
+		var near := false
+		for member in crew:
+			if controller.body.global_position.distance_to(
+					(member as Node3D).global_position) <= _PRESSURE_RANGE:
+				near = true
+				break
+		if not near:
 			continue
 		match controller.state:
 			EnemyController.State.FIGHT:

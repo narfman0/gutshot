@@ -1,12 +1,9 @@
+@tool
 ## Depot 9 — Vantag's logistics warehouse, quietly run by bandit crews
-## (docs/locations.md). The Phase-2 systems testbed:
-##   · a dividing wall with two BREACH DOORS (shoot/blast through, navmesh
-##     re-bakes when they blow)
-##   · a CATWALK crossing over the wall — the alternate route, patrolled
-##   · container aisles (full cover), bandit packs with PATROLS and MORALE
-##     (thin a pack to half and the survivors break and run)
-## Transit pad returns to the street skirmish.
-extends GameWorld
+## (docs/locations.md): dividing wall with two BREACH DOORS, catwalk over it,
+## container aisles, patrols + morale. West arcade to the Exchange, south
+## freight tunnel to the Fab Level.
+extends SiteChunk
 
 const CONTAINER := "res://assets/meshes/POLYGON_Military_Warehouse_SourceFiles_v1/SourceFiles/FBX/SM_Prop_Shipping_Container_01.gltf"
 const CONTAINER_SMALL := "res://assets/meshes/POLYGON_Military_Warehouse_SourceFiles_v1/SourceFiles/FBX/SM_Prop_Shipping_Container_Small_01.gltf"
@@ -14,29 +11,35 @@ const PROP_CRATE_01 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/Sou
 const PROP_CRATE_04 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Crate_04.gltf"
 
 const WALL_Z := -4.0
-const WALL_H := 2.4
+const DIV_WALL_H := 2.4
 const DECK_H := 2.6
 
-func _arena_half() -> float:
-	return 26.0
-
-func _ground_color() -> Color:
-	return Color(0.20, 0.20, 0.19)  # stained warehouse concrete
-
-func _site_name() -> String:
-	return "DEPOT 9"
-
-func _site_id() -> String:
+func site_id() -> String:
 	return "depot"
 
-func _sun_energy() -> float:
+func site_name() -> String:
+	return "DEPOT 9"
+
+func arena_half() -> float:
+	return 26.0
+
+func ground_color() -> Color:
+	return Color(0.20, 0.20, 0.19)  # stained warehouse concrete
+
+func sun_energy() -> float:
 	return 0.9  # dimmer skylight leak — this is an interior
 
-func _fog_density() -> float:
+func fog_density() -> float:
 	return 0.007  # warehouse dust hanging in the work-lights
 
+func gates() -> Array:
+	return [
+		{"side": "w", "center": 0.0},    # arcade from the Exchange
+		{"side": "s", "center": -14.0},  # freight tunnel to the Fab Level
+	]
+
 ## Sodium work-lights over the aisles, one cold blue over the yard gate.
-func _flood_lights() -> Array:
+func flood_lights() -> Array:
 	return [
 		[Vector3(-12, 6, -14), Color(1.0, 0.65, 0.25)],
 		[Vector3(12, 6, -14), Color(1.0, 0.65, 0.25)],
@@ -45,9 +48,9 @@ func _flood_lights() -> Array:
 		[Vector3(18, 6, 18), Color(0.2, 0.8, 1.0)],
 	]
 
-func _cover_layout() -> Array:
+func cover_layout() -> Array:
 	return [
-		# Yard (crew side): scattered crates for the approach fight.
+		# Yard (south side): scattered crates for the approach fight.
 		[PROP_CRATE_01, -9.0, 8.0, 20.0], [PROP_CRATE_04, -7.5, 9.0, 0.0],
 		[PROP_CRATE_01, 8.0, 6.0, 75.0], [PROP_CRATE_04, 12.0, 12.0, 40.0],
 		[PROP_CRATE_01, 0.0, 12.0, 10.0],
@@ -60,13 +63,13 @@ func _cover_layout() -> Array:
 		[PROP_CRATE_04, -12.0, -9.0, 55.0], [PROP_CRATE_01, 12.0, -8.0, 15.0],
 	]
 
-func _crew_spawns() -> Array:
+func crew_spawns() -> Array:
 	return [
 		Vector3(-2.5, 0.1, 21.0), Vector3(0.0, 0.1, 22.0),
 		Vector3(2.5, 0.1, 21.0), Vector3(0.0, 0.1, 19.5),
 	]
 
-func _enemy_spawns() -> Array:
+func enemy_spawns() -> Array:
 	return [
 		# Yard patrol — walks the fence line.
 		{"skin": "punk", "pos": Vector3(-10.0, 0.1, 2.0), "pack": "yard", "morale": true,
@@ -83,12 +86,9 @@ func _enemy_spawns() -> Array:
 		{"skin": "punk", "pos": Vector3(12.0, 0.1, -17.0), "pack": "back", "morale": true},
 	]
 
-func _build_extra_geometry() -> void:
+func build_extra_geometry() -> void:
 	_build_dividing_wall()
 	_build_catwalk()
-	add_transit_zone(Vector3(22.0, 0.0, 22.0), "skirmish", "→ STREET")
-	add_transit_zone(Vector3(-22.0, 0.0, 22.0), "hideout", "→ HIDEOUT")
-	add_transit_zone(Vector3(-22.0, 0.0, -22.0), "fab", "→ FAB LEVEL")  # the freight tunnel
 	# Practicals: cyan strips under the catwalk deck, glow pooled in the
 	# container aisles where the fights happen.
 	add_practical_light(Vector3(0, 1.8, -7.5), Color(0.25, 0.85, 1.0), 1.2, 5.0)
@@ -96,10 +96,10 @@ func _build_extra_geometry() -> void:
 	add_practical_light(Vector3(-12, 2.5, -16), Color(1.0, 0.6, 0.25), 1.8, 8.0)
 	add_practical_light(Vector3(12, 2.5, -16), Color(1.0, 0.6, 0.25), 1.8, 8.0)
 
-## Full-height wall across the arena at WALL_Z with two door gaps; the doors
+## Full-height wall across the site at WALL_Z with two door gaps; the doors
 ## are BreachDoors. Wall sits UNDER the catwalk crossing at x = 0.
 func _build_dividing_wall() -> void:
-	var half := _arena_half()
+	var half := arena_half()
 	# Segments: [-half..-10], [-6..6], [10..half] — gaps at ±8 (width 4).
 	for seg in [[-half, -10.0], [-6.0, 6.0], [10.0, half]]:
 		var from: float = seg[0]
@@ -109,9 +109,9 @@ func _build_dividing_wall() -> void:
 		wall.add_to_group(NavRuntime.SOURCE_GROUP)
 		var col := CollisionShape3D.new()
 		var box := BoxShape3D.new()
-		box.size = Vector3(to - from, WALL_H, 0.6)
+		box.size = Vector3(to - from, DIV_WALL_H, 0.6)
 		col.shape = box
-		col.position.y = WALL_H * 0.5
+		col.position.y = DIV_WALL_H * 0.5
 		wall.add_child(col)
 		var mi := MeshInstance3D.new()
 		var mesh := BoxMesh.new()
@@ -121,12 +121,12 @@ func _build_dividing_wall() -> void:
 		mat.roughness = 0.8
 		mesh.material = mat
 		mi.mesh = mesh
-		mi.position.y = WALL_H * 0.5
+		mi.position.y = DIV_WALL_H * 0.5
 		wall.add_child(mi)
-		_level.add_child(wall)
-		wall.global_position = Vector3((from + to) * 0.5, 0.0, WALL_Z)
-	BreachDoor.build(_level, Vector3(-8.0, 0.0, WALL_Z), Vector3(4.0, WALL_H, 0.5))
-	BreachDoor.build(_level, Vector3(8.0, 0.0, WALL_Z), Vector3(4.0, WALL_H, 0.5))
+		gen_root().add_child(wall)
+		wall.position = Vector3((from + to) * 0.5, 0.0, WALL_Z)
+	BreachDoor.build(gen_root(), Vector3(-8.0, 0.0, WALL_Z), Vector3(4.0, DIV_WALL_H, 0.5))
+	BreachDoor.build(gen_root(), Vector3(8.0, 0.0, WALL_Z), Vector3(4.0, DIV_WALL_H, 0.5))
 
 ## Deck over the wall at x = 0 with ramps at both ends — the loud doors'
 ## quiet alternative, if you can take it from the watch.

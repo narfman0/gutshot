@@ -1,13 +1,9 @@
-## Autoload — scene transitions with fade, and the mission-id → scene registry.
+## Autoload — boots the one seamless district scene (with fade) and reloads
+## it on retry. There are no per-site scenes anymore: travel inside a run is
+## on foot, so the only scene changes left are menu → world and reload.
 extends CanvasLayer
 
-const LEVELS := {
-	"hideout": "res://scenes/levels/hideout.tscn",
-	"skirmish": "res://scenes/levels/skirmish.tscn",
-	"depot": "res://scenes/levels/depot.tscn",
-	"fab": "res://scenes/levels/fab.tscn",
-	"exchange": "res://scenes/levels/exchange.tscn",
-}
+const DISTRICT_SCENE := "res://scenes/district.tscn"
 
 var _fade: ColorRect
 var _busy := false
@@ -20,21 +16,17 @@ func _ready() -> void:
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_fade)
 
-func level_scene_for(mission_id: String) -> String:
-	return LEVELS.get(mission_id, LEVELS["skirmish"])
-
-## Fade out and switch scenes. The arriving GameWorld calls fade_in() from
-## its _ready.
-func change_level(mission_id: String) -> void:
+## Fade out and enter the district, crew placed at `site_id`'s anchors.
+## The arriving GameWorld calls fade_in() from its _ready.
+func start_world(site_id := "hideout") -> void:
 	if _busy:
 		return
 	_busy = true
-	# Crew condition rides along — the scene change frees the bodies.
-	GameState.capture_crew()
+	GameState.start_site = site_id if site_id != "" else "hideout"
 	var tween := create_tween()
 	tween.tween_property(_fade, "color:a", 1.0, 0.25)
 	await tween.finished
-	get_tree().change_scene_to_file(level_scene_for(mission_id))
+	get_tree().change_scene_to_file(DISTRICT_SCENE)
 	_busy = false
 
 func reload_current() -> void:

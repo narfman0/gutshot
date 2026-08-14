@@ -115,11 +115,22 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       site falls quiet and the crew travels out (SQUAD WIPED popup stays)
 - [ ] Mission-complete feedback, the different way: HUD cue / objective
       ping / district-map state — design open
-- [ ] Seamless district: one big connected world instead of discrete sites
-      with fade loads. Big refactor — GameWorld-per-site, per-site navmesh
-      bakes, provocation resets, and autosave-on-arrival all assume scene
-      swaps; sites would become regions (or streamed chunks) and transit
-      pads/district map become traversal aids
+- [x] Seamless district: ONE world scene (district.tscn) — sites are @tool
+      SiteChunk scenes instanced at editor transforms (open a site scene or
+      the district in the editor and see it built), walled connector
+      corridors between gates, travel on foot only, district map turned
+      informational. Navmesh: one region per site/corridor via
+      filter_baking_aabb (~45 ms total; a monolithic bake took minutes),
+      stitched by the map's edge-connection margin; breach rebakes are
+      site-scoped and threaded. Crew spawns once; site tracking drives the
+      HUD label, autosave (save shape unchanged), env mood lerp, and the
+      hideout rest (heal + provocation reset — grudges now reset on rest,
+      not travel). Cleared sites repopulate after ~5 s vacant; per-site
+      objectives emit site_cleared. HEAT scoped to enemies within 40 m
+- [ ] Seamless-district follow-ups: zone-driven ambience (AudioManager can't
+      crossfade), spatial pruning for hostiles_of/hearing scans if rosters
+      grow past dozens, corridor dressing (bare strips today), connector
+      gameplay (fall back through the freight tunnel into Assembly turf)
 - [x] Save/load stub: crew hp/shields carried between sites (hideout heals),
       autosave on arrival, Continue on the main menu; debug/harness runs can
       never write a real slot (GameState.run_active gate + scratch-slot tests)

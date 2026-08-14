@@ -1,14 +1,10 @@
-## The Exchange — a shuttered vertical market hall in the district margins,
-## bandit-run since the traders pulled out. Phase 2's THREE-floor testbed for
-## the FloorSystem reveal state (docs/plan.md):
-##   · ground trading floor: stall/crate cover under an open atrium
-##   · mezzanine gallery (U along north/west/east walls) with guards firing
-##     DOWN over the railings — visible from below, per the overlook rule
-##   · the counting house up top — a closed-off third floor that stays
-##     hidden until you take the stairs
-## One navmesh spans all three floors: the stairs are ramps, same recipe as
-## Depot 9's catwalk. Deck slabs carry COVER, so floors block LOS for real.
-extends GameWorld
+@tool
+## The Exchange — a shuttered vertical market hall, bandit-run since the
+## traders pulled out (docs/locations.md). The three-floor site: ground
+## trading floor, mezzanine gallery firing down over the rails, closed-off
+## counting house up top (FloorSystem reveal state). The east passage runs
+## UNDER the gallery deck toward Depot 9.
+extends SiteChunk
 
 const PROP_CRATE_01 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Crate_01.gltf"
 const PROP_CRATE_04 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Crate_04.gltf"
@@ -19,29 +15,40 @@ const TOP_H := 6.0    # counting-house walk height
 const DECK_T := 0.3
 const RAMP_TILT := 26.57  # rise 3 over run 6 — same read as the depot ramps
 
-func _arena_half() -> float:
-	return 30.0
+## Worn hall boards, not the depot's neon deck — the big slabs would scream
+## in full emissive cyan; the yellow rails carry the edge read instead.
+const DECK_COL := Color(0.30, 0.29, 0.27)
+const DECK_GLOW := 0.04
 
-func _ground_color() -> Color:
-	return Color(0.21, 0.19, 0.17)  # trampled market-hall flagstone
-
-func _site_name() -> String:
-	return "THE EXCHANGE"
-
-func _site_id() -> String:
+func site_id() -> String:
 	return "exchange"
 
-func _sun_energy() -> float:
+func site_name() -> String:
+	return "THE EXCHANGE"
+
+func arena_half() -> float:
+	return 30.0
+
+func ground_color() -> Color:
+	return Color(0.21, 0.19, 0.17)  # trampled market-hall flagstone
+
+func sun_energy() -> float:
 	return 0.7  # skylights boarded over — this hall lights itself
 
-func _fog_density() -> float:
+func fog_density() -> float:
 	return 0.006
 
-func _floor_heights() -> Array:
+func floor_heights() -> Array:
 	return [0.0, MEZZ_H, TOP_H]
 
+func gates() -> Array:
+	return [
+		{"side": "w", "center": 25.0},  # arcade from the street (south of the ramp)
+		{"side": "e", "center": 0.0},   # passage under the east gallery, to Depot 9
+	]
+
 ## Dead neon over the stalls, one cold shaft where the skylight boards gape.
-func _flood_lights() -> Array:
+func flood_lights() -> Array:
 	return [
 		[Vector3(-14, 9, 4), Color(0.95, 0.3, 0.75)],
 		[Vector3(14, 9, 4), Color(0.2, 0.8, 1.0)],
@@ -49,7 +56,7 @@ func _flood_lights() -> Array:
 		[Vector3(0, 9, 20), Color(0.35, 0.7, 1.0)],
 	]
 
-func _cover_layout() -> Array:
+func cover_layout() -> Array:
 	return [
 		# Ground: abandoned stalls and freight left mid-move.
 		[PROP_CRATE_01, -6.0, 8.0, 15.0], [PROP_CRATE_04, 5.0, 10.0, 40.0],
@@ -67,13 +74,13 @@ func _cover_layout() -> Array:
 		[PROP_CRATE_04, 6.0, -27.0, 60.0, TOP_H],
 	]
 
-func _crew_spawns() -> Array:
+func crew_spawns() -> Array:
 	return [
 		Vector3(-2.5, 0.1, 25.0), Vector3(0.0, 0.1, 26.0),
 		Vector3(2.5, 0.1, 25.0), Vector3(0.0, 0.1, 23.5),
 	]
 
-func _enemy_spawns() -> Array:
+func enemy_spawns() -> Array:
 	return [
 		# Trading floor pack — works the stalls.
 		{"skin": "punk", "pos": Vector3(-8.0, 0.1, 2.0), "pack": "floor", "morale": true,
@@ -99,11 +106,9 @@ func _enemy_spawns() -> Array:
 		{"skin": "punk", "pos": Vector3(0.0, 6.1, -23.0), "pack": "vault"},
 	]
 
-func _build_extra_geometry() -> void:
+func build_extra_geometry() -> void:
 	_build_gallery()
 	_build_counting_house()
-	add_transit_zone(Vector3(-26.0, 0.0, 26.0), "hideout", "→ HIDEOUT")
-	add_transit_zone(Vector3(26.0, 0.0, 26.0), "skirmish", "→ STREET")
 	# Practicals — sodium pools over the stalls, cyan strips under the
 	# gallery decks (kept just below the assignment slack so they stay with
 	# the ground floor they light), warm lamps above.
@@ -121,11 +126,6 @@ func _build_extra_geometry() -> void:
 ## U-shaped gallery hugging the north, west, and east walls, one deck height
 ## up, with ramps rising along the west and east walls. Railings on the inner
 ## (atrium) edges are visual-only — guards shoot over them, bodies drop past.
-## Worn hall boards, not the depot's neon deck — the big slabs would scream
-## in full emissive cyan; the yellow rails carry the edge read instead.
-const DECK_COL := Color(0.30, 0.29, 0.27)
-const DECK_GLOW := 0.04
-
 func _build_gallery() -> void:
 	var deck_y := MEZZ_H - DECK_T * 0.5
 	add_walkable_box(Vector3(0.0, deck_y, -25.5), Vector3(60.0, DECK_T, 9.0),
@@ -180,5 +180,5 @@ func _house_wall(pos: Vector3, size: Vector3) -> void:
 	mi.mesh = mesh
 	mi.position.y = size.y * 0.5
 	wall.add_child(mi)
-	_level.add_child(wall)
-	wall.global_position = Vector3(pos.x, TOP_H, pos.z)
+	gen_root().add_child(wall)
+	wall.position = Vector3(pos.x, TOP_H, pos.z)

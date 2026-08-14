@@ -32,14 +32,14 @@ func _ready() -> void:
 		cont.pressed.connect(func():
 			GameState.new_run()
 			var site := GameState.load_game()
-			SceneManager.change_level(site if site != "" else "hideout"))
+			SceneManager.start_world(site))
 		vbox.add_child(cont)
 	var enter := Button.new()
 	enter.text = "New Run"
 	enter.pressed.connect(func():
 		GameState.new_run()
 		GameState.crew_state = {}
-		SceneManager.change_level("hideout"))
+		SceneManager.start_world("hideout"))
 	vbox.add_child(enter)
 	var quit := Button.new()
 	quit.text = "Quit"

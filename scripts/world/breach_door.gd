@@ -1,3 +1,4 @@
+@tool  # site chunks build doors in their editor preview
 ## A destructible door — blocks movement, LOS, and the navmesh until shot or
 ## blasted open. Wild gunfire (Shooter.fire_wild raycasts cover geometry) and
 ## grenade blasts damage it; at 0 HP it blows out and asks the level to
@@ -30,7 +31,7 @@ static func build(parent: Node, pos: Vector3, size: Vector3, yaw_deg := 0.0) -> 
 	col.position.y = size.y * 0.5
 	door.add_child(col)
 	parent.add_child(door)
-	door.global_position = pos
+	door.position = pos  # parent-local, so doors ride their site chunk's offset
 	door.rotation.y = deg_to_rad(yaw_deg)
 	door._add_visual(size)
 	return door
@@ -118,7 +119,9 @@ func receive_damage(amount: float) -> void:
 func _breach() -> void:
 	Vfx.explosion(get_tree().current_scene, global_position + Vector3(0, 0.5, 0), 2.0)
 	breached.emit()
-	# Free first so the rebake parses the world without this collider.
+	# Free first so the rebake parses the world without this collider. The
+	# position scopes the rebake to just this door's site region.
 	var tree := get_tree()
+	var at := global_position
 	queue_free()
-	tree.call_group("nav_owner", "rebake_nav")
+	tree.call_group("nav_owner", "rebake_nav", at)

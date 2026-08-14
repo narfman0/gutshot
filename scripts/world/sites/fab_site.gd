@@ -1,10 +1,9 @@
-## Fab Level — the Assembly's fabrication floor (docs/locations.md). The
-## faction sandbox: machines are NEUTRAL — they patrol, they watch, they warn.
-## Shoot one (or overstay in the fabricator sanctum) and the whole faction is
-## in the fight for the rest of the visit. The actual job: a bandit salvage
-## crew is stripping the east line — clear THEM out. Whether the machines
-## stay out of it is up to you.
-extends GameWorld
+@tool
+## Fab Level — the Assembly's fabrication floor (docs/locations.md). Machines
+## are NEUTRAL — they patrol, they watch, they warn. Shoot one (or overstay
+## in the fabricator sanctum) and the faction is in the fight until the crew
+## next rests at the hideout (grudges reset on rest, not on travel).
+extends SiteChunk
 
 const PROP_SHELF := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Shelf_01.gltf"
 const PROP_SHELF_2 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Shelf_02.gltf"
@@ -12,7 +11,7 @@ const PROP_EBOX := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceF
 const PROP_ROBOT_STATUE := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Robot_Posed_06.gltf"
 const CONTAINER_SMALL := "res://assets/meshes/POLYGON_Military_Warehouse_SourceFiles_v1/SourceFiles/FBX/SM_Prop_Shipping_Container_Small_01.gltf"
 
-const SANCTUM_CENTER := Vector3(0, 0, -14)
+const SANCTUM_CENTER := Vector3(0, 0, -14)  # chunk-local
 const SANCTUM_RADIUS := 7.0
 const TRESPASS_GRACE_SECS := 6.0
 
@@ -20,26 +19,29 @@ var _trespass_timer := 0.0
 var _trespass_warned := false
 var _sanctum_label: Label3D
 
-func _arena_half() -> float:
-	return 24.0
-
-func _ground_color() -> Color:
-	return Color(0.30, 0.32, 0.34)  # clean-room composite, brighter than the district
-
-func _site_name() -> String:
-	return "FAB LEVEL"
-
-func _site_id() -> String:
+func site_id() -> String:
 	return "fab"
 
-func _sun_energy() -> float:
+func site_name() -> String:
+	return "FAB LEVEL"
+
+func arena_half() -> float:
+	return 24.0
+
+func ground_color() -> Color:
+	return Color(0.30, 0.32, 0.34)  # clean-room composite, brighter than the district
+
+func sun_energy() -> float:
 	return 1.1
 
-func _fog_density() -> float:
+func fog_density() -> float:
 	return 0.004
 
+func gates() -> Array:
+	return [{"side": "n", "center": -14.0}]  # freight tunnel from Depot 9
+
 ## Cold, even, clinical — machine light.
-func _flood_lights() -> Array:
+func flood_lights() -> Array:
 	return [
 		[Vector3(-14, 6, -14), Color(0.7, 0.9, 1.0)],
 		[Vector3(14, 6, -14), Color(0.7, 0.9, 1.0)],
@@ -47,7 +49,7 @@ func _flood_lights() -> Array:
 		[Vector3(0, 6, 16), Color(0.5, 0.75, 0.95)],
 	]
 
-func _cover_layout() -> Array:
+func cover_layout() -> Array:
 	return [
 		# Assembly lines: shelf rows east and west.
 		[PROP_SHELF, -14.0, -4.0, 90.0], [PROP_SHELF_2, -14.0, 2.0, 90.0],
@@ -60,13 +62,13 @@ func _cover_layout() -> Array:
 		[PROP_ROBOT_STATUE, -4.0, -12.0, 45.0], [PROP_ROBOT_STATUE, 4.0, -12.0, -45.0],
 	]
 
-func _crew_spawns() -> Array:
+func crew_spawns() -> Array:
 	return [
 		Vector3(-2.5, 0.1, 19.0), Vector3(0.0, 0.1, 20.0),
 		Vector3(2.5, 0.1, 19.0), Vector3(0.0, 0.1, 17.5),
 	]
 
-func _enemy_spawns() -> Array:
+func enemy_spawns() -> Array:
 	return [
 		# The job: a bandit salvage crew stripping the east assembly line.
 		{"skin": "biker", "pos": Vector3(11.0, 0.1, 13.0), "pack": "salvage", "morale": true},
@@ -87,10 +89,8 @@ func _enemy_spawns() -> Array:
 			"gear": "res://resources/gear/machine_laser.tres"},
 	]
 
-func _build_extra_geometry() -> void:
+func build_extra_geometry() -> void:
 	_build_fabricator()
-	add_transit_zone(Vector3(20.0, 0.0, 20.0), "depot", "→ DEPOT 9")
-	add_transit_zone(Vector3(-20.0, 0.0, 20.0), "hideout", "→ HIDEOUT")
 	add_practical_light(Vector3(0, 2.5, -14), Color(0.4, 1.0, 0.9), 2.2, 9.0)
 	add_practical_light(Vector3(-14, 2.2, 2), Color(0.7, 0.9, 1.0), 1.4, 7.0)
 	add_practical_light(Vector3(14, 2.2, 0), Color(0.7, 0.9, 1.0), 1.4, 7.0)
@@ -122,8 +122,8 @@ func _build_fabricator() -> void:
 	mi.mesh = mesh
 	mi.position.y = 1.0
 	fab.add_child(mi)
-	_level.add_child(fab)
-	fab.global_position = SANCTUM_CENTER
+	gen_root().add_child(fab)
+	fab.position = SANCTUM_CENTER
 	_sanctum_label = Label3D.new()
 	_sanctum_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_sanctum_label.font_size = 44
@@ -135,17 +135,18 @@ func _build_fabricator() -> void:
 	fab.add_child(_sanctum_label)
 
 func _process(delta: float) -> void:
-	super._process(delta)
-	_tick_trespass(delta)
+	if not Engine.is_editor_hint():
+		_tick_trespass(delta)
 
 ## Trespass: crew inside the sanctum ring get one warning; overstay the grace
 ## and the Assembly is provoked against the crew.
 func _tick_trespass(delta: float) -> void:
 	if Factions.hostile(Factions.CREW, Factions.ASSEMBLY):
 		return  # already at war — trespass is moot
+	var sanctum := to_global(SANCTUM_CENTER)
 	var intruding := false
 	for c in GameState.living_squad():
-		var flat: Vector3 = (c as Node3D).global_position - SANCTUM_CENTER
+		var flat: Vector3 = (c as Node3D).global_position - sanctum
 		flat.y = 0.0
 		if flat.length() <= SANCTUM_RADIUS:
 			intruding = true

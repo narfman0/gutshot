@@ -22,6 +22,10 @@ var debug_session := false
 ## empty squad and NO active run is a debug/harness launch.
 var run_active := false
 
+## Which site the crew spawns at when the district boots — set by
+## SceneManager.start_world (menu New Run / Continue).
+var start_site := "hideout"
+
 ## Menu entry point: this is a real run — saves may write.
 func new_run() -> void:
 	run_active = true

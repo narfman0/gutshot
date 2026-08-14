@@ -7,14 +7,17 @@ Notes" and "Known Gaps / Decided-Out" at the bottom.
 ## Scene Hierarchy
 
 ```
-GameWorld               (root — manages mission lifecycle, global signals)
-  ├── TileMap / Level   (room geometry, navigation mesh baked here)
-  ├── Squad             (player squad node — owns 4-6 Character children)
-  │     └── Character   (one per crew member)
-  ├── EnemySquad        (mirrors Squad structure for AI-controlled units)
+GameWorld               (root of scenes/district.tscn — the ONE seamless world)
+  ├── Environment / Sun (global mood, lerped toward the active site's values)
+  ├── Level             (SiteChunk scene instances at editor transforms
+  │     ├── Hideout       + GeneratedConnectors — the corridors GameWorld
+  │     ├── Street …        builds between paired gates)
+  ├── Squad             (player squad node — owns 4-6 Character children,
+  │     └── Character     spawned ONCE per run; travel never rebuilds them)
+  ├── EnemySquad        (every site's packs live here simultaneously)
   │     └── Character
-  ├── ObjectiveManager  (tracks active objectives, emits mission_complete / mission_failed)
-  ├── CameraRig         (isometric camera + floor-transition logic)
+  ├── ObjectiveManager  (per-site rosters — site_cleared / mission_failed)
+  ├── CameraRig         (isometric camera + FloorSystem reveal state)
   └── HUD               (CanvasLayer — health bars, ability slots, squad portraits)
 ```
 
@@ -44,11 +47,16 @@ resources/
 
 ## Navigation
 
-- Uses **NavigationServer3D** with ONE runtime-baked `NavigationMesh` per site — stacked
-  floors bake into the same mesh, connected by ramp stairs within the parser's max slope
-  (proven on the Depot 9 catwalk, then the Exchange's three floors). The per-floor-mesh +
-  teleport-waypoint scheme originally planned here was never needed; teleports stay in
-  reserve for ladders/vents.
+- Uses **NavigationServer3D** with one runtime-baked region PER SITE and PER CORRIDOR
+  (`NavRuntime.bake` with a `filter_baking_aabb`): a single district-wide bake takes
+  minutes, nine site-sized ones take ~45 ms total. Adjacent regions stitch through the
+  map's edge-connection margin (1.0 m) — a site's bake and its corridor's bake both clip
+  at the gate's wall plane. Breach-door rebakes are scoped to the door's site and run
+  threaded (`NavRuntime.bake_async`), so a rebake never hitches a fight.
+- Stacked floors bake into their site's mesh, connected by ramp stairs within the
+  parser's max slope (proven on the Depot 9 catwalk, then the Exchange's three floors).
+  The per-floor-mesh + teleport-waypoint scheme originally planned here was never
+  needed; teleports stay in reserve for ladders/vents.
 - Movement is manual waypoint-following over `NavigationServer3D.map_get_path` (see
   CombatBrain notes below).
 - Line-of-sight checks: raycasting against a dedicated collision layer (layer 2 = cover/walls).
@@ -272,13 +280,34 @@ world-space DOWN / REVIVING % label.
 
 ## Phase 2 As-Built (Depot 9)
 
-- **GameWorld is a base class**: levels subclass it and override the data
-  hooks (`_arena_half`, `_ground_color`, `_cover_layout`, `_crew_spawns`,
-  `_enemy_spawns` — dicts with optional `patrol`/`morale` — and
-  `_build_extra_geometry`). `skirmish_level.gd` and `depot_level.gd` are the
-  two sites; `SceneManager.LEVELS` maps ids to scenes.
-- **Transit zones** (`GameWorld.add_transit_zone`): glowing floor pads that
-  `change_level` when a crew body steps on — the district's instant travel.
+- **SiteChunk** (`scripts/world/site_chunk.gd`, @tool): a site is a reusable,
+  editor-previewable chunk — its own scene (`scenes/sites/*.tscn`) whose root
+  subclasses SiteChunk and overrides the data hooks (`site_id/site_name/
+  arena_half/ground_color/cover_layout/crew_spawns/enemy_spawns/
+  build_extra_geometry/heals_crew/floor_heights/sun_energy/fog_density/
+  flood_lights/gates`). All geometry is built chunk-LOCAL under an unowned
+  "Generated" child, so the same scene works alone in the editor viewport or
+  instanced into district.tscn at any offset; nothing generated serializes.
+  Bounds walls leave gaps at the `gates()`, where GameWorld docks corridors.
+- **Seamless district** (`scenes/district.tscn` + GameWorld): the only
+  playable scene. GameWorld discovers the SiteChunk instances under $Level,
+  builds walled connector corridors between paired gates (`CONNECTORS`),
+  bakes the per-region navmesh, spawns the crew once at `GameState.start_site`,
+  and spawns every site's packs (pack ids prefixed `"<site>:"`). Travel is on
+  foot — transit pads and `SceneManager.LEVELS` are gone; the district map
+  (M / hideout console) is informational.
+- **Site tracking** (GameWorld `_tick_sites`): polls crew positions against
+  chunk bounds each frame. The active character crossing into a site drives
+  the HUD label, the autosave (`{site, crew_state}` shape unchanged — world
+  state needn't persist because sites repopulate), and the env mood lerp
+  (fog density + sun energy tween toward the site's values). Entering the
+  hideout RESTS the crew: full heal, crew_state cleared,
+  `Factions.reset_provocations()` — grudges reset on rest, not on travel.
+- **Respawn on re-entry**: when the last crew member leaves a non-hideout
+  site, a vacancy timer (`respawn_delay`, 5 s) runs; on expiry corpses clear
+  and dead spawn slots re-spawn, re-registering with the ObjectiveManager
+  (per-site rosters; `site_cleared(site_id)` fires when a site's required
+  enemies hit zero — respawn un-clears it).
 - **Breach doors** (`scripts/world/breach_door.gd`): cover-layer slabs with
   HP. Wild gunfire raycasts cover geometry and damages them (aimed shots at
   enemies pass through the accuracy model instead); grenade blasts batter
