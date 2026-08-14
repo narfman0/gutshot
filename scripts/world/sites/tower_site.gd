@@ -26,13 +26,20 @@ const MARBLE := Color(0.50, 0.50, 0.47)      # column stone, pool-lit
 const GRANITE_MID := Color(0.30, 0.30, 0.29) # deck stone
 const GRANITE := Color(0.13, 0.14, 0.15)     # the dark polished floor
 
-const TRESPASS_GRACE_SECS := 4.0
+## The security line: everything south of DETECTOR_Z (the vestibule — doors,
+## desk, stair mouths) is public. Cross the detector lanes armed — and the
+## crew is always armed — and the scanners flag you: a grace while security
+## responds, then the floor turns. Back off across the line and it stands
+## down. Upstairs counts as past the line too.
+const DETECTOR_Z := 12.5
+const DETECT_GRACE_SECS := 5.0
 const GUNFIRE_PROVOKE_SHOTS := 1.5  # i.e. a second shot soon after the first
 const GUNFIRE_DECAY := 0.1
 
 var _status_label: Label3D
-var _trespass_timer := 0.0
-var _trespass_warned := false
+var _detector_lights: Array = []
+var _detect_timer := 0.0
+var _detect_warned := false
 var _fire_heat := {}    # faction -> recent shots inside the lobby
 var _fire_warned := {}
 
@@ -134,6 +141,7 @@ func enemy_spawns() -> Array:
 func build_extra_geometry() -> void:
 	_build_columns()
 	_build_desk_and_door()
+	_build_detector_line()
 	_build_mezzanine()
 	_build_exec_floor()
 	_build_elevators()
@@ -150,10 +158,6 @@ func _build_columns() -> void:
 func _build_desk_and_door() -> void:
 	_stone_box(Vector3(0.5, 0, 16.5), Vector3(6.0, 1.1, 1.5), GRANITE_MID, true)
 	add_practical_light(Vector3(0.5, 1.6, 16.5), Color(0.8, 0.9, 1.0), 1.2, 5.0)
-	for px in [-7.4, -4.6]:
-		_stone_box(Vector3(px, 0, 20.5), Vector3(0.22, 2.3, 0.5), GRANITE_MID, false)
-	var lintel := _stone_box(Vector3(-6.0, 0, 20.5), Vector3(3.0, 0.2, 0.5), GRANITE_MID, false)
-	lintel.position.y = 2.3
 	# The house rules, posted over the desk.
 	_status_label = Label3D.new()
 	_status_label.text = "VANTAG SECURITY — WEAPONS DOWN"
@@ -164,6 +168,35 @@ func _build_desk_and_door() -> void:
 	_status_label.modulate = Color(0.7, 0.85, 1.0)
 	gen_root().add_child(_status_label)
 	_status_label.position = Vector3(0.5, 3.0, 16.5)
+
+## The security line: waist-high barriers span the floor at DETECTOR_Z with
+## two detector-arch lanes — the ONLY ground route north. Scanner lights sit
+## calm cyan until somebody armed walks through.
+func _build_detector_line() -> void:
+	var half := arena_half()
+	# Barrier segments: wall → lane, pillar between lanes, lane → wall.
+	for seg in [[-half, -3.4], [-1.6, 1.6], [3.4, half]]:
+		var from: float = seg[0]
+		var to: float = seg[1]
+		_stone_box(Vector3((from + to) * 0.5, 0, DETECTOR_Z),
+			Vector3(to - from, 1.1, 0.4), GRANITE_MID, true)
+	# The lanes: posts + lintel + a scanner light each.
+	for lane_x in [-2.5, 2.5]:
+		for px in [lane_x - 1.0, lane_x + 1.0]:
+			_stone_box(Vector3(px, 0, DETECTOR_Z), Vector3(0.22, 2.3, 0.5),
+				GRANITE_MID, false)
+		var lintel := _stone_box(Vector3(lane_x, 0, DETECTOR_Z),
+			Vector3(2.2, 0.2, 0.5), GRANITE_MID, false)
+		lintel.position.y = 2.3
+		var scanner := OmniLight3D.new()
+		scanner.light_color = Color(0.4, 0.9, 1.0)
+		scanner.light_energy = 0.7
+		scanner.omni_range = 3.5
+		scanner.omni_attenuation = 1.6
+		scanner.shadow_enabled = false
+		gen_root().add_child(scanner)
+		scanner.position = Vector3(lane_x, 2.1, DETECTOR_Z)
+		_detector_lights.append(scanner)
 
 func _build_mezzanine() -> void:
 	var deck_y := MEZZ_H - DECK_T * 0.5
@@ -270,39 +303,52 @@ func _stone_box(pos: Vector3, size: Vector3, color: Color, solid: bool) -> Node3
 func _process(delta: float) -> void:
 	super._process(delta)  # SiteChunk's flicker tick
 	if not Engine.is_editor_hint():
-		_tick_trespass(delta)
+		_tick_detection(delta)
 		_tick_fire_heat(delta)
 
-## Climbing past the lobby while neutral is trespass: one warning, a short
-## grace, then the whole detail turns.
-func _tick_trespass(delta: float) -> void:
+## Armed crew past the security line (through the detector lanes, or up the
+## stairs) trips the scanners: alarm, red lights, a grace while security
+## responds — then they lay in. Back off across the line and it stands down.
+func _tick_detection(delta: float) -> void:
 	if Factions.hostile(Factions.CREW, Factions.CORP):
 		return
-	var intruding := false
+	var flagged := false
 	for c in GameState.living_squad():
 		var pos: Vector3 = (c as Node3D).global_position
-		if pos.y > 2.5 and bounds_rect().has_point(Vector2(pos.x, pos.z)):
-			intruding = true
+		if not bounds_rect().has_point(Vector2(pos.x, pos.z)):
+			continue
+		var local := to_local(pos)
+		if local.z < DETECTOR_Z or local.y > 2.5:
+			flagged = true
 			break
-	if not intruding:
-		_trespass_timer = 0.0
-		if _trespass_warned and _status_label != null:
-			_status_label.text = "VANTAG SECURITY — WEAPONS DOWN"
-			_status_label.modulate = Color(0.7, 0.85, 1.0)
-			_trespass_warned = false
+	if not flagged:
+		_detect_timer = 0.0
+		if _detect_warned:
+			_detect_warned = false
+			_set_scanners(Color(0.4, 0.9, 1.0), 0.7)
+			if _status_label != null:
+				_status_label.text = "VANTAG SECURITY — WEAPONS DOWN"
+				_status_label.modulate = Color(0.7, 0.85, 1.0)
 		return
-	_trespass_timer += delta
-	if not _trespass_warned:
-		_trespass_warned = true
+	_detect_timer += delta
+	if not _detect_warned:
+		_detect_warned = true
 		AudioManager.play_sfx("telegraph")
+		_set_scanners(Color(1.0, 0.25, 0.2), 1.8)
 		if _status_label != null:
-			_status_label.text = "RESTRICTED LEVEL — TURN AROUND"
+			_status_label.text = "WEAPONS DETECTED — LEAVE THE FLOOR"
 			_status_label.modulate = Color(1.0, 0.6, 0.25)
-	if _trespass_timer >= TRESPASS_GRACE_SECS:
+	if _detect_timer >= DETECT_GRACE_SECS:
 		Factions.provoke(Factions.CREW, Factions.CORP)
 		if _status_label != null:
 			_status_label.text = "SECURITY RESPONSE"
 			_status_label.modulate = Color(1.0, 0.3, 0.25)
+
+func _set_scanners(color: Color, energy: float) -> void:
+	for light in _detector_lights:
+		if is_instance_valid(light):
+			(light as OmniLight3D).light_color = color
+			(light as OmniLight3D).light_energy = energy
 
 ## Gunfire anywhere in the tower: first shot draws the warning, the second
 ## turns the detail on the shooter's faction. Steel stays silent.

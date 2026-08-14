@@ -341,8 +341,14 @@ world-space DOWN / REVIVING % label.
   pack shields in or out of combat (`_tick_support` preempts the state
   machine). Heal gear can never fire in anger (`try_fire` refuses `heals`).
   The tower is their turf: 3 floors by stairs (4 m mezzanine, 8 m exec,
-  elevators are dressing), gunfire inside provokes on the second shot,
-  climbing past the lobby provokes after a grace — both label-warned.
+  elevators are dressing). The vestibule (doors, desk, stair mouths) is
+  public; a METAL-DETECTOR line at DETECTOR_Z — two arch lanes through
+  waist-high barriers, the only ground route north — flags armed crew:
+  scanners flip red, a grace while security responds, then the floor turns;
+  backing off across the line stands it down. Upstairs counts as past the
+  line. Gunfire anywhere inside still provokes on the second shot. A track
+  that evaporates without a lost fix (range + forgiven grudge) now stands
+  controllers down instead of leaving them in FIGHT aiming at nothing.
 - **Turf law** (fab_site): `GameState.shot_fired` fires for every round
   leaving any gun (emitted from Shooter's shared `_alert_hearing` path).
   The fab counts shots inside the sanctum guard ring (14 m) per faction:

@@ -196,6 +196,14 @@ func _tick_fight(delta: float) -> void:
 		state = State.SUSPICIOUS
 		_investigate = lkp
 		_linger = SUSPICIOUS_LINGER_SECS
+	elif brain.threat == null:
+		# The track evaporated with no lost fix — target out of range while
+		# unpinned, or the hostility itself ended (a grudge forgiven). Don't
+		# stand in FIGHT forever aiming at nothing.
+		brain.leash_radius = _base_leash
+		state = State.SUSPICIOUS
+		_investigate = Vector3.INF
+		_linger = SUSPICIOUS_LINGER_SECS
 
 # ── Corp discipline: bounding overwatch + the mender ─────────────────────────
 

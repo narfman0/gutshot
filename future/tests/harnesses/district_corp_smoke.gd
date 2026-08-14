@@ -52,8 +52,8 @@ func _ready() -> void:
 	leader.hp = leader.max_hp
 	var tower := _chunk("Tower")
 
-	# 1. The lobby is PUBLIC: walk in, nobody draws.
-	leader.global_position = tower.to_global(Vector3(0, 0.1, 10))
+	# 1. The VESTIBULE is public: walk in (doors, desk), nobody draws.
+	leader.global_position = tower.to_global(Vector3(0, 0.1, 18))
 	await get_tree().create_timer(2.0).timeout
 	_check(not Factions.hostile(Factions.CREW, Factions.CORP),
 		"walking the lobby stays neutral")
@@ -85,12 +85,20 @@ func _ready() -> void:
 	_check(drained.shield > 4.0,
 		"the mender restores a drained shield (%.0f)" % drained.shield)
 
-	# 4. The rope: climbing to the balcony while neutral provokes after the
-	#    grace period.
-	leader.global_position = tower.to_global(Vector3(-22, 4.2, -2))
-	await get_tree().create_timer(5.5).timeout  # grace 4 s + margin
+	# 4. The metal detector: cross the line armed → alarm and a grace;
+	#    back off and it stands down; overstay and they lay in.
+	leader.global_position = tower.to_global(Vector3(0, 0.1, 8))
+	await get_tree().create_timer(1.2).timeout
+	_check(not Factions.hostile(Factions.CREW, Factions.CORP),
+		"crossing the detector starts a grace, not a war")
+	leader.global_position = tower.to_global(Vector3(0, 0.1, 18))
+	await get_tree().create_timer(1.0).timeout
+	_check(not Factions.hostile(Factions.CREW, Factions.CORP),
+		"backing off across the line stands the alarm down")
+	leader.global_position = tower.to_global(Vector3(0, 0.1, 8))
+	await get_tree().create_timer(6.5).timeout  # grace 5 s + margin
 	_check(Factions.hostile(Factions.CREW, Factions.CORP),
-		"overstaying upstairs provokes the detail")
+		"overstaying past the detector provokes the detail")
 	var responded := false
 	for k in 8:
 		await get_tree().create_timer(1.0).timeout
@@ -111,7 +119,20 @@ func _ready() -> void:
 			break
 	_check(not Factions.hostile(Factions.CREW, Factions.CORP),
 		"grudge clears once the crew backs off")
-	leader.global_position = tower.to_global(Vector3(0, 0.1, 10))
+	# Let the threat pins expire too — walking back in while a guard still
+	# has a fix means getting shot, and the DAMAGE would re-provoke.
+	var calm := false
+	for k in 15:
+		await get_tree().create_timer(1.0).timeout
+		calm = true
+		for node in _pack("lobby") + _pack("balcony") + _pack("exec"):
+			if (node as EnemyController).state == EnemyController.State.FIGHT:
+				calm = false
+		if calm:
+			break
+	_check(calm, "the detail stands down once the crew is gone")
+	Factions.reset_provocations()  # in case a parting shot re-provoked
+	leader.global_position = tower.to_global(Vector3(0, 0.1, 18))
 	await _settle(5)
 	var shooter: Shooter = leader.get_node("Shooter")
 	shooter.fire_wild(tower.to_global(Vector3(0, 0.0, -5)))
