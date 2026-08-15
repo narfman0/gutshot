@@ -120,6 +120,39 @@ func _ready() -> void:
 	_check(Factions.hostile(Factions.CREW, Factions.ASSEMBLY),
 		"sanctum overstay provokes the Assembly")
 
+	# 6. Patrols WALK THEIR ROUTE and hold each post. Unpatrolled turf-holders
+	#    stay put, which is the point: a gang holds a corner, it doesn't march.
+	Factions.reset_provocations()
+	var walker: EnemyController = null
+	for node in get_tree().get_nodes_in_group("pack_skirmish:east"):
+		var ec := node as EnemyController
+		if ec != null and not ec.patrol_points.is_empty():
+			walker = ec
+	_check(walker != null, "the street's east pack has a unit on a beat")
+	if walker != null and is_instance_valid(walker.body):
+		# Keep the crew far away so nothing drags the patrol into a fight.
+		leader.global_position = _chunk("Hideout").to_global(Vector3(0, 0.1, 4))
+		await _settle(5)
+		var start_pos := walker.body.global_position
+		var moved := 0.0
+		var dwelled := false
+		for k in 30:
+			await get_tree().create_timer(0.5).timeout
+			if not is_instance_valid(walker.body) or not walker.body.is_alive():
+				break
+			moved = maxf(moved, start_pos.distance_to(walker.body.global_position))
+			if walker.state == EnemyController.State.IDLE \
+					and walker.body.velocity.length() < 0.2 and moved > 1.0:
+				dwelled = true
+		_check(moved > 3.0, "the patrol actually walks its route (%.1f m)" % moved)
+		_check(dwelled, "the patrol HOLDS a post rather than marching nonstop")
+		# Coming off a chase, it resumes at the nearest post, not the abandoned one.
+		walker.body.global_position = _chunk("Street").to_global(
+			walker.patrol_points[0] as Vector3)
+		walker._resume_patrol()
+		_check(walker._patrol_index == 0,
+			"a patrol resumes at the NEAREST post (index %d)" % walker._patrol_index)
+
 	if _failures.is_empty():
 		print("DISTRICT_COMBAT_SMOKE: ALL PASS")
 		get_tree().quit(0)

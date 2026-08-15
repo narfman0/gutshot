@@ -13,6 +13,12 @@ extends Node
 
 const WANDER_RADIUS := 5.0        # amble this far around spawn while idle
 const WANDER_PAUSE_SECS := 2.5    # stand a beat between ambles
+## A patrol that never stops reads like a wind-up toy. Guards hold each post
+## for a beat and SWEEP their gaze across it before moving on, which is what
+## makes a route look like someone doing a job.
+const PATROL_DWELL_SECS := 2.2
+const PATROL_SWEEP_ARC := 1.5     # radians of look-around at a post
+const PATROL_SWEEP_SPEED := 0.9
 const SUSPICIOUS_LINGER_SECS := 4.0  # look around at the noise point this long
 const INVESTIGATE_SPEED := 3.5    # slower than combat speed — wary, not charging
 const MORALE_BREAK_FRAC := 0.5    # pack thinned to half → morale units break
@@ -67,6 +73,8 @@ var _investigate := Vector3.INF
 var _linger := 0.0
 var _wander_target := Vector3.INF
 var _wander_pause := 0.0
+var _patrol_dwell := 0.0
+var _patrol_sweep := 0.0
 var _spawn := Vector3.ZERO
 var _patrol_index := 0
 var _pack_initial := 0
@@ -163,9 +171,7 @@ func _tick_idle(delta: float) -> void:
 		return
 	# Patrol a waypoint loop if we have one; otherwise amble near spawn.
 	if not patrol_points.is_empty():
-		var target: Vector3 = patrol_points[_patrol_index % patrol_points.size()]
-		if not brain.nav_to(target, delta, INVESTIGATE_SPEED):
-			_patrol_index += 1
+		_tick_patrol(delta)
 		return
 	if _wander_target == Vector3.INF:
 		_wander_pause -= delta
@@ -186,6 +192,41 @@ func _tick_idle(delta: float) -> void:
 		_wander_target = Vector3.INF
 		_wander_pause = WANDER_PAUSE_SECS * randf_range(0.6, 1.6)
 
+## Walk the route, then HOLD the post: stand for a beat sweeping the gaze
+## across the arc before moving to the next waypoint. The dwell is jittered
+## per unit so two guards sharing a route don't march in lockstep.
+func _tick_patrol(delta: float) -> void:
+	if _patrol_dwell > 0.0:
+		_patrol_dwell -= delta
+		_patrol_sweep += delta * PATROL_SWEEP_SPEED
+		_stand(delta)
+		var look := body.global_position + Vector3(
+			sin(_patrol_sweep) * PATROL_SWEEP_ARC, 0.0,
+			cos(_patrol_sweep) * PATROL_SWEEP_ARC)
+		brain.face_point(look)
+		return
+	var target: Vector3 = patrol_points[_patrol_index % patrol_points.size()]
+	if not brain.nav_to(target, delta, INVESTIGATE_SPEED):
+		_patrol_index += 1
+		_patrol_dwell = PATROL_DWELL_SECS * randf_range(0.6, 1.6)
+		_patrol_sweep = randf() * TAU
+
+## Coming off a fight, pick up the route at the NEAREST post rather than
+## whichever index we abandoned — otherwise a guard who chased someone across
+## the site turns around and walks the whole loop back to where he was.
+func _resume_patrol() -> void:
+	if patrol_points.is_empty():
+		return
+	var best := 0
+	var best_d := INF
+	for i in patrol_points.size():
+		var d: float = body.global_position.distance_to(patrol_points[i])
+		if d < best_d:
+			best_d = d
+			best = i
+	_patrol_index = best
+	_patrol_dwell = 0.0
+
 func _tick_suspicious(delta: float) -> void:
 	if _check_sight():
 		return
@@ -197,6 +238,7 @@ func _tick_suspicious(delta: float) -> void:
 	_linger -= delta
 	if _linger <= 0.0:
 		state = State.IDLE
+		_resume_patrol()
 		_wander_target = Vector3.INF
 		_wander_pause = 0.5
 

@@ -105,7 +105,14 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
 - [ ] Destructible doors + breach points (Depot 9 has them; generalize)
 - [x] Elevation-aware LOS and cover: walkable decks/ramps carry GROUND|COVER
       so floor slabs block sight and shots between floors
-- [ ] Proper patrol ROUTES (waypoint paths; IDLE wander + alert states are in)
+- [x] Patrol routes: waypoint paths existed and were used by depot/exchange/
+      fab/tower/Little Japan, but read like wind-up toys — nobody ever
+      stopped. Guards now DWELL at each post (jittered 0.6–1.6× so pack-mates
+      sharing a route fall out of lockstep) and SWEEP their gaze across an
+      arc while held, and coming off a fight they resume at the NEAREST post
+      instead of walking the whole loop back to the index they abandoned.
+      The street's ground packs got beats too — one walker per pack, the rest
+      anchored, because a gang HOLDS a corner rather than marching it
 - [x] Camera floor transitions: continuous camera follow kept; the
       FloorSystem reveal state is what transitions — floor above fades in
       across the last quarter of the climb (hidden <75%, solid by 95%),
@@ -212,13 +219,12 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       tree now carries growth. Panel scrolls, shows locked tiers with their
       unlock level, prints WHY a node is blocked, and has a "spend it for
       me" escape hatch. Save v4
+- [x] Tier gates pulled to 1/4/8/14/22 — pacing_probe showed tier 4 (was
+      level 22) and tier 5 (was 35) were unreachable, making two of five
+      tiers decoration. Now 2 tiers open in the first session, 3 by ~5,
+      4 by ~20, all 5 by ~80. The XP curve stays steep; the gates moved to
+      meet it
 - [ ] TUNING, flagged by pacing_probe (needs a human feel-check first):
-      (a) TIER GATES ARE OUT OF REACH. At the live curve a player is level 4
-      after 1 session, 11 after 10, 18 after 40, 24 after 80. Tier 4 opens at
-      22 and tier 5 at 35 — so two of the tree's five tiers are effectively
-      decoration. Either pull the gates in (1/4/8/14/22 tracks where players
-      actually are) or soften the curve (base 15 instead of 25 roughly halves
-      every milestone).
       (b) JOBS PAY LESS THAN JUST CLEARING ANOTHER SITE — a fresh clear
       averages 273 XP against a job's 190, so "explore two sites" (546/session)
       beats "site + job" (463). If jobs are meant to be the reason to play,

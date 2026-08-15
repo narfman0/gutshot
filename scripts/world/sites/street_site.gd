@@ -96,9 +96,13 @@ func cover_layout() -> Array:
 ## and morale (they crack early — the spawner's bandit nerve default).
 func enemy_spawns() -> Array:
 	return [
-		{"skin": "punk", "pos": Vector3(-6.0, 0.1, -6.0), "pack": "mid", "morale": true},
+		# One walker per ground pack, the rest anchored: a gang HOLDS a corner,
+		# so a beat on every body would read like a garrison, not turf.
+		{"skin": "punk", "pos": Vector3(-6.0, 0.1, -6.0), "pack": "mid", "morale": true,
+			"patrol": [Vector3(-7.0, 0.1, -3.0), Vector3(2.0, 0.1, -9.0)]},
 		{"skin": "biker", "pos": Vector3(-3.5, 0.1, -7.0), "pack": "mid", "morale": true},
-		{"skin": "gangster", "pos": Vector3(9.0, 0.1, -12.0), "pack": "east", "morale": true},
+		{"skin": "gangster", "pos": Vector3(9.0, 0.1, -12.0), "pack": "east", "morale": true,
+			"patrol": [Vector3(12.0, 0.1, -6.0), Vector3(8.0, 0.1, -16.0)]},
 		{"skin": "punk_girl", "pos": Vector3(11.0, 0.1, -11.0), "pack": "east", "morale": true,
 			"gear": "res://resources/gear/enemy_pistol.tres"},
 		{"skin": "punk", "pos": Vector3(-10.0, 0.1, -12.0), "pack": "west", "morale": true},

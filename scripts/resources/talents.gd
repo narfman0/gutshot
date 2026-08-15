@@ -19,7 +19,13 @@ extends RefCounted
 
 ## Crew level a tier unlocks at. These ARE the milestones — the moments a
 ## level-up hands you something genuinely new instead of another rank.
-const TIER_LEVEL := {1: 1, 2: 5, 3: 12, 4: 22, 5: 35}
+##
+## Placed against where players ACTUALLY land (pacing_probe): ~level 4 after
+## one session, 11 after ten, 18 after forty, 24 after eighty. The first cut
+## gated tier 4 at 22 and tier 5 at 35, which made two of the five tiers
+## decoration rather than content. The XP curve is deliberately steep and
+## stays that way; the gates moved to meet it.
+const TIER_LEVEL := {1: 1, 2: 4, 3: 8, 4: 14, 5: 22}
 
 ## role "" = the whole crew. Otherwise a Skins.CREW key: the node trains that
 ## member only, which is where individuality lives without a member menu.
@@ -38,7 +44,7 @@ const CATALOG := {
 		"name": "Dead Eye", "blurb": "+5% weapon damage", "tier": 1, "ranks": 5,
 		"requires": "", "req_ranks": 0, "role": "",
 	},
-	# ── Tier 2 — level 5; each wants a foundation under it ───────────────
+	# ── Tier 2 — level 4; each wants a foundation under it ───────────────
 	"quick_hands": {
 		"name": "Quick Hands", "blurb": "-8% ability cooldowns", "tier": 2,
 		"ranks": 3, "requires": "marksman", "req_ranks": 2, "role": "",
@@ -51,7 +57,7 @@ const CATALOG := {
 		"name": "Field Dressing", "blurb": "Revive at 60% HP instead of 40%",
 		"tier": 2, "ranks": 1, "requires": "toughness", "req_ranks": 2, "role": "",
 	},
-	# ── Tier 3 — level 12; the first role nodes ──────────────────────────
+	# ── Tier 3 — level 8; the first role nodes ───────────────────────────
 	"steady_aim": {
 		"name": "Steady Aim", "blurb": "+6% accuracy", "tier": 3, "ranks": 3,
 		"requires": "quick_hands", "req_ranks": 1, "role": "",
@@ -68,7 +74,7 @@ const CATALOG := {
 		"name": "Suppressor", "blurb": "The GUNNER deals +20% damage", "tier": 3,
 		"ranks": 1, "requires": "marksman", "req_ranks": 3, "role": "gunner",
 	},
-	# ── Tier 4 — level 22 ────────────────────────────────────────────────
+	# ── Tier 4 — level 14 ────────────────────────────────────────────────
 	"field_surgeon": {
 		"name": "Field Surgeon", "blurb": "The MEDIC is hard to put down: +60 HP, revives at 90%",
 		"tier": 4, "ranks": 1, "requires": "second_wind", "req_ranks": 1,
@@ -82,7 +88,7 @@ const CATALOG := {
 		"name": "Executioner", "blurb": "+15% weapon damage", "tier": 4, "ranks": 2,
 		"requires": "suppressor", "req_ranks": 1, "role": "",
 	},
-	# ── Tier 5 — level 35; capstones ─────────────────────────────────────
+	# ── Tier 5 — level 22; capstones ─────────────────────────────────────
 	"crew_of_legend": {
 		"name": "Crew of Legend", "blurb": "+50 HP and +50 shield, every member",
 		"tier": 5, "ranks": 1, "requires": "second_wind", "req_ranks": 1, "role": "",

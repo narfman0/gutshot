@@ -128,10 +128,15 @@ func _ready() -> void:
 	GameState.add_xp(GameState.threshold_for(Talents.TIER_LEVEL[2]) - GameState.xp + 1)
 	_check(GameState.crew_level >= int(Talents.TIER_LEVEL[2]),
 		"the crew reaches the tier-2 milestone (level %d)" % GameState.crew_level)
-	GameState.talents["marksman"] = 0
+	# Set the tree to a known state — writing ranks directly also spends the
+	# points they represent, so leave the crew clearly in credit either way.
+	GameState.talents = {}
+	_check(GameState.talent_points_owed() > 0,
+		"points are available for the prerequisite check (%d)"
+		% GameState.talent_points_owed())
 	_check(not Talents.can_buy("quick_hands"),
 		"past the milestone, the node is STILL refused without its prerequisite")
-	GameState.talents["marksman"] = 2
+	GameState.talents = {"marksman": 2}
 	_check(Talents.can_buy("quick_hands"),
 		"milestone reached and prerequisite met, the tier-2 node opens")
 	# Role nodes train ONE member: the gunner's node does nothing to the leader.
@@ -153,7 +158,7 @@ func _ready() -> void:
 	GameState.crew_level = 1
 	GameState.load_game(TEST_SLOT)
 	_check(GameState.xp == xp_saved and GameState.crew_level == lvl_saved
-		and Talents.ranks_in("toughness") > 0
+		and Talents.ranks_in("marksman") == 2
 		and GameState.cleared_sites.has("skirmish"),
 		"save round-trips xp/level/talents/cleared")
 	DirAccess.remove_absolute(SaveManager._path(TEST_SLOT))

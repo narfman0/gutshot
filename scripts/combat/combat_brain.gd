@@ -414,6 +414,11 @@ func _fire_if_able() -> void:
 	if shooter.try_fire(threat) and shooter.last_shot_hit:
 		_starve_timer = 0.0
 
+## Turn to look at a point without moving — patrol dwelling uses this to
+## scan a post instead of standing frozen.
+func face_point(point: Vector3) -> void:
+	_face(point)
+
 func _face(point: Vector3) -> void:
 	var dir := point - body.global_position
 	dir.y = 0.0
