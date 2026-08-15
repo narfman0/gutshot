@@ -15,6 +15,12 @@ func _ready() -> void:
 		await get_tree().physics_frame
 		if GameState.squad.size() == 4:
 			break
+	# The gallery walks the crew through every fight in the district; they
+	# are here to be PHOTOGRAPHED, not to survive on merit.
+	for member in GameState.squad:
+		var c := member as Character
+		c.max_hp = 1000000.0
+		c.hp = c.max_hp
 	DirAccess.make_dir_recursive_absolute("res://.screenshots")
 	await _shot("district_1_hideout.png", 30)
 	_teleport(Vector3(-33.0, 0.1, 15.0))  # the alley
@@ -46,10 +52,16 @@ func _ready() -> void:
 				seal.receive_damage(80.0)
 	_teleport(_chunk("Tower").to_global(Vector3(-2.5, 8.2, -13.0)))
 	await _shot("district_11_horde.png", 420)
-	# The other camera: over-the-shoulder with the reticle, back at street level.
+	# The other camera: over-the-shoulder with the reticle.
 	_teleport((_chunk("Street") as Node3D).global_position + Vector3(0, 0.1, 8))
 	_world.set_camera_mode(true)
 	await _shot("district_12_ots.png", 60)
+	# Same mode on the exchange gallery (railing overlook) and in the middle
+	# of the tower's horde release — the two fights worth comparing.
+	_teleport(_chunk("Exchange").to_global(Vector3(-26, 3.05, -5)))
+	await _shot("district_13_ots_mezz.png", 90)
+	_teleport(_chunk("Tower").to_global(Vector3(-2.5, 8.2, -14.0)))
+	await _shot("district_14_ots_horde.png", 120)
 	_world.set_camera_mode(false)
 	print("DISTRICT_SHOTS: DONE")
 	get_tree().quit(0)
@@ -57,8 +69,14 @@ func _ready() -> void:
 func _chunk(site: String) -> SiteChunk:
 	return _world.get_node("Level/" + site) as SiteChunk
 
+## Move whoever the camera is actually following. (A downed leader hands
+## control to the next crew member — teleporting the corpse would leave the
+## camera somewhere else entirely.)
 func _teleport(pos: Vector3) -> void:
-	(GameState.squad[0] as Character).global_position = pos
+	var active := _world.active_character()
+	if active == null or not is_instance_valid(active):
+		active = GameState.squad[0]
+	active.global_position = pos
 
 func _shot(file_name: String, settle_frames: int) -> void:
 	for i in settle_frames:
