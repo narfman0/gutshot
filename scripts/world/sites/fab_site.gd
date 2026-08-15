@@ -75,6 +75,18 @@ func ground_params() -> Dictionary:
 		"grime_amount": 0.08, "grime_scale": 0.25, "crack_amount": 0.0,
 		"wet_amount": 0.0, "base_roughness": 0.24, "metallic_amount": 0.1}
 
+const BLD_ADVANCED_01 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Advanced_01.gltf"
+const BLD_ADVANCED_02 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Advanced_02.gltf"
+
+## The Assembly's level is a machine district: clean modular blocks, no
+## rust, no laundry, no neon.
+func buildings() -> Array:
+	return [
+		[BLD_ADVANCED_01, -38.0, -6.0, 90.0], [BLD_ADVANCED_02, -38.0, 12.0, 90.0],
+		[BLD_ADVANCED_02, 38.0, -8.0, 270.0], [BLD_ADVANCED_01, 38.0, 10.0, 270.0],
+		[BLD_ADVANCED_01, 8.0, -38.0, 0.0],
+	]
+
 func gates() -> Array:
 	return [{"side": "n", "center": -14.0}]  # freight tunnel from Depot 9
 

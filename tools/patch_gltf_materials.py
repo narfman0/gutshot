@@ -9,7 +9,12 @@ Post-process cooked gltf files under assets/meshes/:
   2. Out-of-bounds texture indices → clamped to the images array length.
      Some materials reference image index N when only N-1 images exist;
      Godot falls back to a default error material.
-  3. Stray emissiveFactor without an emissiveTexture → removed.
+  3. Missing atlas reference → reattached.
+     Some cooked packs (SciFi_City buildings et al) export materials with NO
+     images/textures array at all, so every surface renders untextured white.
+     Synty packs are single-atlas: the meshes already carry the right UVs, so
+     pointing every material at the pack's one Textures/*.png restores them.
+  4. Stray emissiveFactor without an emissiveTexture → removed.
      Synty "custom shader" materials (Samurai packs et al) translate to a
      Principled BSDF with full-white emission; the export then washes the
      whole prop out to pure white regardless of its base texture.
@@ -46,6 +51,45 @@ def _texture_has_alpha(gltf_path: pathlib.Path, g: dict, tex_index: int) -> bool
         return False
 
 
+def _find_atlas(gltf_path: pathlib.Path):
+    """The pack's single Synty atlas, searching upward for a Textures dir."""
+    for parent in list(gltf_path.parents)[:5]:
+        for name in ("Textures", "textures"):
+            tex_dir = parent / name
+            if not tex_dir.is_dir():
+                continue
+            pngs = sorted(tex_dir.glob("*.png"))
+            if not pngs:
+                continue
+            # Prefer the "_A" albedo atlas when the pack ships several maps.
+            albedo = [x for x in pngs if x.stem.endswith("_A")]
+            return (albedo or pngs)[0]
+    return None
+
+
+def _attach_atlas(gltf_path: pathlib.Path, g: dict) -> bool:
+    """Give texture-less materials the pack atlas. Meshes must have UVs —
+    every Synty mesh does, which is why this works at all."""
+    if not g.get("materials") or g.get("images"):
+        return False
+    if not any("TEXCOORD_0" in p.get("attributes", {})
+               for m in g.get("meshes", []) for p in m.get("primitives", [])):
+        return False
+    atlas = _find_atlas(gltf_path)
+    if atlas is None:
+        return False
+    uri = os.path.relpath(atlas, gltf_path.parent).replace(os.sep, "/")
+    g["images"] = [{"mimeType": "image/png", "name": atlas.stem, "uri": uri}]
+    if not g.get("samplers"):
+        g["samplers"] = [{"magFilter": 9729, "minFilter": 9987,
+                          "wrapS": 10497, "wrapT": 10497}]
+    g["textures"] = [{"sampler": 0, "source": 0}]
+    for mat in g["materials"]:
+        pbr = mat.setdefault("pbrMetallicRoughness", {})
+        pbr.setdefault("baseColorTexture", {"index": 0})
+    return True
+
+
 def patch_file(path: pathlib.Path) -> bool:
     with open(path) as f:
         g = json.load(f)
@@ -53,6 +97,7 @@ def patch_file(path: pathlib.Path) -> bool:
     images = g.get("images", [])
     max_idx = max(len(images) - 1, 0)
     changed = False
+    changed |= _attach_atlas(path, g)
 
     for mat in g.get("materials", []):
         if mat.get("alphaMode") == "BLEND":

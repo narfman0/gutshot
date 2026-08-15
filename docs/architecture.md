@@ -349,6 +349,17 @@ world-space DOWN / REVIVING % label.
   line. Gunfire anywhere inside still provokes on the second shot. A track
   that evaporates without a lost fix (range + forgiven grudge) now stands
   controllers down instead of leaving them in FIGHT aiming at nothing.
+- **Buildings** (`SiteChunk.buildings()`): whole structures (SciFi_City's
+  building set, Samurai Empire's dobei walls and archways) placed outside
+  each site's wall line and clear of its gates, with AABB box colliders on
+  the COVER layer so they block sight and shots and the navmesh flows
+  around them. Architecture is per-region and deliberate — the skyline is
+  how you know which part of the district you are standing in.
+  NOTE: `tools/patch_gltf_materials.py` gained a rule for this — some
+  cooked packs export materials with NO images array at all and render
+  untextured white; since Synty packs are single-atlas and the meshes carry
+  correct UVs, the patcher reattaches the pack's `Textures/*_A.png` to every
+  material. That fixed every SciFi_City asset, not just the buildings.
 - **Ground** (`assets/shaders/ground.gdshader` + `SiteChunk.ground_params`):
   every walkable surface — site floors AND connector corridors — runs one
   procedural spatial shader keyed off WORLD position (so tiling never

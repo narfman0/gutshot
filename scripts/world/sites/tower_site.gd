@@ -89,6 +89,19 @@ func ground_params() -> Dictionary:
 		"wet_amount": 0.0, "base_roughness": 0.09, "metallic_amount": 0.22,
 		"grout_color": Color(0.05, 0.05, 0.06)}
 
+const BLD_LARGE_02 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Large_02.gltf"
+const BLD_LARGE_04 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Large_04.gltf"
+const BLD_LARGE_06 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Large_06.gltf"
+
+## Vantag does not share a wall with anyone: its neighbours stand back,
+## tall and corporate, framing the lobby glazing.
+func buildings() -> Array:
+	return [
+		[BLD_LARGE_02, -42.0, -4.0, 90.0], [BLD_LARGE_04, -42.0, 18.0, 90.0],
+		[BLD_LARGE_06, 42.0, -6.0, 270.0], [BLD_LARGE_02, 42.0, 18.0, 270.0],
+		[BLD_LARGE_04, -18.0, -42.0, 180.0], [BLD_LARGE_06, 18.0, -42.0, 180.0],
+	]
+
 func gates() -> Array:
 	return [{"side": "s", "center": -6.0}]  # the plaza from the street
 

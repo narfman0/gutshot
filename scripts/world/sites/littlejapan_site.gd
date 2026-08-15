@@ -91,6 +91,26 @@ func ground_params() -> Dictionary:
 		"wet_amount": 0.95, "puddle_scale": 0.16,
 		"base_roughness": 0.6, "wet_roughness": 0.04, "metallic_amount": 0.05}
 
+const BLD_DOBEI := "res://assets/meshes/POLYGON_Samurai_Empire_SourceFiles_v1/SourceFiles/FBX/SamuraiEmpire/SM_Bld_Fence_Dobei_Double_01.gltf"
+const BLD_DOBEI_END := "res://assets/meshes/POLYGON_Samurai_Empire_SourceFiles_v1/SourceFiles/FBX/SamuraiEmpire/SM_Bld_Fence_Dobei_End_01.gltf"
+const BLD_ARCHWAY := "res://assets/meshes/POLYGON_Samurai_Empire_SourceFiles_v1/SourceFiles/FBX/SamuraiEmpire/SM_Bld_Archway_01.gltf"
+const BLD_SMALL_01 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Small_01.gltf"
+const BLD_SMALL_03 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Small_03.gltf"
+
+## Deliberately LOW and wooden — Little Japan lives under the tower's
+## shadow, not in it. Plastered dobei walls line the market, a temple
+## archway frames the shrine approach, and only a couple of squat
+## shopfronts break the skyline.
+func buildings() -> Array:
+	return [
+		[BLD_DOBEI, -36.0, 14.0, 90.0], [BLD_DOBEI, -36.0, 2.0, 90.0],
+		[BLD_DOBEI, -36.0, -10.0, 90.0], [BLD_DOBEI_END, -36.0, -20.0, 90.0],
+		[BLD_DOBEI, 36.0, 25.0, 270.0], [BLD_DOBEI, 36.0, 0.0, 270.0],
+		[BLD_DOBEI, 36.0, -10.0, 270.0], [BLD_DOBEI_END, 36.0, -20.0, 270.0],
+		[BLD_ARCHWAY, 0.0, -34.0, 0.0, 1.2],
+		[BLD_SMALL_01, -20.0, 38.0, 0.0], [BLD_SMALL_03, 18.0, 38.0, 0.0],
+	]
+
 func gates() -> Array:
 	return [{"side": "e", "center": 12.0}]  # the arcade back to the street
 

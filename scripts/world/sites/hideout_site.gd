@@ -45,6 +45,16 @@ func ground_params() -> Dictionary:
 		"base_color": Color(0.22, 0.19, 0.16),
 		"wet_amount": 0.0, "base_roughness": 0.55, "metallic_amount": 0.35}
 
+const BLD_SMALL_02 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Small_02.gltf"
+const BLD_SMALL_04 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Small_04.gltf"
+
+## The bolt-hole is a gap between two buildings that never wanted it there.
+func buildings() -> Array:
+	return [
+		[BLD_SMALL_02, -24.0, -2.0, 90.0], [BLD_SMALL_04, -24.0, 10.0, 90.0],
+		[BLD_SMALL_04, 24.0, -14.0, 270.0], [BLD_SMALL_02, 0.0, -24.0, 0.0],
+	]
+
 func gates() -> Array:
 	return [{"side": "e", "center": 0.0}]  # the alley out toward the street
 

@@ -38,6 +38,24 @@ func ground_params() -> Dictionary:
 		"wet_amount": 0.85, "puddle_scale": 0.10,
 		"base_roughness": 0.62, "wet_roughness": 0.045, "metallic_amount": 0.05}
 
+const BLD_LARGE_01 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Large_01.gltf"
+const BLD_LARGE_03 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Large_03.gltf"
+const BLD_LARGE_05 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Large_05.gltf"
+const BLD_BANK := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Bank_01.gltf"
+const BLD_FOODHOLE := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_FoodHole_01.gltf"
+const BLD_CHOPSHOP := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Chopshop_01.gltf"
+
+## Tenements and shopfronts crowding the crossroads — the street is a
+## CANYON, not a courtyard. Everything sits outside the wall line so the
+## playable floor is untouched; the gates stay clear.
+func buildings() -> Array:
+	return [
+		[BLD_LARGE_01, -40.0, -1.0, 90.0], [BLD_LARGE_03, -40.0, 24.0, 90.0],
+		[BLD_BANK, 40.0, -12.0, 270.0], [BLD_LARGE_05, 40.0, 24.0, 270.0],
+		[BLD_FOODHOLE, -12.0, 38.0, 0.0], [BLD_CHOPSHOP, 12.0, 39.0, 0.0],
+		[BLD_LARGE_01, 20.0, -40.0, 180.0],
+	]
+
 func gates() -> Array:
 	return [
 		{"side": "w", "center": 15.0},  # alley to the hideout

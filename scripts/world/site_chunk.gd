@@ -82,6 +82,14 @@ func fog_density() -> float:
 func flood_lights() -> Array:
 	return []
 
+## Whole structures — [mesh_path, x, z, yaw_deg, (scale)]. Buildings are
+## SOLID: they take a box collider on the COVER layer (blocking sight and
+## shots) and carve the navmesh. Placed OUTSIDE the perimeter walls they
+## give the site a skyline; placed inside they are shopfront blocks you
+## fight around. Each region uses its own architectural vocabulary.
+func buildings() -> Array:
+	return []
+
 ## Wall openings: [{side: "n"|"s"|"e"|"w", center: float (coord along the
 ## wall), width: float (optional)}]. n = -z, s = +z, w = -x, e = +x.
 ## GameWorld runs connector corridors between paired gates.
@@ -126,6 +134,7 @@ func build_geometry() -> void:
 	_gen.name = "Generated"
 	add_child(_gen)
 	_setup_ground()
+	_setup_buildings()
 	_setup_cover()
 	_setup_floods()
 	build_extra_geometry()
@@ -198,6 +207,29 @@ func _setup_cover() -> void:
 		prop.position = Vector3(entry[1], entry[4] if entry.size() > 4 else 0.0, entry[2])
 		prop.rotation.y = deg_to_rad(entry[3])
 		add_aabb_collider(prop, visual)
+
+## Structures: real buildings with real footprints. The collider comes from
+## the mesh AABB (boxes, like cover props — CombatBrain understands boxes),
+## so a facade blocks LOS and shots and the navmesh flows around it.
+func _setup_buildings() -> void:
+	for entry in buildings():
+		var scene = load(entry[0])
+		if scene == null:
+			continue
+		var body := StaticBody3D.new()
+		body.collision_layer = Layers.COVER
+		body.add_to_group("cover")
+		body.add_to_group(NavRuntime.SOURCE_GROUP)
+		var visual: Node3D = scene.instantiate()
+		var s: float = (entry[4] if entry.size() > 4 else 1.0) * cm_correction(visual)
+		# Buildings keep their proportions — the world's vertical squash is
+		# for BODIES and crates, not architecture.
+		visual.scale = Vector3(s, s, s)
+		body.add_child(visual)
+		_gen.add_child(body)
+		body.position = Vector3(entry[1], 0.0, entry[2])
+		body.rotation.y = deg_to_rad(entry[3])
+		add_aabb_collider(body, visual)
 
 ## Box collider sized from the prop's visual AABB — boxes (not trimesh) so
 ## CombatBrain's cover-ring extent math has a shape it understands, and so a

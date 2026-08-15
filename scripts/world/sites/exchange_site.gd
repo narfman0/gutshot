@@ -63,6 +63,18 @@ func ground_params() -> Dictionary:
 		"wet_amount": 0.25, "puddle_scale": 0.13,
 		"base_roughness": 0.78, "metallic_amount": 0.0}
 
+const BLD_MED_01 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Med_01.gltf"
+const BLD_MED_04 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Med_04.gltf"
+const BLD_RAISED := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Raised_01.gltf"
+
+## The hall is wedged into a block — neighbours press against every wall.
+func buildings() -> Array:
+	return [
+		[BLD_MED_01, -44.0, 8.0, 90.0], [BLD_MED_04, -44.0, -14.0, 90.0],
+		[BLD_MED_04, 44.0, 20.0, 270.0], [BLD_RAISED, 44.0, -18.0, 270.0],
+		[BLD_MED_01, -14.0, -44.0, 180.0], [BLD_MED_04, 14.0, -44.0, 180.0],
+	]
+
 func gates() -> Array:
 	return [
 		{"side": "w", "center": 25.0},  # arcade from the street (south of the ramp)

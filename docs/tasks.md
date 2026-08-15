@@ -219,6 +219,18 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
 - [ ] Ground v2 ideas: normal-map perturbation on grout/puddle edges,
       painted floor markings (depot hazard stripes, tower inlay), footprint
       or blood decals that accumulate during a fight
+- [x] Real buildings: SiteChunk.buildings() places WHOLE structures with
+      AABB colliders (COVER layer + navmesh carve), each region using its
+      own architectural vocabulary — cyber tenements/bank/chopshop on the
+      street, plastered dobei walls + temple archway (deliberately LOW) in
+      Little Japan, industrial sheds + power block at the depot, mid-rise
+      neighbours around the exchange, clean modular blocks at the fab,
+      corporate towers standing back from Vantag, and two backs-of-buildings
+      squeezing the hideout. Facades sit outside the wall line, clear of
+      every gate mouth, so playable space and corridors are untouched
+- [ ] Buildings v2: interiors you can enter, alley depth between structures
+      (corridors as real gaps rather than trenches), rooftop routes onto the
+      facades, ground-floor shopfront bays as cover
 - [ ] Polish round v2 ideas: facade pieces on the tall walls, ground
       texture decals (real textures over seam boxes), animated holograms,
       district-edge fog wall, rain

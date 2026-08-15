@@ -55,6 +55,18 @@ func ground_params() -> Dictionary:
 		"wet_amount": 0.12, "puddle_scale": 0.14,
 		"base_roughness": 0.86, "metallic_amount": 0.0}
 
+const BLD_INDUSTRIAL_01 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Industrial_01.gltf"
+const BLD_INDUSTRIAL_02 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Industrial_02.gltf"
+const BLD_POWER := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Power_02.gltf"
+
+## Sheds and plant — Vantag's logistics estate seen from inside the fence.
+func buildings() -> Array:
+	return [
+		[BLD_INDUSTRIAL_01, -40.0, -18.0, 90.0], [BLD_INDUSTRIAL_02, -40.0, 16.0, 90.0],
+		[BLD_INDUSTRIAL_01, 40.0, -6.0, 270.0], [BLD_POWER, 40.0, 16.0, 270.0],
+		[BLD_INDUSTRIAL_02, 6.0, -40.0, 180.0],
+	]
+
 func gates() -> Array:
 	return [
 		{"side": "w", "center": 0.0},    # arcade from the Exchange
