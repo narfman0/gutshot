@@ -53,11 +53,11 @@
 - [x] Characters can get boosted onto prop tops by capsule depenetration —
       anyone above the walkable plane snaps back to the nearest navmesh point
       (flat-arena guard; revisit for multi-floor)
-- [x] Pressure HUD v1 ("HEAT"): thin top-center bar weighing enemy awareness
-      states (fighting > suspicious > fleeing), easing cyan→red; hidden when
-      the district is quiet
-- [ ] Pressure v2 ideas: incoming-fire intensity, flank warnings, per-pack
-      direction hints
+- [~] Pressure HUD ("HEAT") — built, then REMOVED (2026-08-14). A weighted
+      awareness meter told the player what the fight already tells them,
+      and in the seamless district it was on almost permanently. If threat
+      readability comes back, it should be diegetic (per-pack direction
+      cues, incoming-fire intensity), not a global bar
 
 ## Phase 2 — Multi-Floor Template Level (next)
 
@@ -126,7 +126,7 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       HUD label, autosave (save shape unchanged), env mood lerp, and the
       hideout rest (heal + provocation reset — grudges now reset on rest,
       not travel). Cleared sites repopulate after ~5 s vacant; per-site
-      objectives emit site_cleared. HEAT scoped to enemies within 40 m
+      objectives emit site_cleared
 - [x] Corridor dressing: per-connector identities (alley / arcade / service
       passage / freight tunnel) — visible walls (tall camera-far side, low
       curb camera-near so the iso view stays open), junk-prop cover along

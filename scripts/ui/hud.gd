@@ -42,7 +42,6 @@ func setup(squad: Squad, objectives: ObjectiveManager, camera: Camera3D,
 	_build_weapon_bar()
 	if site_name != "":
 		_build_site_label(site_name)
-	_build_pressure_bar()
 	_apply_crosshair_cursor()
 	_squad.active_changed.connect(func(_i, _c): _refresh_portraits(); _refresh_slots())
 	for member in _squad.members:
@@ -256,77 +255,6 @@ func set_site(site_name: String) -> void:
 	if _site_label != null:
 		_site_label.text = site_name
 
-## Pressure: how much heat is bearing down — not a count, a mood. Weighs
-## every enemy's awareness state (fighting > suspicious > fleeing) and eases
-## toward it; the bar drains cyan→red as the district turns on you.
-const _PRESSURE_FULL := 5.0  # weighted heat that pegs the bar
-## Heat only radiates from enemies near the crew — a fight (or a suspicious
-## wanderer) across the seamless district isn't pressure on YOU.
-const _PRESSURE_RANGE := 40.0
-
-var _pressure_fill: ColorRect
-var _pressure_label: Label
-var _pressure := 0.0
-
-func _build_pressure_bar() -> void:
-	var trough := ColorRect.new()
-	trough.color = Color(0, 0, 0, 0.5)
-	trough.anchor_left = 0.5
-	trough.anchor_right = 0.5
-	trough.offset_left = -140
-	trough.offset_right = 140
-	trough.offset_top = 14
-	trough.offset_bottom = 21
-	trough.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(trough)
-	_pressure_fill = ColorRect.new()
-	_pressure_fill.color = UITheme.C_HEAD
-	_pressure_fill.position = Vector2.ONE
-	_pressure_fill.size = Vector2(0, 5)
-	_pressure_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	trough.add_child(_pressure_fill)
-	_pressure_label = Label.new()
-	_pressure_label.text = "HEAT"
-	_pressure_label.add_theme_font_size_override("font_size", 11)
-	_pressure_label.add_theme_color_override("font_color", UITheme.C_MUTED)
-	_pressure_label.position = Vector2(-34, -5)
-	_pressure_label.visible = false
-	trough.add_child(_pressure_label)
-
-func _update_pressure(delta: float) -> void:
-	if _pressure_fill == null:
-		return
-	var heat := 0.0
-	var crew := GameState.living_squad()
-	for node in get_tree().get_nodes_in_group("enemy_ai"):
-		var controller := node as EnemyController
-		if controller == null or controller.body == null or not controller.body.is_alive():
-			continue
-		# Neutral factions radiate no heat until they're actually in it.
-		if not Factions.hostile(Factions.CREW, controller.body.team) \
-				and controller.state != EnemyController.State.FIGHT:
-			continue
-		var near := false
-		for member in crew:
-			if controller.body.global_position.distance_to(
-					(member as Node3D).global_position) <= _PRESSURE_RANGE:
-				near = true
-				break
-		if not near:
-			continue
-		match controller.state:
-			EnemyController.State.FIGHT:
-				heat += 1.0
-			EnemyController.State.SUSPICIOUS:
-				heat += 0.35
-			EnemyController.State.FLEE:
-				heat += 0.1
-	var target := clampf(heat / _PRESSURE_FULL, 0.0, 1.0)
-	_pressure = lerpf(_pressure, target, minf(1.0, 3.0 * delta))
-	_pressure_fill.size.x = 278.0 * _pressure
-	_pressure_fill.color = UITheme.C_HEAD.lerp(UITheme.C_HP_ENEMY, _pressure)
-	_pressure_label.visible = _pressure > 0.04
-
 var _reticle: TextureRect = null
 
 ## A drawn crosshair — the cursor in iso mode, and the same texture pinned
@@ -386,7 +314,6 @@ func _process(_delta: float) -> void:
 		return
 	if _reticle != null:
 		_reticle.visible = Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
-	_update_pressure(_delta)
 	for character in _overheads:
 		var bar: ColorRect = _overheads[character]
 		if not is_instance_valid(character) or not is_instance_valid(bar) or not bar.visible:
