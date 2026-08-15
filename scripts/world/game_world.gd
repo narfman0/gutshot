@@ -736,6 +736,40 @@ func _respawn_site(chunk: SiteChunk) -> void:
 			rec["body"] = _spawn_enemy(chunk, rec["entry"], state["gen"])
 
 # ── Camera ───────────────────────────────────────────────────────────────────
+# Two modes for the fun evaluation: the shipped ISO rig, and an
+# over-the-shoulder mode on V — perspective, mouse-look, center reticle.
+# Combat resolution is IDENTICAL in both (same cone acquire, same accuracy
+# × cover model); only how the aim direction is produced changes.
+
+const _OTS_FOV := 70.0
+const _OTS_DIST := 2.6
+const _OTS_SHOULDER := Vector3(0.65, 0.3, 0.0)  # right shoulder, slight rise
+const _OTS_SENS := 0.0035
+const _OTS_PITCH_MIN := -1.15
+const _OTS_PITCH_MAX := 0.55
+
+var _ots := false
+var _ots_yaw := 0.0
+var _ots_pitch := -0.15
+
+func ots_active() -> bool:
+	return _ots
+
+## Toggle (V, or harness call). ISO restores the rig wholesale.
+func set_camera_mode(ots: bool) -> void:
+	if _ots == ots:
+		return
+	_ots = ots
+	if _ots:
+		_ots_yaw = _ISO_YAW  # start facing the iso "north" the player knows
+		_ots_pitch = -0.15
+		_camera.projection = Camera3D.PROJECTION_PERSPECTIVE
+		_camera.fov = _OTS_FOV
+		_camera.near = 0.15
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	else:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		_setup_camera()
 
 func _setup_camera() -> void:
 	_cam_pivot.rotation = Vector3(0.0, _ISO_YAW, 0.0)
@@ -749,10 +783,30 @@ func _setup_camera() -> void:
 	if active != null:
 		_cam_pivot.global_position = active.global_position
 
+## Manual spring arm: pull the camera in when world geometry sits between
+## the shoulder pivot and the ideal position.
+func _tick_ots_camera(active: Character) -> void:
+	var pivot := active.global_position \
+		+ Vector3(0, 1.5 * Character.VERTICAL_SQUASH, 0)
+	var rot := Basis.from_euler(Vector3(_ots_pitch, _ots_yaw, 0.0))
+	var ideal := pivot + rot * (_OTS_SHOULDER + Vector3(0, 0, _OTS_DIST))
+	var query := PhysicsRayQueryParameters3D.create(pivot, ideal,
+		Layers.GROUND | Layers.COVER)
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if not hit.is_empty():
+		ideal = (hit["position"] as Vector3) + (pivot - ideal).normalized() * 0.2
+	_camera.global_position = ideal
+	_camera.global_transform.basis = rot
+
 func _process(delta: float) -> void:
 	if Engine.is_editor_hint():
 		return
 	var active := _squad.active_character()
+	if _ots:
+		if active != null and is_instance_valid(active):
+			_tick_ots_camera(active)
+		_tick_sites(delta)
+		return
 	if active != null and is_instance_valid(active):
 		_cam_pivot.global_position = _cam_pivot.global_position.lerp(
 			active.global_position, minf(1.0, _CAM_FOLLOW_SPEED * delta))
@@ -762,11 +816,19 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if Engine.is_editor_hint():
 		return
-	if event is InputEventMouseButton and event.pressed:
+	if _ots and event is InputEventMouseMotion:
+		_ots_yaw -= (event as InputEventMouseMotion).relative.x * _OTS_SENS
+		_ots_pitch = clampf(
+			_ots_pitch - (event as InputEventMouseMotion).relative.y * _OTS_SENS,
+			_OTS_PITCH_MIN, _OTS_PITCH_MAX)
+		return
+	if event is InputEventMouseButton and event.pressed and not _ots:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			_zoom = maxf(_ZOOM_MIN, _zoom - _ZOOM_STEP)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			_zoom = minf(_ZOOM_MAX, _zoom + _ZOOM_STEP)
+	elif event.is_action_pressed("toggle_camera") and not _game_over:
+		set_camera_mode(not _ots)
 	elif event.is_action_pressed("ui_cancel"):
 		_toggle_pause()
 	elif event.is_action_pressed("district_map") and not _game_over:
@@ -783,6 +845,7 @@ func _toggle_pause() -> void:
 		_close_pause()
 		return
 	get_tree().paused = true
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE  # menus need a pointer
 	_pause_layer = CanvasLayer.new()
 	_pause_layer.layer = 60
 	_pause_layer.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -824,6 +887,8 @@ func _close_pause() -> void:
 		_pause_layer.queue_free()
 		_pause_layer = null
 	get_tree().paused = false
+	if _ots:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 # ── Squad wiped ──────────────────────────────────────────────────────────────
 

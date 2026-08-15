@@ -327,7 +327,10 @@ func _update_pressure(delta: float) -> void:
 	_pressure_fill.color = UITheme.C_HEAD.lerp(UITheme.C_HP_ENEMY, _pressure)
 	_pressure_label.visible = _pressure > 0.04
 
-## A drawn crosshair cursor — an arrow pointer reads as UI, not as aim.
+var _reticle: TextureRect = null
+
+## A drawn crosshair — the cursor in iso mode, and the same texture pinned
+## center-screen as the OTS reticle whenever the mouse is captured.
 func _apply_crosshair_cursor() -> void:
 	var size := 25
 	var mid := size / 2
@@ -342,8 +345,14 @@ func _apply_crosshair_cursor() -> void:
 			img.set_pixel(i, clampi(mid + offset, 0, size - 1), shadow if offset != 0 else main)
 			img.set_pixel(clampi(mid + offset, 0, size - 1), i, shadow if offset != 0 else main)
 	img.set_pixel(mid, mid, main)
-	Input.set_custom_mouse_cursor(ImageTexture.create_from_image(img),
-		Input.CURSOR_ARROW, Vector2(mid, mid))
+	var tex := ImageTexture.create_from_image(img)
+	Input.set_custom_mouse_cursor(tex, Input.CURSOR_ARROW, Vector2(mid, mid))
+	_reticle = TextureRect.new()
+	_reticle.texture = tex
+	_reticle.set_anchors_preset(Control.PRESET_CENTER)
+	_reticle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_reticle.visible = false
+	add_child(_reticle)
 
 # ── Overhead bars ────────────────────────────────────────────────────────────
 
@@ -375,6 +384,8 @@ func _add_overhead(character: Character) -> void:
 func _process(_delta: float) -> void:
 	if _camera == null:
 		return
+	if _reticle != null:
+		_reticle.visible = Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 	_update_pressure(_delta)
 	for character in _overheads:
 		var bar: ColorRect = _overheads[character]

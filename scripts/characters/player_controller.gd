@@ -55,7 +55,7 @@ func _physics_process(delta: float) -> void:
 
 	var gear := body.active_gear()
 	if _lmb_held and gear != null and gear.fire_mode != GearItem.FireMode.THROWN:
-		var aim := _cursor_ground_point(_mouse_pos)
+		var aim := _aim_point()
 		_face(aim)
 		if gear.heals:
 			var ally := _acquire_in_cone(body.team, aim)
@@ -81,9 +81,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				_lmb_held = true
 				var gear := body.active_gear()
 				if gear != null and gear.fire_mode == GearItem.FireMode.THROWN:
-					# Grenade slot: LMB lobs at the cursor point, one per click.
+					# Grenade slot: LMB lobs at the aim point, one per click.
 					if not gear.abilities.is_empty():
-						body.activate_ability(gear.abilities[0], _cursor_ground_point(event.position))
+						body.activate_ability(gear.abilities[0], _aim_point())
 					_lmb_held = false
 			else:
 				_lmb_held = false
@@ -134,6 +134,23 @@ func _acquire_in_cone(team: int, aim_point: Vector3, hostile_only := true) -> Ch
 			best = c
 			best_d = d
 	return best
+
+## Where the player is aiming, per camera mode. ISO: the point under the
+## cursor. OTS (perspective camera): the point under the center reticle —
+## a ray straight out of the camera. Both feed the SAME cone-acquire and
+## accuracy/cover model; only the pointing device differs.
+func _aim_point() -> Vector3:
+	var camera := body.get_viewport().get_camera_3d()
+	if camera != null and camera.projection == Camera3D.PROJECTION_PERSPECTIVE:
+		var from := camera.global_position
+		var dir := -camera.global_transform.basis.z
+		var query := PhysicsRayQueryParameters3D.create(
+			from, from + dir * 200.0, Layers.GROUND | Layers.COVER)
+		var hit := body.get_world_3d().direct_space_state.intersect_ray(query)
+		if not hit.is_empty():
+			return hit["position"]
+		return from + dir * 60.0
+	return _cursor_ground_point(_mouse_pos)
 
 ## World point under the cursor: ground hit first, y=0 plane as fallback so
 ## aiming past the arena edge still has a direction.

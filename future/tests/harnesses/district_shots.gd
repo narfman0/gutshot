@@ -46,6 +46,11 @@ func _ready() -> void:
 				seal.receive_damage(80.0)
 	_teleport(_chunk("Tower").to_global(Vector3(-2.5, 8.2, -13.0)))
 	await _shot("district_11_horde.png", 420)
+	# The other camera: over-the-shoulder with the reticle, back at street level.
+	_teleport((_chunk("Street") as Node3D).global_position + Vector3(0, 0.1, 8))
+	_world.set_camera_mode(true)
+	await _shot("district_12_ots.png", 60)
+	_world.set_camera_mode(false)
 	print("DISTRICT_SHOTS: DONE")
 	get_tree().quit(0)
 

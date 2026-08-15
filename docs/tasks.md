@@ -190,6 +190,15 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       no pursuit — they hold the lobby. Plaza corridor from the street
       (swept, white-lit, no junk), ambient_lobby bed (HVAC + glassy
       chimes). Upper floors stay sealed — the campaign's problem
+- [x] OTS camera evaluation mode (V toggles): perspective over-the-shoulder
+      camera with mouse-look, manual spring arm (ray-clamped against
+      GROUND|COVER), center reticle (the crosshair texture pinned
+      mid-screen while the mouse is captured), aim = camera-center ray.
+      Combat resolution IDENTICAL in both modes — same cone acquire, same
+      accuracy × cover model — so the fun comparison is camera-only. Pause
+      releases/restores mouse capture. If OTS wins, true reticle-ballistic
+      shooting becomes a deliberate design decision (it would delete the
+      cover/accuracy model)
 - [ ] Polish round v2 ideas: facade pieces on the tall walls, ground
       texture decals (real textures over seam boxes), animated holograms,
       district-edge fog wall, rain
