@@ -37,6 +37,9 @@ func sun_energy() -> float:
 func fog_density() -> float:
 	return 0.007  # warehouse dust hanging in the work-lights
 
+func sky_energy() -> float:
+	return 0.12  # skylight panels, most of them painted over
+
 func wall_color() -> Color:
 	return Color(0.22, 0.21, 0.18)  # corrugated depot cladding
 

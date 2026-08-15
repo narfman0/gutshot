@@ -210,11 +210,34 @@ func _do_rebake(id: String) -> void:
 
 # ── Environment (one sky, per-site mood lerped on entry) ─────────────────────
 
+## The hive city's night sky: a code-driven ProceduralSkyMaterial rather
+## than a panorama — deep violet at the zenith, the city's own light
+## pollution smeared along the horizon (sodium orange bleeding into the
+## neon magenta the district actually runs on). No sun disk: the sun is a
+## dim moonlight fill, and a hard disk at -55° would read as daytime.
+func _make_sky() -> Sky:
+	var mat := ProceduralSkyMaterial.new()
+	mat.sky_top_color = Color(0.035, 0.028, 0.065)
+	mat.sky_horizon_color = Color(0.19, 0.11, 0.16)
+	mat.sky_curve = 0.12          # tight glow band — pollution hugs the skyline
+	mat.sky_energy_multiplier = 1.0
+	mat.ground_bottom_color = Color(0.012, 0.012, 0.018)
+	mat.ground_horizon_color = Color(0.10, 0.07, 0.09)
+	mat.ground_curve = 0.05
+	mat.sun_angle_max = 1.0
+	mat.sun_curve = 0.02
+	var sky := Sky.new()
+	sky.sky_material = mat
+	sky.radiance_size = Sky.RADIANCE_SIZE_128
+	return sky
+
 func _setup_environment() -> void:
 	var start := _start_chunk()
 	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.02, 0.03, 0.05)
+	env.background_mode = Environment.BG_SKY
+	env.sky = _make_sky()
+	# Interiors are open-topped boxes — background energy IS their ceiling.
+	env.background_energy_multiplier = start.sky_energy()
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.45, 0.55, 0.75)
 	env.ambient_light_energy = 1.4
@@ -236,6 +259,8 @@ func _setup_environment() -> void:
 	sun.light_color = Color(0.85, 0.88, 1.0)
 	sun.light_energy = start.sun_energy()
 	sun.shadow_enabled = true
+	# Light only — a sun disk in the sky would call it daytime.
+	sun.sky_mode = DirectionalLight3D.SKY_MODE_LIGHT_ONLY
 
 ## Crossing into a site retunes the world's air: fog density and sun energy
 ## ease toward the site's mood over a couple of seconds.
@@ -246,6 +271,8 @@ func _apply_mood(chunk: SiteChunk) -> void:
 	_mood_tween = create_tween().set_parallel()
 	_mood_tween.tween_property(env, "fog_density", chunk.fog_density(), 1.8)
 	_mood_tween.tween_property($Sun, "light_energy", chunk.sun_energy(), 1.8)
+	_mood_tween.tween_property(env, "background_energy_multiplier",
+		chunk.sky_energy(), 1.8)
 
 # ── Connectors (walled corridors between gate pairs) ─────────────────────────
 

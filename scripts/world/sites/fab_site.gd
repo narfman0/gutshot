@@ -59,6 +59,9 @@ func sun_energy() -> float:
 func fog_density() -> float:
 	return 0.004
 
+func sky_energy() -> float:
+	return 0.02  # sealed clean-room level, deep in the stack
+
 func ambient() -> String:
 	return "ambient_machine"  # maintained, not derelict — the Assembly's hum
 

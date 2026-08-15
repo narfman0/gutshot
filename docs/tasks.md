@@ -199,6 +199,11 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       releases/restores mouse capture. If OTS wins, true reticle-ballistic
       shooting becomes a deliberate design decision (it would delete the
       cover/accuracy model)
+- [x] Procedural sky: ProceduralSkyMaterial night gradient (violet zenith,
+      light-pollution horizon), sun disk off, per-site sky_energy() lerped
+      with the mood tween — the OTS camera made the black void overhead
+      impossible to ignore. Asset-server panoramas were evaluated and
+      rejected (sky_gloom_01 is a flat daylight gradient)
 - [ ] Polish round v2 ideas: facade pieces on the tall walls, ground
       texture decals (real textures over seam boxes), animated holograms,
       district-edge fog wall, rain

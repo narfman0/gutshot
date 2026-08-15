@@ -60,7 +60,7 @@ func _ready() -> void:
 			(node as EnemyController).body.notify_shot_at(leader)
 	leader.global_position = Vector3(-33, 0.1, 15)  # mid-alley, beyond leash
 	var chased := false
-	for k in 20:
+	for k in 35:  # the dressed street is a maze now — give the chase room
 		await get_tree().create_timer(1.0).timeout
 		for node in mid:
 			if not is_instance_valid(node):

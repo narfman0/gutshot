@@ -69,6 +69,9 @@ func sun_energy() -> float:
 func fog_density() -> float:
 	return 0.0015
 
+func sky_energy() -> float:
+	return 0.45  # curtain-wall glazing — the city glows in
+
 func ambient() -> String:
 	return "ambient_lobby"
 

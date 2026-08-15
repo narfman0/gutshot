@@ -349,6 +349,15 @@ world-space DOWN / REVIVING % label.
   line. Gunfire anywhere inside still provokes on the second shot. A track
   that evaporates without a lost fix (range + forgiven grudge) now stands
   controllers down instead of leaving them in FIGHT aiming at nothing.
+- **Sky** (`GameWorld._make_sky`): a code-driven `ProceduralSkyMaterial` —
+  no panorama asset — giving the hive city a night gradient: deep violet
+  zenith, a tight band of light pollution at the horizon (sodium bleeding
+  into the district's neon magenta), near-black ground half. The sun runs
+  `SKY_MODE_LIGHT_ONLY` so no disk appears. Sites are open-topped boxes, so
+  `SiteChunk.sky_energy()` is effectively their CEILING: GameWorld lerps
+  `Environment.background_energy_multiplier` toward it in the same mood
+  tween as fog and sun (street 1.0, tower 0.45 glazing, exchange 0.18
+  gaping skylights, depot 0.12, fab 0.02, hideout 0.04).
 - **Turf law** (fab_site): `GameState.shot_fired` fires for every round
   leaving any gun (emitted from Shooter's shared `_alert_hearing` path).
   The fab counts shots inside the sanctum guard ring (14 m) per faction:

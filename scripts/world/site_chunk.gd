@@ -101,6 +101,13 @@ func ground_detail() -> bool:
 func ground_roughness() -> float:
 	return 0.4
 
+## How much of the hive-city sky this site can see: 1.0 outdoors, a sliver
+## for interiors with holes in the roof, ~0 for buried rooms. GameWorld
+## lerps the environment's background energy toward it on site entry —
+## these sites are open-topped boxes, so this IS their ceiling.
+func sky_energy() -> float:
+	return 1.0
+
 # ── Build ────────────────────────────────────────────────────────────────────
 
 func _ready() -> void:

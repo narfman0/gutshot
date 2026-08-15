@@ -42,6 +42,9 @@ func sun_energy() -> float:
 func fog_density() -> float:
 	return 0.006
 
+func sky_energy() -> float:
+	return 0.18  # the boarded skylights gape in places
+
 func wall_color() -> Color:
 	return Color(0.20, 0.18, 0.15)  # water-stained hall brick
 

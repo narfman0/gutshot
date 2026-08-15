@@ -31,6 +31,9 @@ func sun_energy() -> float:
 func fog_density() -> float:
 	return 0.01  # close, smoky, safe
 
+func sky_energy() -> float:
+	return 0.04  # a buried bolt-hole: no sky, just ceiling
+
 func ambient() -> String:
 	return "ambient_hideout"  # the quietest air in the district
 
