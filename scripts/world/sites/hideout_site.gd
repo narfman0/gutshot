@@ -156,7 +156,7 @@ func _build_map_console() -> void:
 		if world != null and body is Character and body == world.active_character():
 			# Owed perk picks take the console over; then it's the job board.
 			# The district map stays one key away on M either way.
-			if GameState.total_picks_owed() > 0:
+			if GameState.talent_points_owed() > 0:
 				TrainingPanel.toggle(self, world)
 			else:
 				JobBoard.toggle(self, world))

@@ -33,7 +33,7 @@ func _ready() -> void:
 	GameState.start_site = "hideout"
 	GameState.xp = 0
 	GameState.crew_level = 1
-	GameState.perks = {}
+	GameState.talents = {}
 	GameState.cleared_sites = []
 	GameState.active_job = ""
 	GameState.carrying = false

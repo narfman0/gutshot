@@ -53,10 +53,12 @@ var hp: float
 var shield: float
 var downed := false
 
-## Progression hooks (perks multiply these; see Perks.apply).
+## Progression hooks (the crew tree multiplies these; see Talents.apply_rank).
 var damage_mult := 1.0
 var cooldown_mult := 1.0
 var revive_frac := REVIVE_HP_FRAC
+var shield_regen_mult := 1.0
+var accuracy_mult := 1.0
 ## Who last hurt this character — kill credit for the squad XP pool.
 var last_attacker: Character = null
 
@@ -115,7 +117,7 @@ func _process(delta: float) -> void:
 		return
 	if Time.get_ticks_msec() - _last_damage_ms < int(SHIELD_REGEN_DELAY * 1000.0):
 		return
-	shield = minf(max_shield, shield + SHIELD_REGEN_RATE * delta)
+	shield = minf(max_shield, shield + SHIELD_REGEN_RATE * shield_regen_mult * delta)
 	shield_changed.emit(shield, max_shield)
 
 ## Landing read: falls off the catwalk get a thump and a dust kick so the

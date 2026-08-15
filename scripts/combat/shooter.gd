@@ -115,10 +115,10 @@ func try_fire(target: Character) -> bool:
 	var muzzle := character.muzzle_position()
 	Vfx.muzzle_flash(get_tree().current_scene, muzzle)
 	var moving := Vector2(character.velocity.x, character.velocity.z).length() > 0.5
-	var accuracy := g.base_accuracy \
+	var accuracy := minf(0.99, g.base_accuracy \
 		* (g.moving_accuracy_mult if moving else 1.0) \
 		* Cover.accuracy_mult(Cover.exposure(muzzle, target)) \
-		* range_falloff(g, target)
+		* range_falloff(g, target) * character.accuracy_mult)
 	var hit := randf() < accuracy
 	last_shot_hit = hit
 	match g.fire_mode:
@@ -145,7 +145,9 @@ func _swing(target: Character, g: GearItem) -> bool:
 	AudioManager.play_sfx(g.shot_sfx)  # the whoosh
 	CharacterAnimator.oneshot(character, "attack", 1.5, 0.55)
 	var moving := Vector2(character.velocity.x, character.velocity.z).length() > 0.5
-	var accuracy := g.base_accuracy * (g.moving_accuracy_mult if moving else 1.0)
+	var accuracy := minf(0.99,
+		g.base_accuracy * (g.moving_accuracy_mult if moving else 1.0)
+		* character.accuracy_mult)
 	var hit := randf() < accuracy
 	last_shot_hit = hit
 	if hit:

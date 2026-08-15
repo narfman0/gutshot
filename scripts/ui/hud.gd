@@ -252,7 +252,7 @@ func _refresh_xp() -> void:
 	var text := "LVL %d" % lvl
 	if lvl < GameState.LEVEL_CAP:
 		text += "  ·  XP %d / %d" % [GameState.xp, GameState.threshold_for(lvl + 1)]
-	if GameState.total_picks_owed() > 0:
+	if GameState.talent_points_owed() > 0:
 		text += "  ·  TRAIN AT THE HIDEOUT"
 		_xp_label.add_theme_color_override("font_color", UITheme.C_ACCENT)
 	else:

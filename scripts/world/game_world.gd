@@ -624,8 +624,7 @@ func _spawn_crew() -> void:
 		c.equip(rifle if key == "gunner" else smg)
 		c.equip(heal_gun if key == "medic" else pistol)
 		c.equip(belt)
-		for perk_id in GameState.perks.get(key, []):
-			Perks.apply(c, perk_id)
+		Talents.apply_all(c, key)
 		# Crew condition carried from the save (the hideout rest heals anyway).
 		var carried: Dictionary = GameState.crew_state.get(key, {})
 		if not carried.is_empty():

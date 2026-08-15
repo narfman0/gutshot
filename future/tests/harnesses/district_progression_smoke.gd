@@ -33,7 +33,7 @@ func _ready() -> void:
 	GameState.start_site = "hideout"
 	GameState.xp = 0
 	GameState.crew_level = 1
-	GameState.perks = {}
+	GameState.talents = {}
 	GameState.cleared_sites = []
 	_world = load("res://scenes/district.tscn").instantiate()
 	add_child(_world)
@@ -101,19 +101,44 @@ func _ready() -> void:
 		% [GameState.xp, repop_expected])
 	_check(_clears == 2, "the site still CLEARS again (%d) — only the bonus is once" % _clears)
 
-	# 5. Perk picks: one owed per level past the first, spent once each,
-	#    applied to the body.
-	var owed := GameState.picks_owed("leader")
-	_check(owed == GameState.crew_level - 1,
-		"one pick owed per level past the first (%d at level %d)"
-		% [owed, GameState.crew_level])
-	_check(GameState.take_perk("leader", "dead_eye"), "leader takes Dead Eye")
-	Perks.apply(leader, "dead_eye")
-	for spare in range(owed - 1):
-		GameState.take_perk("leader", ["cap_rig", "scar_tissue", "stims"][spare % 3])
-	_check(not GameState.take_perk("leader", "quick_hands"),
-		"picks run out once they are all spent")
-	_check(absf(leader.damage_mult - 1.15) < 0.001, "Dead Eye applies +15%% damage")
+	# 5. The crew tree: points accrue per level, tiers stay sealed until their
+	#    milestone, prerequisites hold, and a purchase lands on the live body.
+	var owed := GameState.talent_points_owed()
+	_check(owed == (GameState.crew_level - 1) * GameState.POINTS_PER_LEVEL,
+		"points owed = %d per level past the first (%d at level %d)"
+		% [GameState.POINTS_PER_LEVEL, owed, GameState.crew_level])
+	_check(Talents.can_buy("toughness"), "a tier-1 node is open from the start")
+	_check(not Talents.can_buy("steady_aim"),
+		"a tier-3 node is sealed at crew level %d" % GameState.crew_level)
+	_check(not Talents.can_buy("quick_hands"),
+		"a tier-2 node is refused without its prerequisite ranks")
+	var hp_before := leader.max_hp
+	_check(GameState.buy_talent("toughness"), "the crew buys Scar Tissue")
+	Talents.apply_rank(leader, "leader", "toughness")
+	_check(is_equal_approx(leader.max_hp, hp_before + 12.0),
+		"the rank lands on the live body (%.0f -> %.0f)" % [hp_before, leader.max_hp])
+	_check(GameState.talent_points_owed() == owed - 1, "the point is spent")
+	# Rank cap holds even with points to burn.
+	for i in 6:
+		GameState.buy_talent("toughness")
+	_check(Talents.ranks_in("toughness") <= int(Talents.node("toughness")["ranks"]),
+		"a node never exceeds its rank cap (%d)" % Talents.ranks_in("toughness"))
+	# Climb to the tier-2 milestone. The gate is the LEVEL; the prerequisite
+	# is a second, independent lock — check they hold separately.
+	GameState.add_xp(GameState.threshold_for(Talents.TIER_LEVEL[2]) - GameState.xp + 1)
+	_check(GameState.crew_level >= int(Talents.TIER_LEVEL[2]),
+		"the crew reaches the tier-2 milestone (level %d)" % GameState.crew_level)
+	GameState.talents["marksman"] = 0
+	_check(not Talents.can_buy("quick_hands"),
+		"past the milestone, the node is STILL refused without its prerequisite")
+	GameState.talents["marksman"] = 2
+	_check(Talents.can_buy("quick_hands"),
+		"milestone reached and prerequisite met, the tier-2 node opens")
+	# Role nodes train ONE member: the gunner's node does nothing to the leader.
+	var leader_dmg := leader.damage_mult
+	Talents.apply_rank(leader, "leader", "suppressor")
+	_check(is_equal_approx(leader.damage_mult, leader_dmg),
+		"a gunner-tagged node skips the leader")
 
 	# 6. Progression persists through the save (scratch slot; the world boot
 	#    flagged this run as a debug session — lift that for the write).
@@ -122,15 +147,15 @@ func _ready() -> void:
 	_check(GameState.save_game("skirmish", TEST_SLOT), "progression save writes")
 	var xp_saved := GameState.xp
 	GameState.xp = 0
-	GameState.perks = {}
+	GameState.talents = {}
 	GameState.cleared_sites = []
 	var lvl_saved := GameState.crew_level
 	GameState.crew_level = 1
 	GameState.load_game(TEST_SLOT)
 	_check(GameState.xp == xp_saved and GameState.crew_level == lvl_saved
-		and GameState.perks.get("leader", []).has("dead_eye")
+		and Talents.ranks_in("toughness") > 0
 		and GameState.cleared_sites.has("skirmish"),
-		"save round-trips xp/level/perks/cleared")
+		"save round-trips xp/level/talents/cleared")
 	DirAccess.remove_absolute(SaveManager._path(TEST_SLOT))
 	GameState.debug_session = true
 

@@ -131,6 +131,34 @@ bindings.** Until then:
 - Anything it flags as TILING needs the missing texture from the raw tree
   (which the server does serve) or should not be used.
 
+## Progression — one XP pool, one crew level, ONE shared tree
+
+`Talents` (scripts/resources/talents.gd) is a static CATALOG; `GameState`
+holds `talents` (node id → ranks bought) and the point pool. Replaced the
+old per-member `Perks`.
+
+The design problem was four crew × a tree each = four menus and ~36
+decisions a run. The fix is that **there is no member axis**: nodes buff the
+whole crew, and the few that carry identity are ROLE-TAGGED (`"role":
+"medic"`) — they train one member but live in the same tree and cost the
+same pool. You pick a node, never a person.
+
+- Depth comes from MILESTONE gating (`TIER_LEVEL` = 1/5/12/22/35), not
+  breadth. Most tier-2+ nodes additionally require ranks in a named earlier
+  node, so the two locks are independent.
+- `blocked_reason()` returns why a node is unbuyable ("needs Dead Eye 3",
+  "crew level 22"); the panel prints it instead of greying out silently, so
+  the tree teaches its own rules and advertises the next milestone.
+- `apply_rank()` applies ONE rank. Spawn replays every purchased rank through
+  it and a purchase applies just the new one, so the two paths cannot drift.
+- Curve: `XP_BASE * level^XP_EXPONENT` (25, 1.6) — level 2 costs 25, level 11
+  ~995, level 50 ~12,655. `LEVEL_CAP` 50, 2 points per level. The flat
+  per-level HP/shield is deliberately small (2.0/1.5) because there are fifty
+  of them; the tree carries the interesting growth.
+
+Tune the whole economy from `XP_BASE`/`XP_EXPONENT`. These numbers have NOT
+been playtested by a human.
+
 ## Jobs — the retrieval loop
 
 `Jobs` (scripts/core/jobs.gd) is a static CATALOG; `GameState` holds the

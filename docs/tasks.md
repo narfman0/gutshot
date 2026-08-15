@@ -198,9 +198,22 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
 - [ ] Jobs follow-ups: chained/multi-stage contracts, a fence NPC paying
       credits rather than raw XP, jobs that expire, rival crews racing you
       to the same take
-- [ ] Progression follow-ups: objective XP when the jobs system lands,
-      deeper per-member perk menus (role-exclusive picks), difficulty
-      scaling against crew level
+- [x] Progression v2 — the CREW TREE replaces per-member perks. One shared
+      trunk, one point pool (2 per crew level), no member picker: nodes buff
+      the whole crew and the identity nodes are role-tagged (Point Man
+      trains the leader, Field Surgeon the medic) but cost the same pool.
+      Depth via MILESTONE gating — tiers open at crew level 1/5/12/22/35 —
+      plus per-node prerequisites, which are independent locks. Level cap
+      10 → 50 on a curve that slows hard (25 XP for level 2, ~995 for 11,
+      ~12,655 for 50); flat per-level HP/shield shrunk to 2.0/1.5 since the
+      tree now carries growth. Panel scrolls, shows locked tiers with their
+      unlock level, prints WHY a node is blocked, and has a "spend it for
+      me" escape hatch. Save v4
+- [ ] Progression follow-ups: difficulty scaling against crew level; more
+      capstones that grant ABILITIES rather than stats (Demolitions
+      Training is the only one today); per-node icons; a respec at the
+      hideout. The XP curve and node values are UNPLAYTESTED — tune
+      XP_BASE/XP_EXPONENT in GameState
 - [x] World + aesthetic polish round v1 — the district no longer floats in
       void: dark city underlay + a skyline ring of background towers beyond
       the walls; sites got VISIBLE perimeter walls (tall camera-far, low

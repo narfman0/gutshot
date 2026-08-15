@@ -34,17 +34,30 @@ var run_active := false
 ## SceneManager.start_world (menu New Run / Continue).
 var start_site := "hideout"
 
-# ── Progression: one squad XP pool → one crew level → per-member perks ───────
+# ── Progression: one squad XP pool → one crew level → one shared tree ───────
 
-const LEVEL_CAP := 10
-## Per-level flat curves applied at spawn and on live level-ups.
-const HP_PER_LEVEL := 6.0
-const SHIELD_PER_LEVEL := 4.0
+## A long ladder on purpose: the tree's deep tiers are milestones you climb
+## toward over many runs, not a checklist you finish.
+const LEVEL_CAP := 50
+## Talent points granted per crew level (level 1 grants none).
+const POINTS_PER_LEVEL := 2
+## Per-level flat curves applied at spawn and on live level-ups. Small,
+## because there are FIFTY of them — the tree carries the interesting growth.
+const HP_PER_LEVEL := 2.0
+const SHIELD_PER_LEVEL := 1.5
+
+## XP curve constants. Superlinear so the ladder slows hard: level 2 costs
+## 25, level 11 costs ~995, level 50 costs ~12,655. Early levels land inside
+## a single session; the deep tiers are a long haul. Tune the whole economy
+## from these two numbers.
+const XP_BASE := 25.0
+const XP_EXPONENT := 1.6
 
 var xp := 0
 var crew_level := 1
-## member key ("leader"…) → Array of taken perk ids (Perks.CATALOG).
-var perks := {}
+## talent id (Talents.CATALOG) → ranks bought. ONE shared tree for the whole
+## crew; role-tagged nodes train a single member but cost the same pool.
+var talents := {}
 ## Sites whose first-clear milestone already paid this run.
 var cleared_sites: Array = []
 
@@ -96,9 +109,9 @@ func bank_job() -> int:
 	job_changed.emit()
 	return paid
 
-## XP needed to go from `level` to level+1 (front-loaded early dings).
+## XP needed to go from `level` to level+1.
 func xp_to_next(level: int = crew_level) -> int:
-	return 200 * level
+	return int(round(XP_BASE * pow(float(level), XP_EXPONENT)))
 
 ## Bank XP into the squad pool; levels resolve immediately (stat curves), but
 ## perk PICKS are only spendable at the hideout console — become stronger by
@@ -119,24 +132,26 @@ func threshold_for(level: int) -> int:
 		total += xp_to_next(l)
 	return total
 
-## Unspent perk picks across the whole crew (HUD nudge + console gate).
-func total_picks_owed() -> int:
+## Talent points earned across the run (2 per level past the first).
+func talent_points_total() -> int:
+	return (crew_level - 1) * POINTS_PER_LEVEL
+
+func talent_points_spent() -> int:
 	var total := 0
-	for key in Skins.crew_names():
-		total += picks_owed(key)
+	for id in talents:
+		total += int(talents[id])
 	return total
 
-## Perk picks a member has earned but not spent (one pick per level past 1).
-func picks_owed(member_key: String) -> int:
-	return (crew_level - 1) - (perks.get(member_key, []) as Array).size()
+## Unspent points — drives the HUD nudge and the hideout console.
+func talent_points_owed() -> int:
+	return talent_points_total() - talent_points_spent()
 
-func take_perk(member_key: String, perk_id: String) -> bool:
-	if picks_owed(member_key) <= 0 or not Perks.CATALOG.has(perk_id):
+## Buy one rank. Talents validates level gates, prerequisites and rank caps;
+## this only commits the purchase.
+func buy_talent(id: String) -> bool:
+	if not Talents.can_buy(id):
 		return false
-	var taken: Array = perks.get_or_add(member_key, [])
-	if taken.has(perk_id):
-		return false
-	taken.append(perk_id)
+	talents[id] = int(talents.get(id, 0)) + 1
 	return true
 
 ## Menu entry point: this is a real run — saves may write. Progression
@@ -146,7 +161,7 @@ func new_run() -> void:
 	debug_session = false
 	xp = 0
 	crew_level = 1
-	perks = {}
+	talents = {}
 	cleared_sites = []
 	active_job = ""
 	carrying = false
@@ -185,7 +200,7 @@ func save_game(site_id: String, slot: int = 0) -> bool:
 		"crew_state": crew_state,
 		"xp": xp,
 		"crew_level": crew_level,
-		"perks": perks,
+		"talents": talents,
 		"cleared_sites": cleared_sites,
 		"active_job": active_job,
 		"carrying": carrying,
@@ -202,7 +217,7 @@ func load_game(slot: int = 0) -> String:
 	crew_state = data.get("crew_state", {})
 	xp = int(data.get("xp", 0))
 	crew_level = int(data.get("crew_level", 1))
-	perks = data.get("perks", {})
+	talents = data.get("talents", {})
 	cleared_sites = data.get("cleared_sites", [])
 	active_job = str(data.get("active_job", ""))
 	carrying = bool(data.get("carrying", false))
