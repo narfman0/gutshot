@@ -244,6 +244,14 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       owns the crossroads from up there, on a FloorSystem tier); and
       shopfront BAYS (pillar pair + awning + lamp) give cover you can back
       into along the street and market frontages
+- [ ] Asset cook fix (UPSTREAM, outside this repo): the cook drops most of
+      each pack's textures and loses material→texture bindings — see
+      docs/architecture.md §Asset pipeline. Downstream consequence today:
+      Military_Warehouse shipping containers and roller doors render FLAT
+      WHITE (no atlas exists to attach), and SciFi_City Background_*
+      buildings are unusable. Repo-side option if the cook can't be fixed:
+      pull the specific textures from the RAW tree (served) and add a
+      per-mesh texture manifest to patch_gltf_materials.py
 - [ ] Buildings v3 ideas: alley depth between structures
       (corridors as real gaps rather than trenches), rooftop routes onto the
       facades, ground-floor shopfront bays as cover

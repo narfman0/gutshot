@@ -99,6 +99,37 @@ Not implemented yet. Planned approach:
 
 ---
 
+## Asset pipeline — known UPSTREAM cook defects
+
+`fetch_assets.sh` pulls from the asset server's **cooked** tree. Two defects
+live in the cook itself, not in our fetcher (verified by downloading fresh
+copies straight from the server — they arrive broken):
+
+1. **Textures are dropped.** The cooked tree publishes a fraction of what
+   the raw tree holds: POLYGON_SciFi_City ships 6 of 50 textures (missing
+   atlases `PolygonScifi_02_A/03_A/04_A` and, critically,
+   `PolygonScifi_Background_Building_Emissive.png` — the tiled window-light
+   mask its Background_* buildings are built around);
+   POLYGON_Military_Warehouse ships 2 of 45 (missing every Brick_* and
+   Corrigated_Iron_* tiling texture its meshes use).
+2. **Material→texture bindings are lost.** Cooked glTFs for those packs have
+   no `images`/`textures` arrays and bare `lambertNNN` materials. The source
+   FBX does contain `FbxFileTexture` nodes, and CyberCity cooks correctly, so
+   the converter is capable — it is pack-specific.
+
+The cook tooling is not in this repo (we have the fetcher and the
+post-patcher only), so the real fix belongs wherever the cook runs:
+**copy every texture in the pack, and preserve per-material texture
+bindings.** Until then:
+
+- `tools/patch_gltf_materials.py` repairs texture-less meshes whose UVs sit
+  inside [0,1] by attaching the pack's single atlas, and REFUSES the rest.
+- `tools/audit_assets.py` reports both defect classes over fetched assets
+  (`--used-only` restricts to meshes the game references). Run it after
+  adding assets. It is a report, never a gate.
+- Anything it flags as TILING needs the missing texture from the raw tree
+  (which the server does serve) or should not be used.
+
 ## Performance Notes
 
 - Squad scale is small (4-6 player + 8-16 enemies). Node-based architecture is fine — no ECS needed.
