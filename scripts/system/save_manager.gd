@@ -4,7 +4,9 @@ class_name SaveManager
 extends RefCounted
 
 const SAVE_DIR := "user://saves"
-const SAVE_VERSION := 2  # v2 adds xp/crew_level/perks/cleared_sites (v1 loads as fresh level 1)
+const SAVE_VERSION := 3  # v3 adds the job contract (active_job/carrying/completed_jobs);
+                         # v2 added xp/crew_level/perks/cleared_sites. Older saves load
+                         # with the missing keys defaulted — fresh crew, no job.
 
 static func _path(slot: int) -> String:
 	return "%s/slot_%d.json" % [SAVE_DIR, slot]

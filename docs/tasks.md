@@ -170,6 +170,34 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       CIVILIANS (Factions.CIVIL, unarmed, they scatter). Encounter is a
       standing three-way: clan patrol + roof watch + sensei vs a gang
       shakedown at the south stalls, with the crew free to pick a side
+- [x] Jobs v1 — RETRIEVAL contracts, the district's reason to exist: a job
+      board on the hideout console (perk picks still take priority; the map
+      stays on M), three contracts (chop shop ledger / depot manifest /
+      the clan swordsmith's blade), one live at a time. The take is a
+      glowing pickup inside an add_room interior — only the ACTIVE character
+      can lift it, so a follower pathing through a doorway can never start
+      the job for you. Lifting it puts the owner's people within 70 m onto
+      the carrier every 2 s (the word going out; the existing pursuit AI
+      does the chasing), and the hideout is the ONLY place that banks it —
+      which is also the only place that heals, so the run home is the job.
+      Delivery pays 150–240 XP and lands the mission-complete beat where
+      the crew is safe rather than as a popup over the bodies. Save v3
+      persists the live contract + finished ones
+- [ ] Jobs v2 — the other archetypes, into the SAME Jobs.CATALOG (entries
+      already carry a `type`; GameWorld branches on it):
+      HIT (named target with a nameplate + bodyguard pack — closest to what
+      combat already does), SABOTAGE (destroy a thing via the BreachDoor
+      damage model; adds a non-combat verb and a timer), ESCORT/PROTECT
+      (keep a CIVIL alive across a site, or hold a position for a duration —
+      inverts the usual pressure, and escort AI is the fiddly one).
+      Also wanted: a CORP-owned contract in the tower. Worth doing because
+      gang-owned jobs have NO "you made a new enemy" beat — the gangs are
+      base-hostile to the crew already, so only neutral owners (clan, corp,
+      Assembly) can turn on you. Right now the clan blade is the only job
+      that demonstrates it
+- [ ] Jobs follow-ups: chained/multi-stage contracts, a fence NPC paying
+      credits rather than raw XP, jobs that expire, rival crews racing you
+      to the same take
 - [ ] Progression follow-ups: objective XP when the jobs system lands,
       deeper per-member perk menus (role-exclusive picks), difficulty
       scaling against crew level

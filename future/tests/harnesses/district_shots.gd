@@ -60,6 +60,16 @@ func _ready() -> void:
 	# Inside the chop shop — a room with one door.
 	_teleport(_chunk("Street").to_global(Vector3(-16.0, 0.1, -19.0)))
 	await _shot("district_17_interior.png", 40)
+	# The job loop: the take glowing on the shop floor, then the HUD's
+	# standing order once it's in hand. Step OUT before accepting — the
+	# pickup spawns at the room's centre and the crew was just standing on it.
+	_teleport(_chunk("Street").to_global(Vector3(-16.0, 0.1, -13.0)))
+	await _settle(10)
+	GameState.accept_job("ledger")
+	_world.refresh_job_loot()
+	await _shot("district_18_job_loot.png", 40)
+	_teleport(_chunk("Street").to_global(Vector3(-16.0, 0.1, -20.0)))
+	await _shot("district_19_job_carrying.png", 60)
 	# The other camera: over-the-shoulder with the reticle.
 	_teleport((_chunk("Street") as Node3D).global_position + Vector3(0, 0.1, 8))
 	_world.set_camera_mode(true)
@@ -73,6 +83,10 @@ func _ready() -> void:
 	_world.set_camera_mode(false)
 	print("DISTRICT_SHOTS: DONE")
 	get_tree().quit(0)
+
+func _settle(frames: int) -> void:
+	for i in frames:
+		await get_tree().physics_frame
 
 func _chunk(site: String) -> SiteChunk:
 	return _world.get_node("Level/" + site) as SiteChunk

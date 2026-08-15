@@ -166,6 +166,7 @@ func _ready() -> void:
 	_objectives.mission_failed.connect(_show_wipe_screen)
 	_objectives.site_cleared.connect(_on_site_cleared)
 	GameState.crew_leveled.connect(_on_crew_leveled)
+	refresh_job_loot()  # a Continue mid-contract puts the loot back on the floor
 	_tick_sites(0.0)  # register the arrival site (label, save, mood, ambient)
 	SceneManager.fade_in()
 
@@ -741,6 +742,91 @@ func _on_crew_leveled(_new_level: int) -> void:
 		c.shield_changed.emit(c.shield, c.max_shield)
 	AudioManager.play_sfx("levelup")
 
+# ── Jobs: lift the take, then run it home ───────────────────────────────────
+
+## While carrying, the owner's people within this radius get re-pinned on the
+## carrier every tick — the word going out. Bounded on purpose: alerting the
+## whole district at once turns every job into the same dogpile, and the
+## pursuit AI already drags a pinned pack across site borders on its own.
+const JOB_HUNT_RADIUS := 70.0
+const JOB_HUNT_INTERVAL := 2.0
+
+var _job_loot: JobLoot = null
+var _job_hunt_t := 0.0
+
+## Put the loot on the floor (or take it away) to match GameState. Safe to
+## call any time — the board calls it on accept/abandon, boot calls it for a
+## restored save.
+func refresh_job_loot() -> void:
+	if _job_loot != null and is_instance_valid(_job_loot):
+		_job_loot.queue_free()
+	_job_loot = null
+	if GameState.active_job == "" or GameState.carrying:
+		return
+	var job := Jobs.job(GameState.active_job)
+	var chunk: SiteChunk = _chunks_by_id.get(str(job.get("site", "")))
+	if chunk == null:
+		return
+	_job_loot = JobLoot.spawn(chunk, job, self)
+	_job_loot.lifted.connect(_on_loot_lifted)
+
+## The moment that turns a walk into a getaway.
+func _on_loot_lifted() -> void:
+	var id := GameState.active_job
+	if id == "":
+		return
+	_job_loot = null
+	GameState.lift_loot()
+	var owner_faction := Jobs.owner_of(id)
+	# An honor grudge outlives the hideout's rest; an ordinary one is
+	# forgiven once the crew is home and breathing.
+	if Jobs.lasting_grudge(id):
+		Factions.provoke_lasting(owner_faction, Factions.CREW)
+	else:
+		Factions.provoke(owner_faction, Factions.CREW)
+	AudioManager.play_sfx("telegraph")
+	($HUD as Hud).flash_job("%s TAKEN — GET IT HOME" % str(Jobs.job(id).get("loot", "IT")))
+	_hunt_carrier(true)
+
+func _tick_jobs(delta: float) -> void:
+	if not GameState.carrying:
+		return
+	_job_hunt_t -= delta
+	if _job_hunt_t <= 0.0:
+		_job_hunt_t = JOB_HUNT_INTERVAL
+		_hunt_carrier(false)
+
+## Re-pin the owner's nearby units on whoever is holding the take.
+func _hunt_carrier(_first: bool) -> void:
+	var carrier := _squad.active_character()
+	if carrier == null or not is_instance_valid(carrier) or not carrier.is_alive():
+		return
+	var owner_faction := Jobs.owner_of(GameState.active_job)
+	for node in get_tree().get_nodes_in_group("enemy_ai"):
+		var ec := node as EnemyController
+		if ec == null or not is_instance_valid(ec.body) or not ec.body.is_alive():
+			continue
+		if ec.body.team != owner_faction:
+			continue
+		if ec.body.global_position.distance_to(carrier.global_position) > JOB_HUNT_RADIUS:
+			continue
+		ec.body.notify_shot_at(carrier)
+
+## Banked at the hideout — the only place that takes delivery, and the only
+## place that heals. This is also the game's mission-complete beat: it lands
+## where the crew is safe, not as a popup over the bodies.
+func _bank_job_if_carrying() -> void:
+	if not GameState.carrying:
+		return
+	var job := Jobs.job(GameState.active_job)
+	var paid := GameState.bank_job()
+	if paid <= 0:
+		return
+	AudioManager.play_sfx("levelup")
+	($HUD as Hud).flash_job("%s DELIVERED  ·  +%d XP" % [
+		str(job.get("loot", "THE TAKE")), paid])
+	refresh_job_loot()
+
 func _setup_floor_systems() -> void:
 	for chunk in _chunks:
 		if chunk.floor_heights().size() > 1:
@@ -778,6 +864,7 @@ func _enter_site(chunk: SiteChunk) -> void:
 	_apply_mood(chunk)
 	AudioManager.play_ambient(chunk.ambient())
 	if chunk.heals_crew():
+		_bank_job_if_carrying()  # deliver first, THEN rest forgives the heat
 		_rest_crew()
 	# Autosave on arrival: snapshot the living bodies, stamp the site.
 	GameState.capture_crew()
@@ -902,12 +989,14 @@ func _process(delta: float) -> void:
 		if active != null and is_instance_valid(active):
 			_tick_ots_camera(active)
 		_tick_sites(delta)
+		_tick_jobs(delta)
 		return
 	if active != null and is_instance_valid(active):
 		_cam_pivot.global_position = _cam_pivot.global_position.lerp(
 			active.global_position, minf(1.0, _CAM_FOLLOW_SPEED * delta))
 	_camera.size = lerpf(_camera.size, _zoom, minf(1.0, 10.0 * delta))
 	_tick_sites(delta)
+	_tick_jobs(delta)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if Engine.is_editor_hint():

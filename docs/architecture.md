@@ -131,6 +131,28 @@ bindings.** Until then:
 - Anything it flags as TILING needs the missing texture from the raw tree
   (which the server does serve) or should not be used.
 
+## Jobs — the retrieval loop
+
+`Jobs` (scripts/core/jobs.gd) is a static CATALOG; `GameState` holds the
+live contract (`active_job` / `carrying` / `completed_jobs`, save v3) and
+emits `job_changed`. The runtime lives in GameWorld:
+
+- `refresh_job_loot()` reconciles the world with GameState — spawns a
+  `JobLoot` pickup in the target chunk, or clears it. Called on accept,
+  abandon, and boot (a Continue mid-contract puts the take back on the
+  floor).
+- `_on_loot_lifted()` provokes the owner and flashes the HUD.
+- `_tick_jobs()` re-pins owner-faction units within `JOB_HUNT_RADIUS` on the
+  carrier every `JOB_HUNT_INTERVAL`. It does NOT implement chasing — the
+  existing pursuit AI breaks a pinned pack's spawn leash on its own.
+- `_bank_job_if_carrying()` runs on hideout entry, BEFORE `_rest_crew()`, so
+  delivery banks before the rest forgives the heat it caused.
+
+Design note worth remembering: provoking a BASE-hostile faction is a no-op.
+Gang-owned jobs therefore have no "new enemy" beat — their escalation is the
+hunt. Only neutral owners (clan/corp/Assembly) can actually turn on the crew,
+and clan grudges route through `provoke_lasting`, which rest never forgives.
+
 ## Performance Notes
 
 - Squad scale is small (4-6 player + 8-16 enemies). Node-based architecture is fine — no ECS needed.

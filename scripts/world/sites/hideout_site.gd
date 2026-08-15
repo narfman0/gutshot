@@ -104,8 +104,10 @@ func build_extra_geometry() -> void:
 		0.0, 48, true)
 	add_practical_light(Vector3(0.0, 2.4, -10.4), Color(1.0, 0.6, 0.3), 1.1, 5.0, true)
 
-## The district-map console: a glowing terminal — the active character
-## stepping up to it opens the map (M works anywhere too).
+## The hideout console: a glowing terminal — the active character stepping up
+## to it opens the JOB BOARD, or the training screen while perk picks are
+## owed. The district map is on M from anywhere, so the console spends its
+## walk-up on the thing that starts a run instead.
 func _build_map_console() -> void:
 	var console := StaticBody3D.new()
 	console.collision_layer = Layers.COVER
@@ -129,7 +131,7 @@ func _build_map_console() -> void:
 	mi.position.y = 0.55
 	console.add_child(mi)
 	var sign := Label3D.new()
-	sign.text = "DISTRICT MAP"
+	sign.text = "JOB BOARD"
 	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	sign.font_size = 40
 	sign.pixel_size = 0.004
@@ -152,8 +154,9 @@ func _build_map_console() -> void:
 	zone.position = Vector3(0.0, 0.6, -4.0)
 	zone.body_entered.connect(func(body: Node3D):
 		if world != null and body is Character and body == world.active_character():
-			# Owed perk picks take the console over; the map stays on M.
+			# Owed perk picks take the console over; then it's the job board.
+			# The district map stays one key away on M either way.
 			if GameState.total_picks_owed() > 0:
 				TrainingPanel.toggle(self, world)
 			else:
-				DistrictMap.toggle(self, site_id()))
+				JobBoard.toggle(self, world))

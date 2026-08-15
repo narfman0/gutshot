@@ -10,6 +10,9 @@ signal mission_ended(victory: bool)
 signal shot_fired(shooter: Character)
 signal xp_changed(total: int)
 signal crew_leveled(new_level: int)
+## Job state moved: accepted, lifted, banked or abandoned. The HUD line and
+## the board both just re-read GameState when this fires.
+signal job_changed
 
 ## Characters in the player squad, in portrait order. Set by GameWorld.
 var squad: Array = []
@@ -44,6 +47,54 @@ var crew_level := 1
 var perks := {}
 ## Sites whose first-clear milestone already paid this run.
 var cleared_sites: Array = []
+
+# ── Jobs: accept at the board, lift on site, bank at the hideout ─────────────
+
+## Accepted contract id (Jobs.CATALOG), or "" when the crew is between jobs.
+var active_job := ""
+## True once the loot is on the crew — the run home is live and the owner
+## faction is hunting. Carried by the SQUAD, not a body, so a downed carrier
+## never strands the job.
+var carrying := false
+## Jobs banked this run; the board stops offering them.
+var completed_jobs: Array = []
+
+func accept_job(id: String) -> bool:
+	if active_job != "" or not Jobs.exists(id) or completed_jobs.has(id):
+		return false
+	active_job = id
+	carrying = false
+	job_changed.emit()
+	return true
+
+## Walk away from a contract. The loot goes back where it was; a grudge
+## already earned is NOT refunded (see Jobs.lasting_grudge).
+func abandon_job() -> void:
+	if active_job == "":
+		return
+	active_job = ""
+	carrying = false
+	job_changed.emit()
+
+func lift_loot() -> void:
+	if active_job == "" or carrying:
+		return
+	carrying = true
+	job_changed.emit()
+
+## Bank at the hideout: pays out and retires the contract. Returns the XP
+## paid (0 when there was nothing to bank) so the caller can show it.
+func bank_job() -> int:
+	if active_job == "" or not carrying:
+		return 0
+	var paid := int(Jobs.job(active_job).get("xp", 0))
+	if not completed_jobs.has(active_job):
+		completed_jobs.append(active_job)
+	active_job = ""
+	carrying = false
+	add_xp(paid)
+	job_changed.emit()
+	return paid
 
 ## XP needed to go from `level` to level+1 (front-loaded early dings).
 func xp_to_next(level: int = crew_level) -> int:
@@ -97,6 +148,9 @@ func new_run() -> void:
 	crew_level = 1
 	perks = {}
 	cleared_sites = []
+	active_job = ""
+	carrying = false
+	completed_jobs = []
 
 func set_squad(characters: Array) -> void:
 	squad = characters
@@ -133,6 +187,9 @@ func save_game(site_id: String, slot: int = 0) -> bool:
 		"crew_level": crew_level,
 		"perks": perks,
 		"cleared_sites": cleared_sites,
+		"active_job": active_job,
+		"carrying": carrying,
+		"completed_jobs": completed_jobs,
 	})
 
 ## Restore a run: seeds crew_state + progression and reports the site to
@@ -147,4 +204,8 @@ func load_game(slot: int = 0) -> String:
 	crew_level = int(data.get("crew_level", 1))
 	perks = data.get("perks", {})
 	cleared_sites = data.get("cleared_sites", [])
+	active_job = str(data.get("active_job", ""))
+	carrying = bool(data.get("carrying", false))
+	completed_jobs = data.get("completed_jobs", [])
+	job_changed.emit()
 	return str(data["site"])

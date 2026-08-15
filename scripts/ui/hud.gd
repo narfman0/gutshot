@@ -215,6 +215,8 @@ func _refresh_slots() -> void:
 
 var _site_label: Label = null
 var _xp_label: Label = null
+var _job_label: Label = null
+var _job_flash: Label = null
 
 ## Site name top-left — instant orientation as the crew crosses the district.
 ## The XP line rides underneath: level, pool progress, and the train nudge.
@@ -232,9 +234,16 @@ func _build_site_label(site_name: String) -> void:
 	_xp_label.add_theme_color_override("font_color", UITheme.C_MUTED)
 	_xp_label.position = Vector2(18, 42)
 	add_child(_xp_label)
+	_job_label = Label.new()
+	_job_label.theme = UITheme.theme
+	_job_label.add_theme_font_size_override("font_size", 14)
+	_job_label.position = Vector2(18, 60)
+	add_child(_job_label)
 	GameState.xp_changed.connect(func(_t): _refresh_xp())
 	GameState.crew_leveled.connect(func(_l): _refresh_xp())
+	GameState.job_changed.connect(_refresh_job)
 	_refresh_xp()
+	_refresh_job()
 
 func _refresh_xp() -> void:
 	if _xp_label == null:
@@ -249,6 +258,48 @@ func _refresh_xp() -> void:
 	else:
 		_xp_label.add_theme_color_override("font_color", UITheme.C_MUTED)
 	_xp_label.text = text
+
+## The standing order, one line. Between jobs it says nothing at all rather
+## than saying "no job" — an empty line is quieter than a nag.
+func _refresh_job() -> void:
+	if _job_label == null:
+		return
+	if GameState.active_job == "":
+		_job_label.text = ""
+		return
+	var job := Jobs.job(GameState.active_job)
+	if GameState.carrying:
+		_job_label.text = "JOB · CARRYING THE %s — GET TO THE HIDEOUT" % str(
+			job.get("loot", "TAKE")).to_upper()
+		_job_label.add_theme_color_override("font_color", UITheme.C_ACCENT)
+	else:
+		_job_label.text = "JOB · %s — %s" % [str(job.get("name", "")),
+			str(job.get("where", ""))]
+		_job_label.add_theme_color_override("font_color", UITheme.C_HEAD)
+
+## Centre-screen beat for the two moments that matter: the lift and the
+## delivery. Fades itself out — this is the replacement for the AREA CLEAR
+## popup we deleted, and it lands on the player's own actions.
+func flash_job(text: String) -> void:
+	if _job_flash != null and is_instance_valid(_job_flash):
+		_job_flash.queue_free()
+	_job_flash = Label.new()
+	_job_flash.theme = UITheme.theme
+	_job_flash.text = text
+	_job_flash.add_theme_font_size_override("font_size", 30)
+	_job_flash.add_theme_color_override("font_color", UITheme.C_ACCENT)
+	_job_flash.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_job_flash.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_job_flash.anchor_right = 1.0
+	_job_flash.offset_top = 120
+	add_child(_job_flash)
+	var tween := create_tween()
+	tween.tween_interval(2.0)
+	tween.tween_property(_job_flash, "modulate:a", 0.0, 1.2)
+	tween.tween_callback(func():
+		if _job_flash != null and is_instance_valid(_job_flash):
+			_job_flash.queue_free()
+			_job_flash = null)
 
 ## GameWorld calls this when the active character crosses into a site.
 func set_site(site_name: String) -> void:
