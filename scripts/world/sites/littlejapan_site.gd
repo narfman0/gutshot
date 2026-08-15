@@ -296,6 +296,9 @@ func _build_market_dressing() -> void:
 	add_decor(PROP_NOODLE_BOX, Vector3(11.4, 1.0, 6.2), 200.0)
 	add_decor(PROP_TRASH_BIN, Vector3(-9.5, 0, 22.0), 40.0)
 	add_decor(PROP_HOLO_SIGN, Vector3(9.0, 0, 14.0), 250.0)
+	# Bays between the stalls — duck into a shopfront when the alley opens up.
+	add_bay(Vector3(-10.4, 0, 20.0), 3.6, 90.0, Color(0.21, 0.16, 0.14), Color(1.0, 0.4, 0.45))
+	add_bay(Vector3(10.4, 0, -16.0), 3.6, 270.0, Color(0.21, 0.16, 0.14), Color(0.35, 0.9, 1.0))
 	# The swordsmith: a real room off the market, and the clan's shrine-side
 	# tea house. Both open onto the alley you have to walk down.
 	add_room(Vector3(-20.0, 0, 6.0), 8.5, 7.0, 90.0,

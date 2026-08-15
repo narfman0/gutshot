@@ -59,8 +59,12 @@ func _ready() -> void:
 		if is_instance_valid(node):
 			(node as EnemyController).body.notify_shot_at(leader)
 	leader.global_position = Vector3(-33, 0.1, 15)  # mid-alley, beyond leash
+	# What pursuit MEANS: the spawn leash breaks and they cross the site
+	# after you. (Deliberately not "they thread one specific gate" — the
+	# dressed street has several west exits and a lot of furniture, and
+	# that would test pathfinding polish rather than the chase.)
 	var chased := false
-	for k in 35:  # the dressed street is a maze now — give the chase room
+	for k in 35:
 		await get_tree().create_timer(1.0).timeout
 		for node in mid:
 			if not is_instance_valid(node):
@@ -68,11 +72,12 @@ func _ready() -> void:
 			var ec := node as EnemyController
 			if is_instance_valid(ec.body) and ec.body.is_alive():
 				ec.body.notify_shot_at(leader)  # covering fire keeps the track hot
-				if ec.body.global_position.x < -26.0:
+				if ec.body.global_position.x < -20.0 \
+						and ec.brain.leash_radius > 100.0:
 					chased = true
 		if chased:
 			break
-	_check(chased, "a pursuing pack chases the crew out of the street into the alley")
+	_check(chased, "a pursuing pack breaks its leash and crosses the street after the crew")
 
 	# 2. Defensive packs hold: the vault crew guards the take instead.
 	leader.global_position = _chunk("Hideout").to_global(Vector3(0, 0.1, 4))

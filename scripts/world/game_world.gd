@@ -49,6 +49,16 @@ const _VENDING := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFi
 const _EBOX := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Electrical_Box_01.gltf"
 const _SHELF := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Props/SM_Prop_Shelf_01.gltf"
 const _CONTAINER_SMALL := "res://assets/meshes/POLYGON_Military_Warehouse_SourceFiles_v1/SourceFiles/FBX/SM_Prop_Shipping_Container_Small_01.gltf"
+# Corridors run BETWEEN buildings — these line their flanks so an alley
+# reads as a gap in the city rather than a trench in the ground.
+const _BLD_SMALL_01 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Small_01.gltf"
+const _BLD_SMALL_02 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Small_02.gltf"
+const _BLD_SMALL_04 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Small_04.gltf"
+const _BLD_MED_02 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Med_02.gltf"
+const _BLD_MED_07 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Med_07.gltf"
+const _BLD_INDUSTRIAL := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Industrial_02.gltf"
+const _BLD_ADVANCED := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Advanced_02.gltf"
+const _BLD_DOBEI := "res://assets/meshes/POLYGON_Samurai_Empire_SourceFiles_v1/SourceFiles/FBX/SamuraiEmpire/SM_Bld_Fence_Dobei_Double_01.gltf"
 
 ## Each corridor has an identity: wall/floor tone, light colors (pools
 ## alternate through the list), edge-strip glow, junk along the walls, and
@@ -59,6 +69,7 @@ const CORRIDOR_STYLES := {
 		"wall": Color(0.15, 0.14, 0.13), "floor": Color(0.12, 0.12, 0.13),
 		"lights": [Color(1.0, 0.6, 0.25)], "strip": Color(1.0, 0.7, 0.3),
 		"props": [_CRATE_06, _CRATE_01, _VENDING, _CRATE_04], "beams": false,
+		"flank": [_BLD_SMALL_02, _BLD_SMALL_04],
 		"ground": {"tile_size": 2.6, "grout_width": 0.04, "grime_amount": 0.85,
 			"grime_scale": 0.3, "crack_amount": 0.5, "wet_amount": 0.7,
 			"puddle_scale": 0.2, "base_roughness": 0.7},
@@ -68,6 +79,7 @@ const CORRIDOR_STYLES := {
 		"lights": [Color(0.2, 0.8, 1.0), Color(0.95, 0.3, 0.75)],
 		"strip": Color(0.2, 0.8, 1.0),
 		"props": [_VENDING, _CRATE_01, _VENDING, _SHELF], "beams": true,
+		"flank": [_BLD_MED_02, _BLD_SMALL_01, _BLD_MED_07],
 		"ground": {"tile_size": 1.8, "grout_width": 0.05, "grime_amount": 0.6,
 			"grime_scale": 0.4, "wet_amount": 0.5, "base_roughness": 0.5,
 			"metallic_amount": 0.1},
@@ -76,6 +88,7 @@ const CORRIDOR_STYLES := {
 		"wall": Color(0.18, 0.18, 0.17), "floor": Color(0.15, 0.15, 0.14),
 		"lights": [Color(1.0, 0.65, 0.25)], "strip": Color(1.0, 0.65, 0.3),
 		"props": [_EBOX, _CRATE_04, _EBOX, _SHELF], "beams": false,
+		"flank": [_BLD_INDUSTRIAL, _BLD_MED_07],
 		"ground": {"tile_size": 10.0, "grout_width": 0.01, "grime_amount": 0.8,
 			"grime_scale": 0.09, "crack_amount": 0.45, "base_roughness": 0.85},
 	},
@@ -83,6 +96,7 @@ const CORRIDOR_STYLES := {
 		"wall": Color(0.14, 0.15, 0.17), "floor": Color(0.13, 0.14, 0.16),
 		"lights": [Color(0.35, 0.6, 1.0)], "strip": Color(0.4, 0.7, 1.0),
 		"props": [_CONTAINER_SMALL, _CRATE_01, _EBOX], "beams": true,
+		"flank": [_BLD_INDUSTRIAL],
 		"ground": {"tile_size": 4.0, "grout_width": 0.02, "grime_amount": 0.5,
 			"grime_scale": 0.15, "wet_amount": 0.35, "puddle_scale": 0.22,
 			"base_roughness": 0.7, "metallic_amount": 0.25},
@@ -91,6 +105,7 @@ const CORRIDOR_STYLES := {
 		"wall": Color(0.42, 0.44, 0.45), "floor": Color(0.36, 0.38, 0.38),
 		"lights": [Color(0.85, 0.92, 1.0)], "strip": Color(0.7, 0.9, 1.0),
 		"props": [], "beams": false,
+		"flank": [_BLD_ADVANCED, _BLD_MED_02],
 		"ground": {"tile_size": 3.0, "grout_width": 0.008, "grime_amount": 0.06,
 			"base_roughness": 0.16, "metallic_amount": 0.15},
 	},
@@ -99,6 +114,7 @@ const CORRIDOR_STYLES := {
 		"lights": [Color(1.0, 0.35, 0.45), Color(1.0, 0.62, 0.25)],
 		"strip": Color(1.0, 0.4, 0.5),
 		"props": [_CRATE_06, _VENDING, _CRATE_01], "beams": true,
+		"flank": [_BLD_DOBEI, _BLD_SMALL_01],
 		"ground": {"tile_size": 1.4, "grout_width": 0.06, "grime_amount": 0.8,
 			"grime_scale": 0.36, "wet_amount": 0.9, "puddle_scale": 0.18,
 			"base_roughness": 0.6, "wet_roughness": 0.04},
@@ -429,6 +445,25 @@ func _build_corridor(root: Node3D, ga: Dictionary, gb: Dictionary,
 			root.add_child(beam)
 			beam.global_position = pa.lerp(pb, (float(i) + 0.5) / float(beams)) \
 				+ Vector3(0, 3.3, 0)
+	# Flanking buildings: the alley is a GAP between structures, not a
+	# trench. Visual only (the barriers already contain the corridor), set
+	# back so the walls — not the facades — define the walkable width.
+	var flank: Array = style.get("flank", [])
+	if not flank.is_empty():
+		var bays := maxi(1, int(length / 15.0))
+		for b in bays:
+			var bt := (float(b) + 0.5) / float(bays)
+			for fside in [-1.0, 1.0]:
+				var fscene = load(flank[(b + int(fside > 0.0)) % flank.size()])
+				if fscene == null:
+					continue
+				var bldg: Node3D = fscene.instantiate()
+				var bsc := SiteChunk.cm_correction(bldg)
+				bldg.scale = Vector3(bsc, bsc, bsc)
+				root.add_child(bldg)
+				bldg.global_position = pa.lerp(pb, bt) \
+					+ cross * fside * (width * 0.5 + 9.0)
+				bldg.rotation.y = atan2(-cross.x * fside, -cross.z * fside)
 	# Light pools — per-style colors, alternating through the list.
 	var colors: Array = style["lights"]
 	var pools := maxi(1, int(length / 12.0))

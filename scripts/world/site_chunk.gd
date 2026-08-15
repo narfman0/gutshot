@@ -572,6 +572,36 @@ func _room_wall(room: Node3D, pos: Vector3, size: Vector3, tone: Color) -> Stati
 	wall.position = pos
 	return wall
 
+## A shopfront BAY: two pillars carrying an awning, forming a recess you
+## can back into. Cheaper than a room and reads as a storefront — the
+## pillars are real cover, the awning is overhead detail.
+func add_bay(centre: Vector3, width: float, yaw: float,
+		tone := Color(0.20, 0.19, 0.20), glow := Color(1.0, 0.65, 0.3)) -> void:
+	var bay := Node3D.new()
+	_gen.add_child(bay)
+	bay.position = centre
+	bay.rotation.y = deg_to_rad(yaw)
+	for sx in [-1.0, 1.0]:
+		_room_wall(bay, Vector3(sx * width * 0.5, 0, 0), Vector3(0.5, 2.8, 1.0), tone)
+	var awning := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(width + 0.6, 0.25, 2.2)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = tone.darkened(0.25)
+	mat.roughness = 0.85
+	mesh.material = mat
+	awning.mesh = mesh
+	bay.add_child(awning)
+	awning.position = Vector3(0, 2.9, 0.2)
+	var lamp := OmniLight3D.new()
+	lamp.light_color = glow
+	lamp.light_energy = 1.2
+	lamp.omni_range = 5.5
+	lamp.omni_attenuation = 1.6
+	lamp.shadow_enabled = false
+	bay.add_child(lamp)
+	lamp.position = Vector3(0, 2.5, 0.4)
+
 ## Railing: visual only (no collider) — shots pass, and dropping off a deck
 ## stays a legal shortcut down. Default is the district's hazard-yellow
 ## glow; the tower's balustrade passes marble and barely any.

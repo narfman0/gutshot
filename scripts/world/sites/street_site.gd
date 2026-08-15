@@ -56,6 +56,11 @@ func buildings() -> Array:
 		[BLD_LARGE_01, 20.0, -40.0, 180.0],
 	]
 
+const ROOF_H := 4.5
+
+func floor_heights() -> Array:
+	return [0.0, ROOF_H]  # street level and the fire-escape roofline
+
 func gates() -> Array:
 	return [
 		{"side": "w", "center": 15.0},  # alley to the hideout
@@ -102,6 +107,11 @@ func enemy_spawns() -> Array:
 		{"skin": "gangster", "pos": Vector3(0.0, 0.1, -17.0), "pack": "west", "morale": true},
 		{"skin": "punk", "pos": Vector3(-14.0, 0.1, -10.0), "pack": "west", "morale": true,
 			"gear": "res://resources/gear/scrap_blade.tres"},
+		# The roof lookout — the crossroads belongs to whoever is up there.
+		{"skin": "gangster", "pos": Vector3(-6.0, 4.65, -21.0), "pack": "roof",
+			"morale": true, "aggro": 18.0, "xp": 15,
+			"gear": "res://resources/gear/enemy_rifle.tres",
+			"patrol": [Vector3(-14.0, ROOF_H, -21.5), Vector3(10.0, ROOF_H, -21.5)]},
 	]
 
 func build_extra_geometry() -> void:
@@ -132,6 +142,20 @@ func build_extra_geometry() -> void:
 		-90.0, 56, true)
 	add_practical_light(Vector3(-12.0, 2.3, -23.4), Color(0.3, 0.95, 1.0), 1.5, 6.0, true)
 	add_practical_light(Vector3(7.0, 2.5, -23.4), Color(1.0, 0.35, 0.8), 1.5, 6.0, true)
+	# The fire-escape roofline: a walkway over the north shopfronts, reached
+	# by stairs at the west end. Whoever holds it holds the crossroads.
+	add_walkable_box(Vector3(-2.0, ROOF_H - 0.15, -21.5), Vector3(30.0, 0.3, 7.0),
+		0.0, 0.0, Color(0.22, 0.21, 0.22), 0.03)
+	add_walkable_box(Vector3(-19.0, ROOF_H * 0.5 - 0.15, -16.0),
+		Vector3(3.5, 0.3, 10.06), 26.57, 0.0, Color(0.22, 0.21, 0.22), 0.03)
+	add_rail(Vector3(-2.0, ROOF_H + 0.4, -18.2), Vector3(30.0, 0.8, 0.08),
+		Color(0.8, 0.45, 0.2), 0.35)
+	add_practical_light(Vector3(-10.0, ROOF_H + 2.2, -21.0), Color(1.0, 0.6, 0.25), 1.3, 7.0)
+	add_practical_light(Vector3(8.0, ROOF_H + 2.2, -21.0), Color(1.0, 0.6, 0.25), 1.3, 7.0)
+	# Shopfront bays along the south frontage — cover you can back into.
+	add_bay(Vector3(-8.0, 0, 23.5), 4.0, 180.0, Color(0.19, 0.18, 0.20), Color(0.3, 0.9, 1.0))
+	add_bay(Vector3(4.0, 0, 23.5), 4.0, 180.0, Color(0.19, 0.18, 0.20), Color(1.0, 0.35, 0.8))
+	add_bay(Vector3(-23.5, 0, 2.0), 4.0, 90.0, Color(0.19, 0.18, 0.20), Color(1.0, 0.65, 0.25))
 	# Two shopfronts you can actually walk into — the chopshop's roller bay
 	# and the noodle bar. Both open onto the street, both are ambush boxes.
 	add_room(Vector3(-16.0, 0, -20.0), 9.0, 7.0, 0.0,

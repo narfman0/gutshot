@@ -237,7 +237,14 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       depot. Open-topped on purpose (a roof would blind the iso camera).
       World smoke asserts both halves: pathable through the door, and the
       back corner genuinely out of sight from the street
-- [ ] Buildings v2 remainder: alley depth between structures
+- [x] Buildings v2 finished: corridors are ALLEYS — each style flanks its
+      run with buildings from its own palette, so a connector reads as a gap
+      between structures instead of a trench; the street gained a
+      fire-escape ROOFLINE (walkway + stairs + rail, with a gang lookout who
+      owns the crossroads from up there, on a FloorSystem tier); and
+      shopfront BAYS (pillar pair + awning + lamp) give cover you can back
+      into along the street and market frontages
+- [ ] Buildings v3 ideas: alley depth between structures
       (corridors as real gaps rather than trenches), rooftop routes onto the
       facades, ground-floor shopfront bays as cover
 - [ ] Polish round v2 ideas: facade pieces on the tall walls, ground
