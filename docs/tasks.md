@@ -44,7 +44,10 @@
       gameplay zoom)
 - [x] Aim-at-cursor firing (LMB fires immediately toward the cursor, cone
       soft-acquire; gunfire alerts enemies in earshot)
-- [ ] Balance from human playtests (AI-vs-AI smoke wins too cleanly)
+- [ ] Balance from human playtests (AI-vs-AI smoke wins too cleanly). The
+      pacing_probe harness now reports the economy so tuning is not blind —
+      but it cannot tell you how anything FEELS. Two findings already
+      waiting on a human call, see below
 - [x] Proper gravity / falling feel, first pass: one Character.GRAVITY
       (24.0, ~2.5×), reduced air control + air drag on the player, landing
       thump SFX + dust above a fall-speed threshold
@@ -209,6 +212,17 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       tree now carries growth. Panel scrolls, shows locked tiers with their
       unlock level, prints WHY a node is blocked, and has a "spend it for
       me" escape hatch. Save v4
+- [ ] TUNING, flagged by pacing_probe (needs a human feel-check first):
+      (a) TIER GATES ARE OUT OF REACH. At the live curve a player is level 4
+      after 1 session, 11 after 10, 18 after 40, 24 after 80. Tier 4 opens at
+      22 and tier 5 at 35 — so two of the tree's five tiers are effectively
+      decoration. Either pull the gates in (1/4/8/14/22 tracks where players
+      actually are) or soften the curve (base 15 instead of 25 roughly halves
+      every milestone).
+      (b) JOBS PAY LESS THAN JUST CLEARING ANOTHER SITE — a fresh clear
+      averages 273 XP against a job's 190, so "explore two sites" (546/session)
+      beats "site + job" (463). If jobs are meant to be the reason to play,
+      they need to out-pay a clear: roughly 350-400 each
 - [ ] Progression follow-ups: difficulty scaling against crew level; more
       capstones that grant ABILITIES rather than stats (Demolitions
       Training is the only one today); per-node icons; a respec at the
