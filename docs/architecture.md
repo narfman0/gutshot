@@ -118,7 +118,8 @@ copies straight from the server — they arrive broken):
    the converter is capable — it is pack-specific.
 
 The cook tooling is not in this repo (we have the fetcher and the
-post-patcher only), so the real fix belongs wherever the cook runs:
+post-patcher only), so the real fix belongs wherever the cook runs — a full
+write-up for whoever does it is in **docs/asset-server-handover.md**:
 **copy every texture in the pack, and preserve per-material texture
 bindings.** Until then:
 
