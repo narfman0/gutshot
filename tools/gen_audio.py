@@ -356,6 +356,37 @@ def ambient_lobby():
     return seamless(out)
 
 
+def ambient_market():
+    """Little Japan: a crowd murmur bed, sizzling stall griddles, and a
+    shrine bell that rings twice in the loop. The one place in the district
+    that sounds ALIVE."""
+    n = int(10.0 * SR)
+    out = []
+    for i in range(n):
+        t = i / SR
+        hum = math.sin(2 * math.pi * 92 * t) * 0.05 \
+            + math.sin(2 * math.pi * 138 * t) * 0.03
+        out.append(hum)
+    # Crowd murmur: band-limited noise with slow swells.
+    murmur = lowpass([rng.uniform(-1, 1) for _ in range(n)], 0.05)
+    swell = [0.55 + 0.45 * math.sin(2 * math.pi * 0.09 * i / SR) for i in range(n)]
+    out = [o + m * s * 0.30 for o, m, s in zip(out, murmur, swell)]
+    # Griddle sizzle: bright noise, quieter, always on.
+    sizzle = lowpass([rng.uniform(-1, 1) for _ in range(n)], 0.6)
+    out = [o + z * 0.05 for o, z in zip(out, sizzle)]
+    # Shrine bell: a struck bowl with a long decay, twice per loop.
+    for start_s in (2.2, 7.0):
+        s0 = int(start_s * SR)
+        dur = min(int(3.0 * SR), n - s0)
+        for j in range(dur):
+            t = j / SR
+            env = math.exp(-1.6 * t)
+            out[s0 + j] += (math.sin(2 * math.pi * 523.25 * t) * 0.5
+                            + math.sin(2 * math.pi * 1046.5 * t) * 0.2
+                            + math.sin(2 * math.pi * 1567.9 * t) * 0.08) * env * 0.10
+    return seamless(out)
+
+
 def main():
     write_wav("sfx_shot_smg.wav", sfx_shot_smg())
     write_wav("sfx_shot_rifle.wav", sfx_shot_rifle())
@@ -380,6 +411,7 @@ def main():
     write_wav("ambient_industrial.wav", ambient_industrial())
     write_wav("ambient_machine.wav", ambient_machine())
     write_wav("ambient_lobby.wav", ambient_lobby())
+    write_wav("ambient_market.wav", ambient_market())
 
 
 if __name__ == "__main__":

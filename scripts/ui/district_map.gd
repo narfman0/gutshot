@@ -11,7 +11,7 @@ const SITES := [
 	{"id": "exchange", "site_name": "The Exchange", "blurb": "Shuttered market hall — bandits hold the galleries."},
 	{"id": "depot", "site_name": "Depot 9", "blurb": "Vantag's warehouse — bandit-run. Breach or take the catwalk."},
 	{"id": "fab", "site_name": "Fab Level", "blurb": "Assembly machine turf. Neutral — for now."},
-	{"id": "littlejapan", "site_name": "Little Japan", "blurb": "Market alleys. Clan territory. [SEALED]"},
+	{"id": "littlejapan", "site_name": "Little Japan", "blurb": "Market alleys, shrine, neon. The Clan polices it — and remembers."},
 	{"id": "tower", "site_name": "Vantag Tower — Lobby", "blurb": "Marble, columns, corporate security. The elevators are sealed."},
 ]
 

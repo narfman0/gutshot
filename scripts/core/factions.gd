@@ -2,13 +2,18 @@
 ##
 ## Base hostility is data; PROVOCATION is runtime state — the Assembly is
 ## neutral until someone damages a machine or overstays in their territory,
-## then that faction is marked hostile both ways for the rest of the site
-## visit (GameWorld resets provocations on level load).
+## then that faction is marked hostile both ways. Ordinary provocations are
+## forgiven when the crew rests at the hideout (GameWorld._rest_crew calls
+## reset_provocations). HONOR grudges are not: the clan never forgets.
 class_name Factions
 
-enum { CREW = 0, GANGS = 1, ASSEMBLY = 2, CORP = 3, HORDE = 4 }
+enum { CREW = 0, GANGS = 1, ASSEMBLY = 2, CORP = 3, HORDE = 4, CLAN = 5, CIVIL = 6 }
 
-const NAMES := {CREW: "Crew", GANGS: "Gangs", ASSEMBLY: "The Assembly", CORP: "Vantag Security", HORDE: "The Spawn"}
+const NAMES := {
+	CREW: "Crew", GANGS: "Gangs", ASSEMBLY: "The Assembly",
+	CORP: "Vantag Security", HORDE: "The Spawn", CLAN: "The Clan",
+	CIVIL: "Civilians",
+}
 
 ## Overhead-bar / UI tint per faction.
 const COLORS := {
@@ -17,22 +22,37 @@ const COLORS := {
 	ASSEMBLY: Color(1.0, 0.65, 0.2),
 	CORP: Color(0.55, 0.75, 1.0),
 	HORDE: Color(0.75, 0.3, 0.95),
+	CLAN: Color(0.95, 0.25, 0.45),
+	CIVIL: Color(0.85, 0.85, 0.80),
 }
 
-## Base wars: the gangs and the crew are at it from the first frame, and
-## corporate security exists to keep the gangs out. The crew and CORP start
-## neutral — the lobby is public until you start something.
-## The Spawn is at war with EVERYTHING that breathes or computes.
-const _BASE_HOSTILE := [[CREW, GANGS], [CORP, GANGS],
-	[HORDE, CREW], [HORDE, GANGS], [HORDE, ASSEMBLY], [HORDE, CORP]]
+## Base wars: the gangs and the crew are at it from the first frame;
+## corporate security exists to keep the gangs out; the clan polices its own
+## streets and the gangs keep trying them. The Spawn is at war with
+## EVERYTHING that breathes or computes — civilians included, which is
+## rather the point of civilians.
+const _BASE_HOSTILE := [
+	[CREW, GANGS], [CORP, GANGS], [CLAN, GANGS],
+	[HORDE, CREW], [HORDE, GANGS], [HORDE, ASSEMBLY], [HORDE, CORP],
+	[HORDE, CLAN], [HORDE, CIVIL],
+]
 
 static var _provoked: Dictionary = {}
+## Grudges that survive a rest — clan honor. Nothing in the game clears
+## these: making peace with the clan is a campaign problem, not a nap.
+static var _honor: Dictionary = {}
 
 static func _key(a: int, b: int) -> String:
 	return "%d|%d" % [mini(a, b), maxi(a, b)]
 
+## Forgive ordinary provocations (the hideout rest). Honor grudges stay.
 static func reset_provocations() -> void:
 	_provoked = {}
+
+## Full wipe — new run / harness setup.
+static func reset_all() -> void:
+	_provoked = {}
+	_honor = {}
 
 static func hostile(a: int, b: int) -> bool:
 	if a == b:
@@ -40,18 +60,32 @@ static func hostile(a: int, b: int) -> bool:
 	for pair in _BASE_HOSTILE:
 		if (pair[0] == a and pair[1] == b) or (pair[0] == b and pair[1] == a):
 			return true
-	return _provoked.has(_key(a, b))
+	var k := _key(a, b)
+	return _provoked.has(k) or _honor.has(k)
 
-## Mark two factions hostile for the rest of the site visit.
+## Mark two factions hostile until the crew next rests.
 static func provoke(a: int, b: int) -> void:
 	if a == b or hostile(a, b):
 		return
 	_provoked[_key(a, b)] = true
 
+## A slight the offended party will not forget (clan honor).
+static func provoke_lasting(a: int, b: int) -> void:
+	if a == b:
+		return
+	_honor[_key(a, b)] = true
+
+static func has_honor_grudge(a: int, b: int) -> bool:
+	return _honor.has(_key(a, b))
+
 ## Damage between non-hostile factions IS a provocation (machines don't
-## forgive friendly fire either).
+## forgive friendly fire either) — and the clan escalates it to HONOR: draw
+## blood on their street and they carry it for the rest of the run.
 static func note_attack(victim_faction: int, attacker_faction: int) -> void:
-	provoke(victim_faction, attacker_faction)
+	if victim_faction == CLAN or attacker_faction == CLAN:
+		provoke_lasting(victim_faction, attacker_faction)
+	else:
+		provoke(victim_faction, attacker_faction)
 
 ## Every living character hostile to `faction`, via the global "characters"
 ## group. Fine at squad scale; revisit if rosters grow past dozens.

@@ -38,6 +38,7 @@ const CONNECTORS := [
 	["exchange", 1, "depot", 0, "service"],
 	["depot", 1, "fab", 0, "tunnel"],
 	["skirmish", 2, "tower", 0, "plaza"],
+	["skirmish", 3, "littlejapan", 0, "market"],
 ]
 
 # Corridor dressing props — full res:// literals for fetch_assets.sh's scan.
@@ -79,6 +80,12 @@ const CORRIDOR_STYLES := {
 		"wall": Color(0.42, 0.44, 0.45), "floor": Color(0.36, 0.38, 0.38),
 		"lights": [Color(0.85, 0.92, 1.0)], "strip": Color(0.7, 0.9, 1.0),
 		"props": [], "beams": false,
+	},
+	"market": {  # street ↔ Little Japan: paper lanterns and knock-off neon
+		"wall": Color(0.17, 0.13, 0.15), "floor": Color(0.14, 0.12, 0.13),
+		"lights": [Color(1.0, 0.35, 0.45), Color(1.0, 0.62, 0.25)],
+		"strip": Color(1.0, 0.4, 0.5),
+		"props": [_CRATE_06, _VENDING, _CRATE_01], "beams": true,
 	},
 }
 
@@ -587,6 +594,8 @@ func _spawn_enemy(chunk: SiteChunk, entry: Dictionary, generation := 0) -> Chara
 	all_skins.merge(Skins.MACHINES)
 	all_skins.merge(Skins.CORP)
 	all_skins.merge(Skins.HORDE)
+	all_skins.merge(Skins.CLAN)
+	all_skins.merge(Skins.CIVILIANS)
 	var info: Dictionary = all_skins[entry["skin"]]
 	var c: Character = CharacterScene.instantiate()
 	c.team = entry.get("faction", Factions.GANGS)
@@ -597,8 +606,11 @@ func _spawn_enemy(chunk: SiteChunk, entry: Dictionary, generation := 0) -> Chara
 	_enemy_squad.add_child(c)
 	c.global_position = chunk.to_global(entry["pos"])
 	c.setup_skin(info["path"])
-	c.equip(smg)
-	c.equip(belt)  # dug-in crew get cover-called too
+	# Civilians carry nothing — no gun, no belt. An unarmed body can never
+	# fire, so the whole combat path simply never engages for them.
+	if not entry.get("unarmed", false):
+		c.equip(smg)
+		c.equip(belt)  # dug-in crew get cover-called too
 	var brain := CombatBrain.new()
 	brain.name = "CombatBrain"
 	c.add_child(brain)

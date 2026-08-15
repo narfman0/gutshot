@@ -17,6 +17,10 @@ enum FireMode { HITSCAN, PROJECTILE, THROWN, MELEE }
 @export var heals := false
 ## Heal variant that tops up SHIELDS instead of HP (the corp mender beam).
 @export var restores_shield := false
+## SILENT: no bang, so no hearing alert, no shot_fired, no turf/lobby heat.
+## Melee is silent by construction; this is for thrown steel (shurikens) —
+## the clan's whole identity is violence nobody else hears.
+@export var silent := false
 
 @export var damage := 10.0
 @export var fire_range := 20.0

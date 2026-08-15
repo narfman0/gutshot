@@ -35,6 +35,23 @@ const HORDE := {
 	"brute": {"path": "res://assets/meshes/POLYGON_BossZombies_SourceFiles_v3/SourceFiles/Chr/SK_Chr_ZombieBoss_Brute_01.gltf", "set": "masc"},
 }
 
+## The Clan — Little Japan's street authority. Cyber-ninja enforcers, an
+## old sensei who trained half of them, warriors in modern kit.
+const CLAN := {
+	"cyber_ninja": {"path": "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/Characters/SK_Character_CyborgNinja_01.gltf", "set": "masc"},
+	"ninja": {"path": "res://assets/meshes/POLYGON_Samurai_SourceFiles_v2/SourceFiles/Characters/SK_Character_Samurai_Ninja_01.gltf", "set": "masc"},
+	"sensei": {"path": "res://assets/meshes/POLYGON_Samurai_SourceFiles_v2/SourceFiles/Characters/SK_Character_Samurai_Sensei_01.gltf", "set": "masc"},
+	"clan_warrior": {"path": "res://assets/meshes/POLYGON_Samurai_SourceFiles_v2/SourceFiles/Characters/SK_Character_Samurai_Warrior_01.gltf", "set": "masc"},
+}
+
+## Civilians — the market's actual people. Unarmed, and they run.
+const CIVILIANS := {
+	"geisha": {"path": "res://assets/meshes/POLYGON_Samurai_SourceFiles_v2/SourceFiles/Characters/SK_Character_Samurai_Geisha_01.gltf", "set": "femn"},
+	"villager_f": {"path": "res://assets/meshes/POLYGON_Samurai_SourceFiles_v2/SourceFiles/Characters/SK_Character_Samurai_VillageFemale_01.gltf", "set": "femn"},
+	"villager_m": {"path": "res://assets/meshes/POLYGON_Samurai_SourceFiles_v2/SourceFiles/Characters/SK_Character_Samurai_VillageMale_01.gltf", "set": "masc"},
+	"villager_m2": {"path": "res://assets/meshes/POLYGON_Samurai_SourceFiles_v2/SourceFiles/Characters/SK_Character_Samurai_VillageMale_02.gltf", "set": "masc"},
+}
+
 ## The Assembly — semi-sentient machines (Scifi_Space rigged robots).
 const MACHINES := {
 	"war_robot": {"path": "res://assets/meshes/POLYGON_Scifi_Space_SourceFiles_v2/SourceFiles/Characters/SK_Chr_BR_War_Robot_01.gltf", "set": "masc"},

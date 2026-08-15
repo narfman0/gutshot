@@ -43,6 +43,15 @@ enum State { IDLE, SUSPICIOUS, FIGHT, FLEE }
 ## while the other half works the brain's normal cover/flank game; roles
 ## swap every few seconds. Feels like fighting a mirror of your own squad.
 @export var disciplined := false
+## Clan doctrine: when hurt, VANISH — smoke at the feet (a real LOS blocker),
+## then a fast dash to a flank. The thrower's last-known position goes stale
+## the instant the cloud lands, so the crew ends up shooting at where the
+## ninja WAS. Weaponizing the awareness system from the other side.
+@export var vanisher := false
+
+const VANISH_COOLDOWN := 9.0
+const VANISH_DASH := 9.0     # metres of repositioning under the cloud
+const VANISH_SPEED := 11.0
 
 const PURSUIT_LEASH := 10000.0  # effectively unleashed while the chase is on
 const OVERWATCH_SWAP_SECS := 6.0
@@ -87,7 +96,9 @@ func _ready() -> void:
 	# the muzzle flash reveals exactly who shot, so pin them as the threat.
 	body.shot_at.connect(func(attacker: Character):
 		brain.pin_threat(attacker)
-		_enter_fight())
+		_enter_fight()
+		if vanisher:
+			_try_vanish())
 	# Count the full pack once everyone has spawned.
 	if pack_id != "":
 		_count_pack.call_deferred()
@@ -190,6 +201,8 @@ func _tick_suspicious(delta: float) -> void:
 		_wander_pause = 0.5
 
 func _tick_fight(delta: float) -> void:
+	if vanisher and _tick_vanish(delta):
+		return
 	if disciplined and _suppress_role():
 		_tick_suppress(delta)
 	else:
@@ -212,6 +225,35 @@ func _tick_fight(delta: float) -> void:
 		state = State.SUSPICIOUS
 		_investigate = Vector3.INF
 		_linger = SUSPICIOUS_LINGER_SECS
+
+# ── Clan doctrine: vanish ────────────────────────────────────────────────────
+
+var _vanish_ready_ms := 0
+var _vanish_to := Vector3.INF
+
+## Drop the cloud and pick a spot around the threat's flank to reappear from.
+func _try_vanish() -> void:
+	if not body.is_alive() or Time.get_ticks_msec() < _vanish_ready_ms:
+		return
+	_vanish_ready_ms = Time.get_ticks_msec() + int(VANISH_COOLDOWN * 1000.0)
+	SmokeBomb.pop(get_tree().current_scene, body.global_position)
+	var away := body.global_position - brain.threat_pos()
+	away.y = 0.0
+	if away.length_squared() < 0.01:
+		away = Vector3.FORWARD
+	# Sidestep, not retreat: circle the threat rather than break contact.
+	var arc := deg_to_rad(75.0) * (1.0 if (body.get_instance_id() & 1) == 0 else -1.0)
+	_vanish_to = body.global_position \
+		+ away.normalized().rotated(Vector3.UP, arc) * VANISH_DASH
+
+## Returns true while the dash owns the body.
+func _tick_vanish(delta: float) -> bool:
+	if _vanish_to == Vector3.INF:
+		return false
+	if not brain.nav_to(_vanish_to, delta, VANISH_SPEED, brain.threat_pos()):
+		_vanish_to = Vector3.INF
+		return false
+	return true
 
 # ── Corp discipline: bounding overwatch + the mender ─────────────────────────
 

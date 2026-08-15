@@ -34,6 +34,7 @@ func gates() -> Array:
 		{"side": "w", "center": 15.0},  # alley to the hideout
 		{"side": "e", "center": 10.0},  # arcade toward the Exchange
 		{"side": "n", "center": -6.0},  # the plaza up to Vantag Tower
+		{"side": "w", "center": -12.0},  # the market gate into Little Japan
 	]
 
 func flood_lights() -> Array:

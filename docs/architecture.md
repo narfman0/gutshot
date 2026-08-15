@@ -358,6 +358,19 @@ world-space DOWN / REVIVING % label.
   `Environment.background_energy_multiplier` toward it in the same mood
   tween as fog and sun (street 1.0, tower 0.45 glazing, exchange 0.18
   gaping skylights, depot 0.12, fab 0.02, hideout 0.04).
+- **The Clan** (Factions.CLAN + SmokeBomb + EnemyController.vanisher):
+  silent weapons (`GearItem.silent` suppresses the hearing alert and
+  `shot_fired`, so shurikens and steel never raise the district), and the
+  vanish — `SmokeBomb.pop` spawns a COVER-layer sphere with a lifetime, so
+  smoke blinds every LOS test in the game (player and AI alike) with no
+  special cases, and is NOT in the nav source group, so bodies walk through
+  what they cannot see through. The thrower then dash-flanks, leaving the
+  stale LKP the awareness system already punishes. HONOR: `provoke_lasting`
+  writes to a `_honor` table that `reset_provocations` (the hideout rest)
+  does not clear — only `reset_all` does.
+- **Civilians** (Factions.CIVIL): hostile to nobody but the Spawn, spawned
+  with `unarmed: true` so the spawner skips the default loadout — an
+  unarmed body never engages the combat path at all.
 - **Turf law** (fab_site): `GameState.shot_fired` fires for every round
   leaving any gun (emitted from Shooter's shared `_alert_hearing` path).
   The fab counts shots inside the sanctum guard ring (14 m) per faction:

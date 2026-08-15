@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/game_world.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/characters/squad.gd" id="2"]
@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://scenes/sites/depot.tscn" id="8"]
 [ext_resource type="PackedScene" path="res://scenes/sites/fab.tscn" id="9"]
 [ext_resource type="PackedScene" path="res://scenes/sites/tower.tscn" id="10"]
+[ext_resource type="PackedScene" path="res://scenes/sites/littlejapan.tscn" id="11"]
 
 [node name="GameWorld" type="Node3D"]
 script = ExtResource("1")
@@ -36,6 +37,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 185, 0, 85)
 
 [node name="Tower" parent="Level" instance=ExtResource("10")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -70)
+
+[node name="Littlejapan" parent="Level" instance=ExtResource("11")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -75, 0, -35)
 
 [node name="Squad" type="Node3D" parent="."]
 script = ExtResource("2")

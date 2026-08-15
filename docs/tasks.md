@@ -164,6 +164,12 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       Rig, Scar Tissue, Dead Eye, Quick Hands, Combat Stims). HUD XP line
       under the site label with the TRAIN nudge; save v2 persists
       xp/level/perks/cleared (v1 saves load as fresh level 1)
+- [x] Little Japan — the market street: stall rows, shrine + torii approach,
+      shop-roof tier, hologram cherry tree, dense neon (麺/酒/刀/薬), a
+      crowd-murmur+shrine-bell ambient bed, and the district's first
+      CIVILIANS (Factions.CIVIL, unarmed, they scatter). Encounter is a
+      standing three-way: clan patrol + roof watch + sensei vs a gang
+      shakedown at the south stalls, with the crew free to pick a side
 - [ ] Progression follow-ups: objective XP when the jobs system lands,
       deeper per-member perk menus (role-exclusive picks), difficulty
       scaling against crew level
@@ -265,16 +271,12 @@ and onto systems that already exist (CombatBrain, awareness, packs).
       Asset candidates (verified): POLYGON_Scifi_Space skinned robots
       (SK_Chr_BR_War_Robot_01, SK_Chr_RobotFemale_01), drone props in
       CyberCity/SciFiWorlds for spotters, POLYGON_Mech for the heavies.
-- [ ] **The cyber-ninja clan** — Little Japan's street authority (see
-      docs/locations.md). Melee/mobility faction that weaponizes the
-      awareness system from the other side: they break YOUR line of sight —
-      smoke, dash gap-closers, rooftop routes — and strike from where your
-      LKP on them is stale. Shurikens as silent PROJECTILE weapons (no
-      hearing alert — the quiet counterpart to gunfire), katana melee (melee
-      attack path shared with the demon-horde prereq), and clan honor rules:
-      neutral-ish on their turf like the Assembly, but they never forget a
-      slight (persistent standing, not per-mission aggro). Asset candidates
-      (verified): SK_Chr_CyborgNinja_01 (SciFi_City), POLYGON_Samurai pack
-      (ninja/warrior/sensei bodies), CyberCity katana + shuriken meshes, and
-      the ANIMATION_Sword_Combat attack combos already fetched for
-      hit/death clips.
+- [x] **The cyber-ninja clan** — SHIPPED with Little Japan. Factions.CLAN:
+      neutral to the crew, base-hostile to the gangs. SILENT shurikens
+      (GearItem.silent — no hearing alert, no shot_fired, no turf heat),
+      ninjato/katana melee, rooftop watch on the FloorSystem tier, and
+      VANISH: hurt a ninja and they drop a SmokeBomb — a real COVER-layer
+      volume, so it blinds player and AI alike through the existing LOS
+      raycasts — then dash-flank out of it, leaving your last-known
+      position on them stale. HONOR: Factions.note_attack routes CLAN
+      through provoke_lasting, and the hideout rest never forgives it.

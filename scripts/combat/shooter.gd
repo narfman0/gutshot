@@ -129,7 +129,8 @@ func try_fire(target: Character) -> bool:
 	# Muzzle flash gives the shooter away — hit or miss, the target knows —
 	# and gunfire carries: anyone hostile in earshot wakes up.
 	target.notify_shot_at(character)
-	_alert_hearing()
+	if not g.silent:
+		_alert_hearing()
 	return true
 
 ## One melee swing at a target already inside reach (can_fire gated the rate
@@ -198,7 +199,8 @@ func fire_wild(at_point: Vector3) -> bool:
 		if hit["collider"] is BreachDoor:
 			(hit["collider"] as BreachDoor).receive_damage(g.damage)
 	Vfx.tracer(get_tree().current_scene, muzzle, toward)
-	_alert_hearing()
+	if not g.silent:
+		_alert_hearing()
 	return true
 
 func _alert_hearing() -> void:
