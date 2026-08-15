@@ -46,6 +46,15 @@ func wall_color() -> Color:
 func ambient() -> String:
 	return "ambient_industrial"  # thrum, ducts, the conveyor's slow thud
 
+func ground_params() -> Dictionary:
+	# Poured warehouse concrete: enormous pours, hairline cracks, oil soaked
+	# into the joints, dust over everything. Dry and dead flat.
+	return {"tile_size": 12.0, "grout_width": 0.008, "tile_variation": 0.05,
+		"grime_amount": 0.8, "grime_scale": 0.07, "crack_amount": 0.5,
+		"base_color": Color(0.28, 0.28, 0.26),
+		"wet_amount": 0.12, "puddle_scale": 0.14,
+		"base_roughness": 0.86, "metallic_amount": 0.0}
+
 func gates() -> Array:
 	return [
 		{"side": "w", "center": 0.0},    # arcade from the Exchange

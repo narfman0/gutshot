@@ -68,6 +68,13 @@ func ambient() -> String:
 func wall_color() -> Color:
 	return Color(0.26, 0.28, 0.31)  # clean-room panelling — the ONE kept site
 
+func ground_params() -> Dictionary:
+	# Clean-room epoxy: seamless, spotless, faintly glossy. The Assembly
+	# maintains its floor, and it shows — the anti-district surface.
+	return {"tile_size": 9.0, "grout_width": 0.004, "tile_variation": 0.02,
+		"grime_amount": 0.08, "grime_scale": 0.25, "crack_amount": 0.0,
+		"wet_amount": 0.0, "base_roughness": 0.24, "metallic_amount": 0.1}
+
 func gates() -> Array:
 	return [{"side": "n", "center": -14.0}]  # freight tunnel from Depot 9
 

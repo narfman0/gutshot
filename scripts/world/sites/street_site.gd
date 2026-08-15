@@ -29,6 +29,15 @@ func fog_density() -> float:
 func wall_color() -> Color:
 	return Color(0.17, 0.17, 0.20)  # rain-stained ferrocrete
 
+func ground_params() -> Dictionary:
+	# Wet asphalt slabs under the neon: big panels, oily standing water in
+	# the low spots, grime in every joint. The most reflective street floor.
+	return {"tile_size": 7.0, "grout_width": 0.012, "tile_variation": 0.10,
+		"grime_amount": 0.65, "grime_scale": 0.11, "crack_amount": 0.25,
+		"base_color": Color(0.23, 0.24, 0.27),
+		"wet_amount": 0.85, "puddle_scale": 0.10,
+		"base_roughness": 0.62, "wet_roughness": 0.045, "metallic_amount": 0.05}
+
 func gates() -> Array:
 	return [
 		{"side": "w", "center": 15.0},  # alley to the hideout

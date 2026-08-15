@@ -92,14 +92,15 @@ func gates() -> Array:
 func wall_color() -> Color:
 	return Color(0.20, 0.20, 0.22)
 
-## Pavement seams + stains on the ground plane (off for special floors).
-func ground_detail() -> bool:
-	return true
-
-## Ground surface roughness — 0.4 reads as worn concrete; the tower lobby
-## drops it for the polished-marble sheen.
-func ground_roughness() -> float:
-	return 0.4
+## Ground material knobs (assets/shaders/ground.gdshader). Sites override
+## this to own their floor: slab size, grime, cracks, standing water,
+## polish. Anything omitted falls back to the shader's default; base_color
+## defaults to ground_color() so old sites keep their tone.
+##   tile_size grout_width tile_variation grime_amount grime_scale
+##   crack_amount wet_amount puddle_scale base_roughness wet_roughness
+##   metallic_amount grout_color base_color
+func ground_params() -> Dictionary:
+	return {}
 
 ## How much of the hive-city sky this site can see: 1.0 outdoors, a sliver
 ## for interiors with holes in the roof, ~0 for buried rooms. GameWorld
@@ -175,60 +176,10 @@ func _setup_ground() -> void:
 	var mi := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(arena_half() * 2.0, arena_half() * 2.0)
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = ground_color()
-	mat.roughness = ground_roughness()
-	mat.metallic = 0.15
-	plane.material = mat
+	plane.material = make_ground_material(ground_params(), ground_color())
 	mi.mesh = plane
 	ground.add_child(mi)
 	_gen.add_child(ground)
-	if ground_detail():
-		_ground_seams()
-		_ground_stains()
-
-## Pavement seam grid — thin darker strips break the single-color plane.
-func _ground_seams() -> void:
-	var half := arena_half()
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = ground_color().darkened(0.4)
-	mat.roughness = 0.7
-	var step := 6.0
-	var i := 1
-	while i * step < half * 2.0 - 1.0:
-		var offset := -half + i * step
-		for axis in 2:
-			var mi := MeshInstance3D.new()
-			var mesh := BoxMesh.new()
-			mesh.size = Vector3(half * 2.0, 0.02, 0.12) if axis == 0 \
-				else Vector3(0.12, 0.02, half * 2.0)
-			mesh.material = mat
-			mi.mesh = mesh
-			_gen.add_child(mi)
-			mi.position = Vector3(0, 0.012, offset) if axis == 0 \
-				else Vector3(offset, 0.012, 0)
-		i += 1
-
-## Grime patches — deterministic per site, so the editor preview is stable.
-func _ground_stains() -> void:
-	var half := arena_half()
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = ground_color().darkened(0.22)
-	mat.roughness = 0.9
-	var count := int(half / 3.0)
-	for i in count:
-		var h := hash(site_id() + str(i))
-		var x := float(h % 1000) / 1000.0 * (half * 2.0 - 6.0) - half + 3.0
-		var z := float((h / 1000) % 1000) / 1000.0 * (half * 2.0 - 6.0) - half + 3.0
-		var size := 1.2 + float(h % 7) * 0.25
-		var mi := MeshInstance3D.new()
-		var plane := PlaneMesh.new()
-		plane.size = Vector2(size, size * (0.6 + float(h % 5) * 0.15))
-		plane.material = mat
-		mi.mesh = plane
-		_gen.add_child(mi)
-		mi.position = Vector3(x, 0.008, z)
-		mi.rotation.y = deg_to_rad(float(h % 360))
 
 func _setup_cover() -> void:
 	for entry in cover_layout():
@@ -337,6 +288,23 @@ func _bounds_wall(side: String, from: float, to: float) -> void:
 	mi.position = Vector3(0, face_h * 0.5 - WALL_H * 0.5, 0)
 
 # ── Site-geometry helpers (chunk-local positions) ────────────────────────────
+
+## Build a ground material from `params` (see ground_params). Shared by
+## sites AND by GameWorld's connector corridors, so a corridor floor can be
+## as specific as a site floor.
+static func make_ground_material(params: Dictionary,
+		fallback_color := Color(0.2, 0.2, 0.22)) -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://assets/shaders/ground.gdshader")
+	mat.set_shader_parameter("base_color", params.get("base_color", fallback_color))
+	mat.set_shader_parameter("grout_color",
+		params.get("grout_color", (params.get("base_color", fallback_color) as Color).darkened(0.55)))
+	for key in ["tile_size", "grout_width", "tile_variation", "grime_amount",
+			"grime_scale", "crack_amount", "wet_amount", "puddle_scale",
+			"base_roughness", "wet_roughness", "metallic_amount"]:
+		if params.has(key):
+			mat.set_shader_parameter(key, params[key])
+	return mat
 
 ## Small shadowless practical light — fixtures, signs, machine glow.
 ## `flicker`: dying-neon jitter (registered with the chunk's flicker tick).

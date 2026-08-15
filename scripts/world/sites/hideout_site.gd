@@ -37,6 +37,14 @@ func sky_energy() -> float:
 func ambient() -> String:
 	return "ambient_hideout"  # the quietest air in the district
 
+func ground_params() -> Dictionary:
+	# Scavenged deck plating: small panels, heavy wear, a metal sheen and no
+	# water — this floor is INSIDE, and somebody sweeps it.
+	return {"tile_size": 2.2, "grout_width": 0.035, "tile_variation": 0.13,
+		"grime_amount": 0.5, "grime_scale": 0.3, "crack_amount": 0.0,
+		"base_color": Color(0.22, 0.19, 0.16),
+		"wet_amount": 0.0, "base_roughness": 0.55, "metallic_amount": 0.35}
+
 func gates() -> Array:
 	return [{"side": "e", "center": 0.0}]  # the alley out toward the street
 

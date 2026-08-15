@@ -59,33 +59,49 @@ const CORRIDOR_STYLES := {
 		"wall": Color(0.15, 0.14, 0.13), "floor": Color(0.12, 0.12, 0.13),
 		"lights": [Color(1.0, 0.6, 0.25)], "strip": Color(1.0, 0.7, 0.3),
 		"props": [_CRATE_06, _CRATE_01, _VENDING, _CRATE_04], "beams": false,
+		"ground": {"tile_size": 2.6, "grout_width": 0.04, "grime_amount": 0.85,
+			"grime_scale": 0.3, "crack_amount": 0.5, "wet_amount": 0.7,
+			"puddle_scale": 0.2, "base_roughness": 0.7},
 	},
 	"arcade": {  # street ↔ exchange: dead shopfronts, neon still buzzing
 		"wall": Color(0.15, 0.16, 0.19), "floor": Color(0.16, 0.16, 0.18),
 		"lights": [Color(0.2, 0.8, 1.0), Color(0.95, 0.3, 0.75)],
 		"strip": Color(0.2, 0.8, 1.0),
 		"props": [_VENDING, _CRATE_01, _VENDING, _SHELF], "beams": true,
+		"ground": {"tile_size": 1.8, "grout_width": 0.05, "grime_amount": 0.6,
+			"grime_scale": 0.4, "wet_amount": 0.5, "base_roughness": 0.5,
+			"metallic_amount": 0.1},
 	},
 	"service": {  # exchange ↔ depot: maintenance passage behind the hall
 		"wall": Color(0.18, 0.18, 0.17), "floor": Color(0.15, 0.15, 0.14),
 		"lights": [Color(1.0, 0.65, 0.25)], "strip": Color(1.0, 0.65, 0.3),
 		"props": [_EBOX, _CRATE_04, _EBOX, _SHELF], "beams": false,
+		"ground": {"tile_size": 10.0, "grout_width": 0.01, "grime_amount": 0.8,
+			"grime_scale": 0.09, "crack_amount": 0.45, "base_roughness": 0.85},
 	},
 	"tunnel": {  # depot ↔ fab: the freight tunnel, cold and echoing
 		"wall": Color(0.14, 0.15, 0.17), "floor": Color(0.13, 0.14, 0.16),
 		"lights": [Color(0.35, 0.6, 1.0)], "strip": Color(0.4, 0.7, 1.0),
 		"props": [_CONTAINER_SMALL, _CRATE_01, _EBOX], "beams": true,
+		"ground": {"tile_size": 4.0, "grout_width": 0.02, "grime_amount": 0.5,
+			"grime_scale": 0.15, "wet_amount": 0.35, "puddle_scale": 0.22,
+			"base_roughness": 0.7, "metallic_amount": 0.25},
 	},
 	"plaza": {  # street ↔ tower: the corporate approach — swept, lit, watched
 		"wall": Color(0.42, 0.44, 0.45), "floor": Color(0.36, 0.38, 0.38),
 		"lights": [Color(0.85, 0.92, 1.0)], "strip": Color(0.7, 0.9, 1.0),
 		"props": [], "beams": false,
+		"ground": {"tile_size": 3.0, "grout_width": 0.008, "grime_amount": 0.06,
+			"base_roughness": 0.16, "metallic_amount": 0.15},
 	},
 	"market": {  # street ↔ Little Japan: paper lanterns and knock-off neon
 		"wall": Color(0.17, 0.13, 0.15), "floor": Color(0.14, 0.12, 0.13),
 		"lights": [Color(1.0, 0.35, 0.45), Color(1.0, 0.62, 0.25)],
 		"strip": Color(1.0, 0.4, 0.5),
 		"props": [_CRATE_06, _VENDING, _CRATE_01], "beams": true,
+		"ground": {"tile_size": 1.4, "grout_width": 0.06, "grime_amount": 0.8,
+			"grime_scale": 0.36, "wet_amount": 0.9, "puddle_scale": 0.18,
+			"base_roughness": 0.6, "wet_roughness": 0.04},
 	},
 }
 
@@ -253,6 +269,13 @@ func _setup_environment() -> void:
 	env.glow_bloom = 0.1
 	env.ssao_enabled = true
 	env.ssao_intensity = 1.6
+	# Screen-space reflections: the whole point of wet ground. Neon, muzzle
+	# flashes and sign glow land in the puddles the ground shader carves.
+	env.ssr_enabled = true
+	env.ssr_max_steps = 48
+	env.ssr_fade_in = 0.2
+	env.ssr_fade_out = 8.0
+	env.ssr_depth_tolerance = 0.3
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.tonemap_exposure = 1.05
 	# Fog is always on; density lerps toward the active site's air.
@@ -339,10 +362,9 @@ func _build_corridor(root: Node3D, ga: Dictionary, gb: Dictionary,
 	var mi := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
 	mesh.size = _axis_size(axis, length, 0.1, width)
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = style["floor"]
-	mat.roughness = 0.6
-	mesh.material = mat
+	var floor_params: Dictionary = (style.get("ground", {}) as Dictionary).duplicate()
+	floor_params["base_color"] = style["floor"]
+	mesh.material = SiteChunk.make_ground_material(floor_params, style["floor"])
 	mi.mesh = mesh
 	mi.position.y = -0.04
 	floor_body.add_child(mi)

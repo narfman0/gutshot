@@ -82,6 +82,15 @@ func ambient() -> String:
 func floor_heights() -> Array:
 	return [0.0, ROOF_H]  # street level and the shop roofs
 
+func ground_params() -> Dictionary:
+	# Small wet market cobbles: tight slabs, water everywhere from the stalls
+	# and the steam, every joint black with grime. The neon lives in it.
+	return {"tile_size": 1.5, "grout_width": 0.055, "tile_variation": 0.18,
+		"grime_amount": 0.75, "grime_scale": 0.35, "crack_amount": 0.3,
+		"base_color": Color(0.24, 0.20, 0.22),
+		"wet_amount": 0.95, "puddle_scale": 0.16,
+		"base_roughness": 0.6, "wet_roughness": 0.04, "metallic_amount": 0.05}
+
 func gates() -> Array:
 	return [{"side": "e", "center": 12.0}]  # the arcade back to the street
 

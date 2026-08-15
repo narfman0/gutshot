@@ -81,6 +81,14 @@ func wall_color() -> Color:
 func floor_heights() -> Array:
 	return [0.0, MEZZ_H, EXEC_H]
 
+func ground_params() -> Dictionary:
+	# Polished granite: huge book-matched slabs, tight dark joints, mirror
+	# finish. No grime — money keeps the district outside.
+	return {"tile_size": 5.0, "grout_width": 0.006, "tile_variation": 0.05,
+		"grime_amount": 0.05, "grime_scale": 0.2, "crack_amount": 0.0,
+		"wet_amount": 0.0, "base_roughness": 0.09, "metallic_amount": 0.22,
+		"grout_color": Color(0.05, 0.05, 0.06)}
+
 func gates() -> Array:
 	return [{"side": "s", "center": -6.0}]  # the plaza from the street
 

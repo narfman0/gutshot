@@ -210,6 +210,15 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       with the mood tween — the OTS camera made the black void overhead
       impossible to ignore. Asset-server panoramas were evaluated and
       rejected (sky_gloom_01 is a flat daylight gradient)
+- [x] Ground materials: one procedural shader for every walkable surface
+      (slabs + grout, fbm grime, ridged cracks, puddle mask driving
+      roughness/specular), per-site ground_params() so each floor has its
+      own identity, corridors included; SSR on so neon reflects in the wet.
+      Replaced the flat plane + seam boxes + decal blobs that made every
+      site read the same
+- [ ] Ground v2 ideas: normal-map perturbation on grout/puddle edges,
+      painted floor markings (depot hazard stripes, tower inlay), footprint
+      or blood decals that accumulate during a fight
 - [ ] Polish round v2 ideas: facade pieces on the tall walls, ground
       texture decals (real textures over seam boxes), animated holograms,
       district-edge fog wall, rain

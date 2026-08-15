@@ -54,6 +54,15 @@ func floor_heights() -> Array:
 func ambient() -> String:
 	return "ambient_hall"  # wind through the boarded skylights
 
+func ground_params() -> Dictionary:
+	# Market-hall flagstone: mid-size worn slabs, cracked and filthy after
+	# years of freight, damp where the roof gapes.
+	return {"tile_size": 3.4, "grout_width": 0.03, "tile_variation": 0.16,
+		"grime_amount": 0.72, "grime_scale": 0.16, "crack_amount": 0.65,
+		"base_color": Color(0.30, 0.27, 0.24),
+		"wet_amount": 0.25, "puddle_scale": 0.13,
+		"base_roughness": 0.78, "metallic_amount": 0.0}
+
 func gates() -> Array:
 	return [
 		{"side": "w", "center": 25.0},  # arcade from the street (south of the ramp)

@@ -349,6 +349,21 @@ world-space DOWN / REVIVING % label.
   line. Gunfire anywhere inside still provokes on the second shot. A track
   that evaporates without a lost fix (range + forgiven grudge) now stands
   controllers down instead of leaving them in FIGHT aiming at nothing.
+- **Ground** (`assets/shaders/ground.gdshader` + `SiteChunk.ground_params`):
+  every walkable surface — site floors AND connector corridors — runs one
+  procedural spatial shader keyed off WORLD position (so tiling never
+  stretches and is consistent across sites of different sizes). Four layers:
+  slab grid with grout and per-slab tone variation, fbm grime, ridged-noise
+  cracks, and a puddle mask that drops ROUGHNESS and lifts SPECULAR. Sites
+  own their floor by overriding `ground_params()` (tile size, grime, cracks,
+  wetness, polish, metallic) — wet asphalt on the street, deck plating in
+  the hideout, poured concrete at the depot, cracked flagstone in the
+  exchange, clean-room epoxy at the fab, polished granite in the tower, wet
+  cobbles in Little Japan. Corridor styles carry a `ground` dict for the
+  same treatment. This replaced the old flat-color plane plus box-geometry
+  seams and decal blobs (which were identical everywhere and cost draw
+  calls). SSR is enabled in the Environment so neon actually lands in the
+  puddles the shader carves.
 - **Sky** (`GameWorld._make_sky`): a code-driven `ProceduralSkyMaterial` —
   no panorama asset — giving the hive city a night gradient: deep violet
   zenith, a tight band of light pollution at the horizon (sodium bleeding
