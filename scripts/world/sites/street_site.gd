@@ -132,6 +132,15 @@ func build_extra_geometry() -> void:
 		-90.0, 56, true)
 	add_practical_light(Vector3(-12.0, 2.3, -23.4), Color(0.3, 0.95, 1.0), 1.5, 6.0, true)
 	add_practical_light(Vector3(7.0, 2.5, -23.4), Color(1.0, 0.35, 0.8), 1.5, 6.0, true)
+	# Two shopfronts you can actually walk into — the chopshop's roller bay
+	# and the noodle bar. Both open onto the street, both are ambush boxes.
+	add_room(Vector3(-16.0, 0, -20.0), 9.0, 7.0, 0.0,
+		Color(0.19, 0.17, 0.16), Color(1.0, 0.55, 0.2), "CHOP SHOP")
+	add_decor(PROP_CRATE_04, Vector3(-19.0, 0, -22.0), 20.0)
+	add_decor(PROP_TRASH_BIN, Vector3(-13.0, 0, -22.5), 60.0)
+	add_room(Vector3(14.0, 0, -20.0), 8.0, 6.5, 0.0,
+		Color(0.18, 0.16, 0.18), Color(0.3, 0.9, 1.0), "麺")
+	add_decor(PROP_VENDING, Vector3(11.5, 0, -22.0), 0.0)
 	# Idle life: steam off the grates.
 	add_steam(Vector3(-6.0, 0, -2.0))
 	add_steam(Vector3(14.0, 0, -14.0))

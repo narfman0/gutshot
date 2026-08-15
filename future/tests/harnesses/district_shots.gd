@@ -57,6 +57,9 @@ func _ready() -> void:
 	await _shot("district_15_littlejapan.png", 60)
 	_teleport(_chunk("Littlejapan").to_global(Vector3(0, 0.1, -12)))
 	await _shot("district_16_shrine.png", 60)
+	# Inside the chop shop — a room with one door.
+	_teleport(_chunk("Street").to_global(Vector3(-16.0, 0.1, -19.0)))
+	await _shot("district_17_interior.png", 40)
 	# The other camera: over-the-shoulder with the reticle.
 	_teleport((_chunk("Street") as Node3D).global_position + Vector3(0, 0.1, 8))
 	_world.set_camera_mode(true)

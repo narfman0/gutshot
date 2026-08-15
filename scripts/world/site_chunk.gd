@@ -486,6 +486,92 @@ func add_walkable_box(pos: Vector3, size: Vector3, tilt_x_deg := 0.0, tilt_z_deg
 	body.rotation.x = deg_to_rad(tilt_x_deg)
 	body.rotation.z = deg_to_rad(tilt_z_deg)
 
+## An enterable room: three solid walls plus a front wall with a DOOR GAP,
+## standing on the site's own floor just inside the perimeter, so the facade
+## behind it reads as the building's upper storeys. Open-topped on purpose —
+## a roof would blind the iso camera, and the walls already sell the
+## interior. Walls are COVER + navmesh sources, so the doorway is the only
+## way in for bullets, sight lines, and pathfinding alike: a real room to be
+## ambushed in.
+##
+## `yaw` points the DOORWAY. Returns the room's world-space centre so
+## callers can furnish it.
+func add_room(centre: Vector3, width: float, depth: float, yaw: float,
+		tone := Color(0.20, 0.19, 0.20), glow := Color(1.0, 0.7, 0.3),
+		sign_text := "", door_width := 3.2) -> Vector3:
+	var room := Node3D.new()
+	_gen.add_child(room)
+	room.position = centre
+	room.rotation.y = deg_to_rad(yaw)
+	var h := 3.0
+	var t := 0.4
+	# Back and sides (door faces +z in room space).
+	_room_wall(room, Vector3(0, 0, -depth * 0.5), Vector3(width, h, t), tone)
+	_room_wall(room, Vector3(-width * 0.5, 0, 0), Vector3(t, h, depth), tone)
+	_room_wall(room, Vector3(width * 0.5, 0, 0), Vector3(t, h, depth), tone)
+	# Front wall, split around the doorway.
+	var side := (width - door_width) * 0.5
+	if side > 0.1:
+		for sx in [-1.0, 1.0]:
+			_room_wall(room, Vector3(sx * (door_width + side) * 0.5, 0, depth * 0.5),
+				Vector3(side, h, t), tone)
+	# Lintel over the opening — the doorway reads as a doorway.
+	var lintel := _room_wall(room, Vector3(0, 0, depth * 0.5),
+		Vector3(door_width, 0.5, t), tone)
+	lintel.position.y = h - 0.5
+	# Interior light, and a sign over the door if the shop has a name.
+	var lamp := OmniLight3D.new()
+	lamp.light_color = glow
+	lamp.light_energy = 1.7
+	lamp.omni_range = maxf(width, depth) * 0.9
+	lamp.omni_attenuation = 1.4
+	lamp.shadow_enabled = false
+	room.add_child(lamp)
+	lamp.position = Vector3(0, 2.4, 0)
+	if sign_text != "":
+		var sign := Label3D.new()
+		sign.text = sign_text
+		sign.font_size = 52
+		sign.pixel_size = 0.012
+		sign.outline_size = 9
+		sign.modulate = glow.lightened(0.25)
+		room.add_child(sign)
+		sign.position = Vector3(0, h + 0.5, depth * 0.5 + 0.25)
+		var spill := OmniLight3D.new()
+		spill.light_color = glow
+		spill.light_energy = 1.4
+		spill.omni_range = 6.0
+		spill.omni_attenuation = 1.6
+		spill.shadow_enabled = false
+		room.add_child(spill)
+		spill.position = Vector3(0, h + 0.2, depth * 0.5 + 1.0)
+	return centre
+
+func _room_wall(room: Node3D, pos: Vector3, size: Vector3, tone: Color) -> StaticBody3D:
+	var wall := StaticBody3D.new()
+	wall.collision_layer = Layers.COVER
+	wall.add_to_group("cover")
+	wall.add_to_group(NavRuntime.SOURCE_GROUP)
+	var col := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = size
+	col.shape = box
+	col.position.y = size.y * 0.5
+	wall.add_child(col)
+	var mi := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = tone
+	mat.roughness = 0.8
+	mesh.material = mat
+	mi.mesh = mesh
+	mi.position.y = size.y * 0.5
+	wall.add_child(mi)
+	room.add_child(wall)
+	wall.position = pos
+	return wall
+
 ## Railing: visual only (no collider) — shots pass, and dropping off a deck
 ## stays a legal shortcut down. Default is the district's hazard-yellow
 ## glow; the tower's balustrade passes marble and barely any.

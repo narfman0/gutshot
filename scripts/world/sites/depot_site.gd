@@ -147,6 +147,11 @@ func build_extra_geometry() -> void:
 	add_neon_sign("LOADING", Vector3(-19.0, 2.3, -25.2), Color(1.0, 0.7, 0.2),
 		0.0, 48, true)
 	add_practical_light(Vector3(-19.0, 2.3, -24.2), Color(1.0, 0.7, 0.2), 1.3, 6.0, true)
+	# The foreman's office — lit, papered with manifests, and the only room
+	# in the yard with a door.
+	add_room(Vector3(18.0, 0, 16.0), 8.0, 6.0, 180.0,
+		Color(0.24, 0.23, 0.20), Color(1.0, 0.75, 0.35), "OFFICE")
+	add_decor(PROP_WORK_BENCH, Vector3(20.0, 0, 17.5), 180.0)
 	add_steam(Vector3(-4.0, 0, -7.2))
 	add_steam(Vector3(18.0, 0, 14.0))
 

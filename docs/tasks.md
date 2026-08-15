@@ -228,7 +228,16 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       corporate towers standing back from Vantag, and two backs-of-buildings
       squeezing the hideout. Facades sit outside the wall line, clear of
       every gate mouth, so playable space and corridors are untouched
-- [ ] Buildings v2: interiors you can enter, alley depth between structures
+- [x] Enterable interiors: SiteChunk.add_room builds walled rooms with a
+      single DOORWAY on the site's own floor — three solid walls, a split
+      front wall, a lintel, interior lamp and a shop sign; walls are COVER +
+      navmesh sources, so the door is the only way in for bullets, sight
+      lines AND pathfinding. Shipped: chop shop + noodle bar on the street,
+      swordsmith + tea house in Little Japan, the foreman's office at the
+      depot. Open-topped on purpose (a roof would blind the iso camera).
+      World smoke asserts both halves: pathable through the door, and the
+      back corner genuinely out of sight from the street
+- [ ] Buildings v2 remainder: alley depth between structures
       (corridors as real gaps rather than trenches), rooftop routes onto the
       facades, ground-floor shopfront bays as cover
 - [ ] Polish round v2 ideas: facade pieces on the tall walls, ground

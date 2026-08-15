@@ -73,6 +73,24 @@ func _ready() -> void:
 	_check(t_path.size() > 1 and Vector2(t_end.x - t_to.x, t_end.z - t_to.z).length() < 6.0,
 		"Street → Tower is walkable (path %d pts)" % t_path.size())
 
+	# 2c. Interiors are REAL rooms: pathable through the doorway, and walled
+	#     against sight from outside (you must go in, or shoot through the
+	#     door you can see).
+	var street_chunk := _chunk("Street")
+	var shop_inside := street_chunk.to_global(Vector3(-16.0, 0.1, -20.0))
+	var shop_path := NavigationServer3D.map_get_path(
+		map, street_chunk.to_global(Vector3(-16.0, 0.1, -8.0)), shop_inside, true)
+	var shop_end := shop_path[shop_path.size() - 1] if shop_path.size() > 0 else Vector3.INF
+	_check(shop_path.size() > 1
+			and Vector2(shop_end.x - shop_inside.x, shop_end.z - shop_inside.z).length() < 2.0,
+		"the chop shop can be walked into (path %d pts)" % shop_path.size())
+	var eye_out := street_chunk.to_global(Vector3(-16.0, 1.4, -8.0))
+	var eye_in := street_chunk.to_global(Vector3(-19.0, 1.4, -22.5))
+	var space := _world.get_world_3d().direct_space_state
+	var blocked: Dictionary = space.intersect_ray(
+		PhysicsRayQueryParameters3D.create(eye_out, eye_in, Layers.LOS_MASK))
+	_check(not blocked.is_empty(), "its back corner is out of sight from the street")
+
 	# 3. Site tracking follows the active character across the district.
 	var street := _chunk("Street")
 	leader.global_position = street.to_global(Vector3(0, 0.1, 18))

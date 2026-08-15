@@ -360,6 +360,13 @@ world-space DOWN / REVIVING % label.
   untextured white; since Synty packs are single-atlas and the meshes carry
   correct UVs, the patcher reattaches the pack's `Textures/*_A.png` to every
   material. That fixed every SciFi_City asset, not just the buildings.
+- **Interiors** (`SiteChunk.add_room`): enterable shopfront rooms standing
+  on the site's own floor just inside the wall line, so the facade behind
+  reads as their upper storeys. Three solid walls plus a front wall split
+  around a doorway, with a lintel; walls carry COVER + the navmesh source
+  group, so the doorway is the single opening for shots, sight and paths
+  alike — a room you can be ambushed in. Deliberately roofless: a ceiling
+  would blind the iso camera, and the walls already sell the interior.
 - **Ground** (`assets/shaders/ground.gdshader` + `SiteChunk.ground_params`):
   every walkable surface — site floors AND connector corridors — runs one
   procedural spatial shader keyed off WORLD position (so tiling never
