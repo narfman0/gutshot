@@ -355,11 +355,17 @@ world-space DOWN / REVIVING % label.
   the COVER layer so they block sight and shots and the navmesh flows
   around them. Architecture is per-region and deliberate — the skyline is
   how you know which part of the district you are standing in.
-  NOTE: `tools/patch_gltf_materials.py` gained a rule for this — some
-  cooked packs export materials with NO images array at all and render
-  untextured white; since Synty packs are single-atlas and the meshes carry
-  correct UVs, the patcher reattaches the pack's `Textures/*_A.png` to every
-  material. That fixed every SciFi_City asset, not just the buildings.
+  NOTE: `tools/patch_gltf_materials.py` gained a rule for this — some cooked
+  packs export materials with NO images array at all and render untextured
+  white; for meshes whose UVs sit inside [0,1] the patcher reattaches the
+  pack's `Textures/*_A.png`, which fixed every SciFi_City asset. It REFUSES
+  meshes whose UVs tile outside [0,1]: those were laid out for a repeating
+  facade texture the cooked pack doesn't ship, and wrapping an atlas across
+  them samples the entire sheet (rainbow swatches smeared over a building).
+  Seven SciFi_City `Background_Med/Small` meshes fail that test and are not
+  used; CyberCity's `Background_Building_0*` (tight atlas island, intact
+  bindings) stand in for them. Audit any new building with the UV check
+  before placing it.
 - **Interiors** (`SiteChunk.add_room`): enterable shopfront rooms standing
   on the site's own floor just inside the wall line, so the facade behind
   reads as their upper storeys. Three solid walls plus a front wall split

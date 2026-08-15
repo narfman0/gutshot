@@ -95,7 +95,7 @@ const BLD_DOBEI := "res://assets/meshes/POLYGON_Samurai_Empire_SourceFiles_v1/So
 const BLD_DOBEI_END := "res://assets/meshes/POLYGON_Samurai_Empire_SourceFiles_v1/SourceFiles/FBX/SamuraiEmpire/SM_Bld_Fence_Dobei_End_01.gltf"
 const BLD_ARCHWAY := "res://assets/meshes/POLYGON_Samurai_Empire_SourceFiles_v1/SourceFiles/FBX/SamuraiEmpire/SM_Bld_Archway_01.gltf"
 const BLD_SMALL_01 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Small_01.gltf"
-const BLD_SMALL_03 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Small_03.gltf"
+const BLD_SMALL_03 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Small_01.gltf"
 
 ## Deliberately LOW and wooden — Little Japan lives under the tower's
 ## shadow, not in it. Plastered dobei walls line the market, a temple

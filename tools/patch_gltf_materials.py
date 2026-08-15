@@ -9,11 +9,17 @@ Post-process cooked gltf files under assets/meshes/:
   2. Out-of-bounds texture indices → clamped to the images array length.
      Some materials reference image index N when only N-1 images exist;
      Godot falls back to a default error material.
-  3. Missing atlas reference → reattached.
+  3. Missing atlas reference → reattached, but ONLY for atlas-mapped meshes.
      Some cooked packs (SciFi_City buildings et al) export materials with NO
      images/textures array at all, so every surface renders untextured white.
-     Synty packs are single-atlas: the meshes already carry the right UVs, so
-     pointing every material at the pack's one Textures/*.png restores them.
+     Synty packs are single-atlas: meshes whose UVs sit inside [0,1] carry the
+     right coordinates, so pointing their materials at the pack's one
+     Textures/*.png restores them. Meshes whose UVs TILE outside [0,1] are not
+     atlas-mapped at all — they wanted a repeating facade texture the cooked
+     pack does not ship — and wrapping an atlas across them samples the whole
+     sheet (rainbow swatches smeared over a building). Those are left
+     untextured on purpose: flat grey is a legible "asset needs art", garbage
+     is not.
   4. Stray emissiveFactor without an emissiveTexture → removed.
      Synty "custom shader" materials (Samurai packs et al) translate to a
      Principled BSDF with full-white emission; the export then washes the
@@ -51,6 +57,33 @@ def _texture_has_alpha(gltf_path: pathlib.Path, g: dict, tex_index: int) -> bool
         return False
 
 
+def _uvs_in_unit_square(gltf_path: pathlib.Path, g: dict, margin: float = 0.02) -> bool:
+    """True when every UV lands inside the atlas. Meshes that tile past the
+    edges are laid out for a repeating texture, not an atlas cell."""
+    import struct as _struct
+    for mesh in g.get("meshes", []):
+        for prim in mesh.get("primitives", []):
+            idx = prim.get("attributes", {}).get("TEXCOORD_0")
+            if idx is None:
+                continue
+            try:
+                acc = g["accessors"][idx]
+                bv = g["bufferViews"][acc["bufferView"]]
+                uri = g["buffers"][bv["buffer"]]["uri"]
+                if uri.startswith("data:"):
+                    return True  # embedded: assume the exporter knew best
+                with open(gltf_path.parent / uri, "rb") as fh:
+                    raw = fh.read()
+                off = bv.get("byteOffset", 0) + acc.get("byteOffset", 0)
+                uvs = _struct.unpack_from("<%df" % (acc["count"] * 2), raw, off)
+            except (KeyError, IndexError, OSError, _struct.error):
+                return True  # unreadable: leave the old behaviour alone
+            for value in uvs:
+                if value < -margin or value > 1.0 + margin:
+                    return False
+    return True
+
+
 def _find_atlas(gltf_path: pathlib.Path):
     """The pack's single Synty atlas, searching upward for a Textures dir."""
     for parent in list(gltf_path.parents)[:5]:
@@ -74,6 +107,10 @@ def _attach_atlas(gltf_path: pathlib.Path, g: dict) -> bool:
         return False
     if not any("TEXCOORD_0" in p.get("attributes", {})
                for m in g.get("meshes", []) for p in m.get("primitives", [])):
+        return False
+    if not _uvs_in_unit_square(gltf_path, g):
+        print("  skipped (UVs tile outside 0..1, not atlas-mapped):",
+              gltf_path.name)
         return False
     atlas = _find_atlas(gltf_path)
     if atlas is None:

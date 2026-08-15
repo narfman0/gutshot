@@ -52,10 +52,10 @@ const _CONTAINER_SMALL := "res://assets/meshes/POLYGON_Military_Warehouse_Source
 # Corridors run BETWEEN buildings — these line their flanks so an alley
 # reads as a gap in the city rather than a trench in the ground.
 const _BLD_SMALL_01 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Small_01.gltf"
-const _BLD_SMALL_02 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Small_02.gltf"
-const _BLD_SMALL_04 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Small_04.gltf"
-const _BLD_MED_02 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Med_02.gltf"
-const _BLD_MED_07 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Med_07.gltf"
+const _BLD_SMALL_02 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Buildings/SM_Bld_Background_Building_02.gltf"
+const _BLD_SMALL_04 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Buildings/SM_Bld_Background_Building_04.gltf"
+const _BLD_MED_02 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Buildings/SM_Bld_Background_Building_02.gltf"
+const _BLD_MED_07 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Buildings/SM_Bld_Background_Building_04.gltf"
 const _BLD_INDUSTRIAL := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Industrial_02.gltf"
 const _BLD_ADVANCED := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Advanced_02.gltf"
 const _BLD_DOBEI := "res://assets/meshes/POLYGON_Samurai_Empire_SourceFiles_v1/SourceFiles/FBX/SamuraiEmpire/SM_Bld_Fence_Dobei_Double_01.gltf"

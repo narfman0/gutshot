@@ -63,8 +63,8 @@ func ground_params() -> Dictionary:
 		"wet_amount": 0.25, "puddle_scale": 0.13,
 		"base_roughness": 0.78, "metallic_amount": 0.0}
 
-const BLD_MED_01 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Med_01.gltf"
-const BLD_MED_04 := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Background_Med_04.gltf"
+const BLD_MED_01 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Buildings/SM_Bld_Background_Building_01.gltf"
+const BLD_MED_04 := "res://assets/meshes/POLYGON_CyberCity_SourceFiles_v3/SourceFiles/FBX/Buildings/SM_Bld_Background_Building_03.gltf"
 const BLD_RAISED := "res://assets/meshes/POLYGON_SciFi_City_SourceFiles_v5/Source_Files/FBX/SM_Bld_Raised_01.gltf"
 
 ## The hall is wedged into a block — neighbours press against every wall.
