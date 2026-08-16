@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="FocusFireAbility" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/ability_focus_fire.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Focus Fire"
+cooldown = 10.0
+command_range = 30.0
+acquire_cone_deg = 18.0

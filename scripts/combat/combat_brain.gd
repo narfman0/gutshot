@@ -127,9 +127,14 @@ func acquire_threat() -> Character:
 
 ## Drive one combat frame. Callers ensure a threat context exists (aggro /
 ## engage checks live in the owner controllers).
+## Hurt badly enough that a stim is worth the cooldown. Generic on purpose —
+## anything carrying one uses it, the crew today and whoever else later.
+const STIM_BELOW_FRAC := 0.45
+
 func tick(delta: float) -> void:
 	if body == null or not body.is_alive():
 		return
+	_try_self_stim()
 	if acquire_threat() == null:
 		idle_stop(delta)
 		return
@@ -190,6 +195,16 @@ func _tick_melee(delta: float) -> void:
 					and body.activate_ability(ability, threat_pos()):
 				return
 		shooter.try_fire(threat)
+
+## Pop a stim when the body is in real trouble. activate_ability gates the
+## cooldown, so a refused cast simply costs nothing.
+func _try_self_stim() -> void:
+	if body.hp > body.max_hp * STIM_BELOW_FRAC:
+		return
+	for ability in body.action_slots:
+		if ability is CombatStimAbility:
+			body.activate_ability(ability, body.global_position)
+			return
 
 ## Throw a frag at the threat if we carry one, it's off cooldown, and the
 ## threat is inside throw range. Both followers and enemies use this — cover
@@ -390,6 +405,7 @@ func nav_to(dest: Vector3, delta: float, speed: float = SPEED,
 	var dir := _waypoints[_wp_index] - body.global_position
 	dir.y = 0.0
 	dir = dir.normalized()
+	speed *= body.effect_speed_mult()
 	body.velocity.x = dir.x * speed
 	body.velocity.z = dir.z * speed
 	_apply_gravity(delta)

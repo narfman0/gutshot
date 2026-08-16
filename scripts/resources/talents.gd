@@ -53,6 +53,15 @@ const CATALOG := {
 		"name": "Hardened Plating", "blurb": "Shields regenerate 60% faster",
 		"tier": 2, "ranks": 1, "requires": "capacitor", "req_ranks": 2, "role": "",
 	},
+	"light_step": {
+		"name": "Light Step", "blurb": "+8% movement speed", "tier": 2,
+		"ranks": 2, "requires": "", "req_ranks": 0, "role": "",
+	},
+	# ── The KIT line: every tier hands the crew a new VERB ────────────────
+	"smoke_screen": {
+		"name": "Smoke Screen", "blurb": "ABILITY — throw a blinding cloud (real cover, blinds them too)",
+		"tier": 2, "ranks": 1, "requires": "quick_hands", "req_ranks": 1, "role": "",
+	},
 	"field_dressing": {
 		"name": "Field Dressing", "blurb": "Revive at 60% HP instead of 40%",
 		"tier": 2, "ranks": 1, "requires": "toughness", "req_ranks": 2, "role": "",
@@ -65,6 +74,10 @@ const CATALOG := {
 	"second_wind": {
 		"name": "Second Wind", "blurb": "+25 max HP for everyone", "tier": 3,
 		"ranks": 1, "requires": "field_dressing", "req_ranks": 1, "role": "",
+	},
+	"focus_fire": {
+		"name": "Focus Fire", "blurb": "ABILITY — order the whole crew onto the target under your cursor",
+		"tier": 3, "ranks": 1, "requires": "smoke_screen", "req_ranks": 1, "role": "",
 	},
 	"point_man": {
 		"name": "Point Man", "blurb": "The LEADER gains +40 shield", "tier": 3,
@@ -84,6 +97,10 @@ const CATALOG := {
 		"name": "Overclock", "blurb": "The HACKER's cooldowns drop 40%", "tier": 4,
 		"ranks": 1, "requires": "quick_hands", "req_ranks": 2, "role": "hacker",
 	},
+	"combat_stim": {
+		"name": "Combat Stim", "blurb": "ABILITY — heal 45 and move faster for five seconds",
+		"tier": 4, "ranks": 1, "requires": "focus_fire", "req_ranks": 1, "role": "",
+	},
 	"executioner": {
 		"name": "Executioner", "blurb": "+15% weapon damage", "tier": 4, "ranks": 2,
 		"requires": "suppressor", "req_ranks": 1, "role": "",
@@ -93,6 +110,10 @@ const CATALOG := {
 		"name": "Crew of Legend", "blurb": "+50 HP and +50 shield, every member",
 		"tier": 5, "ranks": 1, "requires": "second_wind", "req_ranks": 1, "role": "",
 	},
+	"emp_charge": {
+		"name": "EMP Charge", "blurb": "ABILITY — strips shields in a radius and staggers machines",
+		"tier": 5, "ranks": 1, "requires": "combat_stim", "req_ranks": 1, "role": "",
+	},
 	"demolitions": {
 		"name": "Demolitions Training", "blurb": "The whole crew carries frag grenades",
 		"tier": 5, "ranks": 1, "requires": "executioner", "req_ranks": 1, "role": "",
@@ -100,6 +121,18 @@ const CATALOG := {
 }
 
 const FRAG := preload("res://resources/abilities/frag_grenade.tres")
+const SMOKE := preload("res://resources/abilities/smoke_screen.tres")
+const FOCUS := preload("res://resources/abilities/focus_fire.tres")
+const STIM := preload("res://resources/abilities/combat_stim.tres")
+const EMP := preload("res://resources/abilities/emp_charge.tres")
+
+## Ability nodes hand the crew a VERB rather than a number. They go into the
+## same action_slots gear uses, so the kit bar, the cooldown display and the
+## follower AI all pick them up with no special casing.
+const GRANTS := {
+	"smoke_screen": SMOKE, "focus_fire": FOCUS,
+	"combat_stim": STIM, "emp_charge": EMP, "demolitions": FRAG,
+}
 
 static func node(id: String) -> Dictionary:
 	return CATALOG.get(id, {})
@@ -141,6 +174,12 @@ static func apply_rank(c: Character, member_key: String, id: String) -> void:
 	var role := str(n.get("role", ""))
 	if role != "" and role != member_key:
 		return  # a role node trains one member; everyone else skips it
+	if GRANTS.has(id):
+		var ability: Ability = GRANTS[id]
+		if not c.action_slots.has(ability) \
+				and c.action_slots.size() < Character.MAX_ACTION_SLOTS:
+			c.action_slots.append(ability)
+		return
 	match id:
 		"toughness":
 			c.max_hp += 12.0
@@ -186,9 +225,8 @@ static func apply_rank(c: Character, member_key: String, id: String) -> void:
 			c.shield += 50.0
 			c.hp_changed.emit(c.hp, c.max_hp)
 			c.shield_changed.emit(c.shield, c.max_shield)
-		"demolitions":
-			if not c.action_slots.has(FRAG) and c.action_slots.size() < 4:
-				c.action_slots.append(FRAG)
+		"light_step":
+			c.base_speed_mult *= 1.08
 
 ## Replay the whole tree onto a freshly spawned body.
 static func apply_all(c: Character, member_key: String) -> void:

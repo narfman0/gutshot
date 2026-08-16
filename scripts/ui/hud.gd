@@ -43,13 +43,15 @@ func setup(squad: Squad, objectives: ObjectiveManager, camera: Camera3D,
 	if site_name != "":
 		_build_site_label(site_name)
 	_apply_crosshair_cursor()
-	_squad.active_changed.connect(func(_i, _c): _refresh_portraits(); _refresh_slots())
+	_squad.active_changed.connect(func(_i, _c):
+		_refresh_portraits(); _refresh_slots(); _refresh_kit())
 	for member in _squad.members:
 		(member as Character).hp_changed.connect(func(_h, _m): _refresh_portraits())
 		(member as Character).shield_changed.connect(func(_s, _m): _refresh_portraits())
 		(member as Character).weapon_changed.connect(func(_s): _refresh_slots())
 	for c in _squad.get_tree().get_nodes_in_group("characters"):
 		_add_overhead(c as Character)
+	_build_kit_bar()
 	_refresh_portraits()
 	_refresh_slots()
 
@@ -213,6 +215,72 @@ func _refresh_slots() -> void:
 		var box := entry["box"] as Control
 		box.modulate = Color(1, 1, 1) if i == active.active_slot else Color(0.6, 0.65, 0.7, 0.85)
 
+## The KIT bar — abilities the crew tree granted, on Q/E/F/C. Rebuilt on
+## every active-character change because different members can carry
+## different kit (role nodes), and it hides entirely when the crew has none,
+## so an early run isn't cluttered by an empty bar.
+var _kit_row: HBoxContainer = null
+var _kit_entries: Array = []
+
+const KIT_KEYS := ["Q", "E", "F", "C"]
+
+func _build_kit_bar() -> void:
+	_kit_row = HBoxContainer.new()
+	_kit_row.name = "KitBar"
+	_kit_row.theme = UITheme.theme
+	_kit_row.add_theme_constant_override("separation", 6)
+	_kit_row.anchor_left = 0.5
+	_kit_row.anchor_right = 0.5
+	_kit_row.anchor_top = 1.0
+	_kit_row.anchor_bottom = 1.0
+	_kit_row.offset_left = -220.0
+	_kit_row.offset_right = 220.0
+	_kit_row.offset_top = -16.0 - SLOT_SIZE.y - 46.0
+	_kit_row.offset_bottom = -16.0 - SLOT_SIZE.y - 10.0
+	add_child(_kit_row)
+	_refresh_kit()
+
+func _refresh_kit() -> void:
+	if _kit_row == null:
+		return
+	for child in _kit_row.get_children():
+		child.queue_free()
+	_kit_entries = []
+	var active := _squad.active_character() if _squad != null else null
+	if active == null or not is_instance_valid(active):
+		_kit_row.visible = false
+		return
+	var shown := 0
+	for i in mini(active.action_slots.size(), KIT_KEYS.size()):
+		var ability: Ability = active.action_slots[i]
+		if ability == null:
+			continue
+		var label := Label.new()
+		label.theme = UITheme.theme
+		label.add_theme_font_size_override("font_size", 13)
+		label.add_theme_color_override("font_color", UITheme.C_HEAD)
+		label.text = "[%s] %s" % [KIT_KEYS[i], ability.display_name]
+		_kit_row.add_child(label)
+		_kit_entries.append({"label": label, "ability": ability, "name": ability.display_name})
+		shown += 1
+	_kit_row.visible = shown > 0
+
+## Cooldowns tick down live — the bar greys and counts while a cue recharges.
+func _tick_kit() -> void:
+	var active := _squad.active_character() if _squad != null else null
+	if active == null or not is_instance_valid(active):
+		return
+	for entry in _kit_entries:
+		var left: float = active.cooldown_remaining(entry["ability"])
+		var label := entry["label"] as Label
+		if left > 0.05:
+			label.text = "%s  %.0fs" % [entry["name"], left]
+			label.add_theme_color_override("font_color", UITheme.C_MUTED)
+		else:
+			var idx := _kit_entries.find(entry)
+			label.text = "[%s] %s" % [KIT_KEYS[idx], entry["name"]]
+			label.add_theme_color_override("font_color", UITheme.C_HEAD)
+
 var _site_label: Label = null
 var _xp_label: Label = null
 var _job_label: Label = null
@@ -361,6 +429,7 @@ func _add_overhead(character: Character) -> void:
 			trough.visible = false)
 
 func _process(_delta: float) -> void:
+	_tick_kit()
 	if _camera == null:
 		return
 	if _reticle != null:

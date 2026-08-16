@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CombatStimAbility" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/ability_combat_stim.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Combat Stim"
+cooldown = 22.0
+heal = 45.0
+speed_bonus = 1.35
+duration = 5.0

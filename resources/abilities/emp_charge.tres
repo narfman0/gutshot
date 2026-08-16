@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="EmpChargeAbility" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/ability_emp_charge.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "EMP Charge"
+cooldown = 20.0
+throw_range = 12.0
+radius = 5.0
+fuse_secs = 0.7
+machine_stagger = 3.0

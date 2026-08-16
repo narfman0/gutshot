@@ -13,9 +13,9 @@ func _ready() -> void:
 		if GameState.squad.size() == 4:
 			break
 	# A crew partway up the ladder: some ranks down, a milestone just opened.
-	GameState.crew_level = 13
+	GameState.crew_level = 15
 	GameState.talents = {"toughness": 3, "marksman": 2, "capacitor": 2,
-		"quick_hands": 1, "hardened": 1}
+		"quick_hands": 1, "hardened": 1, "smoke_screen": 1, "light_step": 1}
 	DirAccess.make_dir_recursive_absolute("res://.screenshots")
 	TrainingPanel.toggle(world, world)
 	for i in 30:

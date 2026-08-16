@@ -164,6 +164,50 @@ func _ready() -> void:
 	DirAccess.remove_absolute(SaveManager._path(TEST_SLOT))
 	GameState.debug_session = true
 
+	# 7. The KIT: ability nodes hand out verbs, and the verbs actually work.
+	#    Each one is checked by its EFFECT, not by "activate returned true" —
+	#    an ability that reports success and changes nothing is the bug.
+	GameState.crew_level = int(Talents.TIER_LEVEL[5])
+	GameState.talents = {"quick_hands": 1, "smoke_screen": 1, "focus_fire": 1,
+		"combat_stim": 1, "emp_charge": 1}
+	var kit_before := leader.action_slots.size()
+	for id in ["smoke_screen", "focus_fire", "combat_stim", "emp_charge"]:
+		Talents.apply_rank(leader, "leader", str(id))
+	_check(leader.action_slots.size() == kit_before + 4,
+		"four ability nodes put four verbs in the kit (%d → %d)"
+		% [kit_before, leader.action_slots.size()])
+	_check(leader.action_slots.size() <= Character.MAX_ACTION_SLOTS,
+		"the kit never overflows its slot cap")
+
+	# Smoke: a real COVER-layer volume that blinds the AI too.
+	var smoke_before := get_tree().get_nodes_in_group("cover").size()
+	var here := leader.global_position
+	# Throw it far enough out that the probe ray STARTS outside the cloud —
+	# Godot reports no hit for a ray originating inside a shape.
+	_check(Talents.SMOKE.activate(leader, here + Vector3(6, 0, 0)), "smoke throws")
+	await _settle(3)
+	var blocked: Dictionary = _world.get_world_3d().direct_space_state.intersect_ray(
+		PhysicsRayQueryParameters3D.create(here + Vector3(0, 1.2, 0),
+			here + Vector3(11, 1.2, 0), Layers.COVER))
+	_check(not blocked.is_empty(), "the cloud genuinely blocks line of sight")
+
+	# Stim: heals HP, which nothing else in a fight does.
+	leader.hp = leader.max_hp * 0.4
+	var hurt := leader.hp
+	_check(Talents.STIM.activate(leader, here), "the stim fires")
+	_check(leader.hp > hurt, "the stim heals (%.0f → %.0f)" % [hurt, leader.hp])
+	_check(leader.effect_speed_mult() > 1.0, "and it speeds the crew up")
+
+	# Focus Fire: a command, so it needs a target and it moves the FOLLOWERS.
+	_check(not Talents.FOCUS.activate(leader, here + Vector3(2, 0, 0)),
+		"focus fire refuses when nothing is under the cursor")
+
+	# Light Step is a permanent multiplier, not a timed one.
+	var speed_before := leader.base_speed_mult
+	Talents.apply_rank(leader, "leader", "light_step")
+	_check(leader.base_speed_mult > speed_before,
+		"Light Step raises base movement speed")
+
 	if _failures.is_empty():
 		print("DISTRICT_PROGRESSION_SMOKE: ALL PASS")
 		get_tree().quit(0)

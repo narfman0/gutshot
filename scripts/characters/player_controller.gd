@@ -48,7 +48,8 @@ func _physics_process(delta: float) -> void:
 		body.velocity.y -= Character.GRAVITY * delta
 
 	var stick := _read_input()
-	var speed := SPEED * (SPRINT_MUL if Input.is_action_pressed("sprint") else 1.0)
+	var speed := SPEED * (SPRINT_MUL if Input.is_action_pressed("sprint") else 1.0) \
+		* body.effect_speed_mult()
 	var grounded := body.is_on_floor()
 	if stick.length_squared() > 0.01:
 		var dir := _camera_relative(stick)
@@ -95,6 +96,18 @@ func _unhandled_input(event: InputEvent) -> void:
 					_lmb_held = false
 			else:
 				_lmb_held = false
+	# The KIT bar — Q/E/F/C cast whatever the crew tree (and gear) has granted,
+	# aimed at the cursor like everything else. Sits beside the 1/2/3 weapon
+	# bar rather than inside it: gear is what you carry, the kit is what you
+	# have learned.
+	elif event.is_action_pressed("ability_1"):
+		_cast_kit(0)
+	elif event.is_action_pressed("ability_2"):
+		_cast_kit(1)
+	elif event.is_action_pressed("ability_3"):
+		_cast_kit(2)
+	elif event.is_action_pressed("ability_4"):
+		_cast_kit(3)
 	elif event.is_action_pressed("weapon_1"):
 		body.select_slot(0)
 	elif event.is_action_pressed("weapon_2"):
@@ -177,6 +190,12 @@ func _cursor_ground_point(screen_pos: Vector2) -> Vector3:
 		if t > 0.0:
 			return from + dir * t
 	return body.global_position + Vector3.FORWARD
+
+## Cast kit slot `index`, if the crew has one there and it is off cooldown.
+func _cast_kit(index: int) -> void:
+	if body == null or index >= body.action_slots.size():
+		return
+	body.activate_ability(body.action_slots[index], _aim_point())
 
 func _tick_footsteps(delta: float) -> void:
 	if not body.is_on_floor():

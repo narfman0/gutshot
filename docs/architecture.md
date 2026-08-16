@@ -159,6 +159,27 @@ same pool. You pick a node, never a person.
 Tune the whole economy from `XP_BASE`/`XP_EXPONENT`. These numbers have NOT
 been playtested by a human.
 
+## Abilities and the kit bar
+
+`Ability.activate(caster, target_point) -> bool` is the whole contract.
+Abilities reach a character's `action_slots` two ways — equipping gear that
+exports them, and crew-tree nodes listed in `Talents.GRANTS` — and nothing
+downstream cares which. `MAX_ACTION_SLOTS` is 6 now that the tree grants too.
+
+- The player casts slots 0-3 on Q/E/F/C (`ability_1..4`), aimed at the
+  cursor. Gear stays on 1/2/3: gear is what you carry, kit is what you have
+  learned.
+- The AI uses the same slots: CombatBrain throws frags at range, tries
+  non-frag abilities in melee, and pops a Combat Stim below 45% HP.
+- Live effects land on Character as `base_speed_mult` (permanent, Light
+  Step), `stim_until_ms`/`stim_speed_mult` (timed) and `stagger_until_ms`
+  (EMP). `effect_speed_mult()` is the one place movers read speed from, so
+  the player controller and the brain can never disagree.
+
+Smoke Screen is worth noting as the cheapest of them: smoke is just COVER
+with a timer, and every LOS test already raycasts `Layers.COVER`, so it
+blinds the AI exactly as hard as the player with no special cases anywhere.
+
 ## Jobs — the retrieval loop
 
 `Jobs` (scripts/core/jobs.gd) is a static CATALOG; `GameState` holds the

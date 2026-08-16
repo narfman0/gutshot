@@ -222,9 +222,21 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       paths hurt it for free. Three of the six are owned by NEUTRAL factions
       (clan/Assembly/corp), which is where the "you just made an enemy"
       beat actually lands
-- [ ] Jobs follow-ups: chained/multi-stage contracts, a fence NPC paying
-      credits rather than raw XP, jobs that expire, rival crews racing you
-      to the same take
+- [x] Abilities in the tree — the KIT line, running the full height of the
+      tree so every tier hands over a VERB rather than a number: Smoke Screen
+      (t2), Focus Fire (t3), Combat Stim (t4), EMP Charge (t5), alongside
+      Demolitions. Cast on a new Q/E/F/C kit bar (gear stays on 1/2/3 — gear
+      is what you carry, kit is what you learned) with live cooldowns in the
+      HUD. Deliberately DECIDED AGAINST credits/a fence: a currency with no
+      sink is a second XP bar, and XP stays the single progression currency
+      that jobs pay into
+- [ ] Jobs follow-ups (no economy): chained/multi-stage contracts, jobs that
+      expire if you dawdle, rival crews racing you to the same take
+- [ ] Gear is still not a player choice — the crew loadout is hardcoded at
+      spawn (gunner/rifle, medic/heal gun, everyone else smg+pistol+belt) and
+      6 of the 16 GearItems are enemy-only. The katana, ninjato and shuriken
+      the clan monopolises are player-viable already. A loadout screen at the
+      hideout would open a system that is built and currently invisible
 - [x] Progression v2 — the CREW TREE replaces per-member perks. One shared
       trunk, one point pool (2 per crew level), no member picker: nodes buff
       the whole crew and the identity nodes are role-tagged (Point Man

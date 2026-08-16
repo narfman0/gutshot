@@ -121,6 +121,11 @@ func _physics_process(delta: float) -> void:
 	# in or out of a fight. Everything else waits.
 	if _tick_support(delta):
 		return
+	# EMP: machines have no morale to break, so a stagger IS their break —
+	# a few seconds of standing there doing nothing.
+	if body.is_staggered():
+		_stand(delta)
+		return
 	match state:
 		State.IDLE:
 			_tick_idle(delta)

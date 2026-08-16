@@ -22,7 +22,9 @@ signal weapon_changed(slot: int)
 ## return-fire alerts and threat pinning.
 signal shot_at(attacker: Character)
 
-const MAX_ACTION_SLOTS := 4
+## Four was enough when abilities came only from gear. The crew tree grants
+## them too now, so the kit has room to grow across a run.
+const MAX_ACTION_SLOTS := 6
 
 ## One gravity for every mover. Deliberately heavier than Earth (games run
 ## 2-3× or drops feel like moon-walking); tuned against the catwalk height.
@@ -59,6 +61,24 @@ var cooldown_mult := 1.0
 var revive_frac := REVIVE_HP_FRAC
 var shield_regen_mult := 1.0
 var accuracy_mult := 1.0
+## Permanent movement multiplier from the crew tree (Light Step).
+var base_speed_mult := 1.0
+## Combat Stim window: movement runs faster until this tick.
+var stim_until_ms := 0
+var stim_speed_mult := 1.0
+## EMP stagger: machines do nothing at all until this tick. Their lack of
+## morale is the point of them, so this is what "breaking" looks like.
+var stagger_until_ms := 0
+
+## Speed multiplier from live effects — one place so every mover agrees.
+func effect_speed_mult() -> float:
+	var m := base_speed_mult
+	if Time.get_ticks_msec() < stim_until_ms:
+		m *= stim_speed_mult
+	return m
+
+func is_staggered() -> bool:
+	return Time.get_ticks_msec() < stagger_until_ms
 ## Who last hurt this character — kill credit for the squad XP pool.
 var last_attacker: Character = null
 
