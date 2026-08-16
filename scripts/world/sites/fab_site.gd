@@ -218,10 +218,13 @@ func _on_shot_fired(shooter: Character) -> void:
 	if not _turf_warned.get(shooter.team, false):
 		_turf_warned[shooter.team] = true
 		AudioManager.play_sfx("telegraph")
+		AudioManager.play_sfx("machine_warn", 1.0, 0.02)
 		if _sanctum_label != null:
 			_sanctum_label.text = "CEASE FIRE"
 			_sanctum_label.modulate = Color(1.0, 0.5, 0.2)
 	if heat >= TURF_HEAT_PROVOKE:
+		if not Factions.hostile(shooter.team, Factions.ASSEMBLY):
+			AudioManager.play_sfx("machine_engage", 1.0, 0.02)
 		Factions.provoke(shooter.team, Factions.ASSEMBLY)
 		if _sanctum_label != null:
 			_sanctum_label.text = "HOSTILE"
@@ -261,10 +264,13 @@ func _tick_trespass(delta: float) -> void:
 	if not _trespass_warned:
 		_trespass_warned = true
 		AudioManager.play_sfx("telegraph")
+		AudioManager.play_sfx("machine_warn", 1.0, 0.02)
 		if _sanctum_label != null:
 			_sanctum_label.text = "LEAVE. NOW."
 			_sanctum_label.modulate = Color(1.0, 0.5, 0.2)
 	if _trespass_timer >= TRESPASS_GRACE_SECS:
+		if not Factions.hostile(Factions.CREW, Factions.ASSEMBLY):
+			AudioManager.play_sfx("machine_engage", 1.0, 0.02)
 		Factions.provoke(Factions.CREW, Factions.ASSEMBLY)
 		if _sanctum_label != null:
 			_sanctum_label.text = "HOSTILE"

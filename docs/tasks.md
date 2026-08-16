@@ -120,11 +120,28 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       floors stay hidden, characters one floor up drawn only while a crew
       member has a line on them (overlook rule), lights/overhead bars fade
       with their floor
-- [ ] Audio pass (AudioManager autoload, wayfarer `gen_audio.py` lineage)
+- [x] Audio pass v1 — real recordings replace most of the placeholder tones.
+      The asset server turned out to hold a 1,342-file Kenney audio library
+      nobody had touched; fetch_assets.sh grew an audio prefix and now pulls
+      99 samples. New SoundBank maps a logical cue to SEVERAL real files and
+      AudioManager picks one at random — the fatiguing thing about
+      placeholder audio was never fidelity, it was the same impact firing
+      forty times a fight. Gunfire deliberately STAYS synthesized (the
+      library is sci-fi, with no ballistic recordings) but gained three
+      jittered variants apiece. Impacts now split metal from flesh, breach
+      doors ring and blow, the active character has footsteps (only the
+      active one — the mix is non-positional, thirty sets of boots is mud),
+      and the ASSEMBLY SPEAKS: synth-voice warnings ("lower your weapon")
+      before it escalates, engagement calls after — a posture that was in
+      the design and inaudible until now. audio_probe guards it, since the
+      samples are fetched and gitignored
 - [x] Remove the "AREA CLEAR" end popup — victory now shows nothing; the
       site falls quiet and the crew travels out (SQUAD WIPED popup stays)
-- [ ] Mission-complete feedback, the different way: HUD cue / objective
-      ping / district-map state — design open
+- [x] Mission-complete feedback — answered by jobs: delivery at the hideout
+      flashes the contract paid, landing on the player's own action rather
+      than as a popup over the bodies. Clearing a SITE still says nothing,
+      deliberately: sites repopulate, so they are terrain rather than an
+      achievement
 - [x] Seamless district: ONE world scene (district.tscn) — sites are @tool
       SiteChunk scenes instanced at editor transforms (open a site scene or
       the district in the editor and see it built), walled connector

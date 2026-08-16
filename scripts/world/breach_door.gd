@@ -107,6 +107,7 @@ func receive_damage(amount: float) -> void:
 	if hp <= 0.0:
 		return
 	hp -= amount
+	AudioManager.play_sfx("impact_metal", -2.0)
 	Juice.impact_burst(get_tree().current_scene, global_position, Color(1.0, 0.7, 0.2))
 	# Battered doors glow hotter — a readable damage state.
 	if _damage_strip_mat != null:
@@ -118,6 +119,7 @@ func receive_damage(amount: float) -> void:
 
 func _breach() -> void:
 	Vfx.explosion(get_tree().current_scene, global_position + Vector3(0, 0.5, 0), 2.0)
+	AudioManager.play_sfx("door_open", 2.0)
 	breached.emit()
 	# Free first so the rebake parses the world without this collider. The
 	# position scopes the rebake to just this door's site region.

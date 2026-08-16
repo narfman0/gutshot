@@ -15,6 +15,11 @@ const STOP_ACCEL := 900.0   # and stop just as hard
 const AIR_ACCEL := 160.0    # limited steering mid-air — momentum carries you
 const AIR_DRAG := 30.0      # and letting go doesn't brake a fall
 const AIM_CONE_DEG := 14.0  # soft-acquire half-angle around the aim line
+## Footsteps ride on distance travelled, not a timer, so they stay in step
+## with the legs at every speed instead of drifting when you sprint. Only the
+## ACTIVE character makes them: the mix is non-positional, so thirty sets of
+## boots would be mud rather than presence.
+const STRIDE_METRES := 2.3
 
 var enabled := false:
 	set(value):
@@ -32,9 +37,12 @@ func _ready() -> void:
 	body = get_parent() as Character
 	shooter = body.get_node("Shooter")
 
+var _stride := 0.0
+
 func _physics_process(delta: float) -> void:
 	if not enabled or body == null or not body.is_alive():
 		return
+	_tick_footsteps(delta)
 
 	if not body.is_on_floor():
 		body.velocity.y -= Character.GRAVITY * delta
@@ -169,6 +177,18 @@ func _cursor_ground_point(screen_pos: Vector2) -> Vector3:
 		if t > 0.0:
 			return from + dir * t
 	return body.global_position + Vector3.FORWARD
+
+func _tick_footsteps(delta: float) -> void:
+	if not body.is_on_floor():
+		_stride = STRIDE_METRES * 0.6  # land already part-way to the next step
+		return
+	var speed := Vector2(body.velocity.x, body.velocity.z).length()
+	if speed < 0.5:
+		return
+	_stride += speed * delta
+	if _stride >= STRIDE_METRES:
+		_stride = 0.0
+		AudioManager.play_sfx("footstep", -14.0, 0.12)
 
 func _read_input() -> Vector2:
 	return Input.get_vector("move_left", "move_right", "move_forward", "move_back")

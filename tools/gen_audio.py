@@ -67,16 +67,24 @@ def gunshot(length, crack_gain, thump_freq, thump_gain, snap_k):
     return out
 
 
-def sfx_shot_smg():
-    return gunshot(0.09, 0.9, 130, 0.5, 26)
+# Guns stay synthesized on purpose: the sample library on the asset server is
+# a sci-fi set with no ballistic recordings, and a purpose-built crack beats a
+# laser impersonating a pistol. What they DID need is variants — a single
+# gunshot sample fired six times a second is the most fatiguing sound in the
+# game, and no amount of fidelity fixes that. Three per weapon, jittered in
+# length, pitch and snap, and SoundBank rotates them.
+GUNS = {
+    "smg":    (0.09, 0.9, 130, 0.5, 26),
+    "rifle":  (0.18, 0.8, 85, 0.9, 14),
+    "pistol": (0.12, 0.85, 110, 0.7, 20),
+}
 
 
-def sfx_shot_rifle():
-    return gunshot(0.18, 0.8, 85, 0.9, 14)
-
-
-def sfx_shot_pistol():
-    return gunshot(0.12, 0.85, 110, 0.7, 20)
+def gun_variant(base, jitter):
+    length, crack, thump_f, thump_g, snap = base
+    return gunshot(length * (1.0 + 0.10 * jitter), crack * (1.0 + 0.06 * jitter),
+                   thump_f * (1.0 + 0.09 * jitter), thump_g * (1.0 - 0.05 * jitter),
+                   snap * (1.0 + 0.12 * jitter))
 
 
 # ── Impacts ──────────────────────────────────────────────────────────────────
@@ -388,9 +396,11 @@ def ambient_market():
 
 
 def main():
-    write_wav("sfx_shot_smg.wav", sfx_shot_smg())
-    write_wav("sfx_shot_rifle.wav", sfx_shot_rifle())
-    write_wav("sfx_shot_pistol.wav", sfx_shot_pistol())
+    for gun, base in GUNS.items():
+        for tag, jitter in (("a", -1.0), ("b", 0.0), ("c", 1.0)):
+            write_wav("sfx_shot_%s_%s.wav" % (gun, tag), gun_variant(base, jitter))
+        # Unsuffixed base stays as the fallback for anything unbanked.
+        write_wav("sfx_shot_%s.wav" % gun, gun_variant(base, 0.0))
     write_wav("sfx_impact.wav", sfx_impact())
     write_wav("sfx_shield_hit.wav", sfx_shield_hit())
     write_wav("sfx_explosion.wav", sfx_explosion())

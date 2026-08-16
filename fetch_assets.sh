@@ -13,6 +13,7 @@
 # Reference forms the used-only resolver covers:
 #   1. literal res://assets/meshes/…  → cooked tree  (server: assets/…)
 #   2. literal res://assets/ui/…      → raw tree     (server: raw/…)
+#   2b. literal res://assets/audio/sfx/… → raw tree  (server: raw/kenney_aio/Audio/…)
 #   3. _ANIM_ROOT + "…" clip paths in character_animator.gd
 #   4. dir-const + bare-filename pairs in any .gd
 # Add packs to the server freely; they cost nothing here until referenced.
@@ -67,9 +68,15 @@ DEST   = os.environ["DEST"]           # local root: assets/meshes
 LOCAL_PREFIX  = DEST + "/"            # local  path:  assets/meshes/<rest>
 SERVER_PREFIX = "assets/"             # server path:  assets/<rest>
 UI_PREFIX     = "assets/ui/"          # local  path:  assets/ui/<pack>/<rest>
+SFX_PREFIX    = "assets/audio/sfx/"   # local  path:  assets/audio/sfx/<rest>
 RAW_PREFIX    = "raw/"                # server path:  raw/<pack>/<rest>
+# Kenney's audio library lives in the raw tree under one pack; the local
+# layout drops the pack name so sound paths stay readable in the sound bank.
+SFX_SERVER    = "raw/kenney_aio/Audio/"
 
 def local_to_server(fs):
+    if fs.startswith(SFX_PREFIX):
+        return SFX_SERVER + fs[len(SFX_PREFIX):]
     if fs.startswith(UI_PREFIX):
         return RAW_PREFIX + fs[len(UI_PREFIX):]
     return SERVER_PREFIX + fs[len(LOCAL_PREFIX):]
@@ -87,6 +94,8 @@ for base in ("scenes", "scripts", "resources"):
         for m in re.findall(r'res://assets/meshes/[^"\'\n]+?\.(?:gltf|glb|png)', txt):
             referenced.add(res_to_fs(m))
         for m in re.findall(r'res://assets/ui/[^"\'\n]+?\.(?:png|jpg|svg)', txt):
+            referenced.add(res_to_fs(m))
+        for m in re.findall(r'res://assets/audio/sfx/[^"\'\n]+?\.ogg', txt):
             referenced.add(res_to_fs(m))
 
 # 2) explicit animation clips ( _ANIM_ROOT + "…" ). Full-literal paths (e.g. the

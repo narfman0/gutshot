@@ -231,7 +231,8 @@ func receive_damage(amount: float, attacker: Node = null) -> void:
 		AudioManager.play_sfx("shield_hit")
 	if amount <= 0.0:
 		return
-	AudioManager.play_sfx("impact")
+	# Machines ring; people don't. Same cue name pattern, different material.
+	AudioManager.play_sfx("impact_metal" if team == Factions.ASSEMBLY else "impact")
 	hp = maxf(0.0, hp - amount)
 	hp_changed.emit(hp, max_hp)
 	if hp <= 0.0:

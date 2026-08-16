@@ -46,6 +46,9 @@ if [[ "${1:-}" == "test" ]]; then
 		echo "$out" | grep -E "ALL PASS"
 	done
 	echo "-- rig_probe"
+	godot --headless --script res://future/tests/harnesses/audio_probe.gd 2>&1 \
+		| grep -q "AUDIO_PROBE: ALL PASS" \
+		&& echo "  audio_probe OK" || { echo "  FAILED: audio_probe"; fail=1; }
 	godot --headless --script res://future/tests/harnesses/rig_probe.gd 2>/dev/null \
 		| grep -E "ALL PASS" || { echo "FAILED: rig_probe"; exit 1; }
 	echo "All suites pass."

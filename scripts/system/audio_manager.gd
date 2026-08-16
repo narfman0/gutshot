@@ -1,8 +1,13 @@
-## Autoload — minimum viable audio: pooled one-shot SFX and the hive-city
-## ambient loop. Everything is flat (non-positional) placeholder audio
-## synthesized into assets/audio/ by tools/gen_audio.py; the point is that
-## the game is no longer silent. Real assets replace the WAVs by name later,
-## no code change. (Lineage: wayfarer audio_manager.gd.)
+## Autoload — pooled one-shot SFX and the hive-city ambient beds.
+##
+## Cues resolve in two steps: SoundBank first (real recordings from the asset
+## server, several VARIANTS per cue, one picked at random), then the
+## synthesized assets/audio/sfx_<name>.wav that tools/gen_audio.py writes.
+## Gunfire deliberately stays on the synth side — the sample library is a
+## sci-fi set with no ballistic recordings, and a purpose-built crack beats a
+## laser impersonating a pistol — but it gets variants of its own.
+##
+## Everything is still flat (non-positional). (Lineage: wayfarer.)
 extends Node
 
 const _DIR := "res://assets/audio/"
@@ -34,10 +39,12 @@ func _ready() -> void:
 		add_child(bed)
 		_beds.append(bed)
 
-## Fire a one-shot by base name ("impact" → sfx_impact.wav). Small random
-## pitch spread keeps rapid repeats from machine-gunning.
+## Fire a one-shot by cue name. Banked cues pick a random real recording;
+## everything else falls back to the synthesized WAV. The pitch spread stays
+## on top of both — with variants it is the difference between "same sound
+## again" and "another round hitting another thing".
 func play_sfx(sfx_name: String, volume_db := 0.0, pitch_jitter := 0.07) -> void:
-	var stream := _load("sfx_" + sfx_name)
+	var stream := _pick_stream(sfx_name)
 	if stream == null:
 		return
 	var p := _pool[_pool_idx]
@@ -46,6 +53,18 @@ func play_sfx(sfx_name: String, volume_db := 0.0, pitch_jitter := 0.07) -> void:
 	p.volume_db = _SFX_DB + volume_db
 	p.pitch_scale = 1.0 + randf_range(-pitch_jitter, pitch_jitter)
 	p.play()
+
+## SoundBank variant if the cue is banked, else the synthesized WAV. Missing
+## sample files (nobody ran fetch_assets.sh) fall through to the synth rather
+## than going silent, so a fresh checkout still makes noise.
+func _pick_stream(sfx_name: String) -> AudioStream:
+	if SoundBank.has(sfx_name):
+		var path := SoundBank.pick(sfx_name)
+		if path != "" and ResourceLoader.exists(path):
+			var banked := load(path)
+			if banked is AudioStream:
+				return banked as AudioStream
+	return _load("sfx_" + sfx_name)
 
 ## Play (or crossfade to) a looping ambient bed. Same name → no-op, so
 ## GameWorld can call this on every site entry.
