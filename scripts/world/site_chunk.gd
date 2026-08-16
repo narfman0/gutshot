@@ -61,10 +61,6 @@ func build_extra_geometry() -> void:
 func heals_crew() -> bool:
 	return false
 
-## Walk heights of each floor, ground first; >1 entry gets a FloorSystem.
-func floor_heights() -> Array:
-	return [0.0]
-
 # Per-site light/air mood — GameWorld lerps the global env toward the
 # active site's values.
 func sun_energy() -> float:
@@ -140,8 +136,8 @@ func build_geometry() -> void:
 	build_extra_geometry()
 	_setup_bounds()
 
-## World-space XZ footprint — GameWorld uses this for site regions and
-## FloorSystem scoping. Assumes chunks are translated, never rotated.
+## World-space XZ footprint — GameWorld uses this for site tracking and the
+## respawn ledger. Assumes chunks are translated, never rotated.
 func bounds_rect() -> Rect2:
 	var half := arena_half()
 	return Rect2(global_position.x - half, global_position.z - half,

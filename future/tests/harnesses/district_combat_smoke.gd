@@ -1,7 +1,7 @@
 ## Headless district combat smoke — run with:
 ##   godot --headless res://future/tests/harnesses/district_combat_smoke.tscn
 ## Ports the per-site combat assertions into the seamless world: exchange
-## FloorSystem at its district offset (solid from outside, reveal inside),
+## multi-floor sites drawn whole at their district offset,
 ## depot breach door + THREADED navmesh rebake, depot morale break, fab
 ## sanctum trespass provocation, and site-prefixed pack groups.
 extends Node
@@ -49,26 +49,35 @@ func _ready() -> void:
 	_check(get_tree().get_nodes_in_group("pack_depot:back").size() == 3,
 		"depot back pack registers under its site-prefixed group")
 
-	# 2. Exchange FloorSystem at the district offset: building solid from
-	#    outside, reveal state engages inside, gallery commits on the climb.
+	# 2. Multi-floor sites are drawn WHOLE, always. The reveal/translucency
+	#    system is gone (playtest 2026-08-15): upper floors used to fade out
+	#    so the iso camera could see in, which read as missing geometry at
+	#    eye level in OTS and as flicker in iso. Nothing may quietly start
+	#    hiding geometry again.
 	var exchange := _chunk("Exchange")
-	var fs := _world.get_node("FloorSystem_exchange") as FloorSystem
-	_check(fs != null, "exchange gets a FloorSystem")
-	_check(fs.opacity(1) == 1.0 and fs.opacity(2) == 1.0,
-		"from outside the Exchange stands whole (%.2f/%.2f)" % [fs.opacity(1), fs.opacity(2)])
-	leader.global_position = exchange.to_global(Vector3(0, 0.1, 20))
-	await _settle(40)
-	_check(fs.active_floor == 0 and fs.opacity(1) < 0.05,
-		"inside on the ground floor the gallery hides (floor %d, %.2f)"
-		% [fs.active_floor, fs.opacity(1)])
+	leader.global_position = exchange.to_global(Vector3(0, 0.1, 12))
+	await _settle(10)
+	var faded := 0
+	var checked := 0
+	for node in exchange.find_children("*", "GeometryInstance3D", true, false):
+		var g := node as GeometryInstance3D
+		if g == null or not is_instance_valid(g):
+			continue
+		checked += 1
+		if g.transparency > 0.01 or not g.visible:
+			faded += 1
+	_check(checked > 0, "the Exchange has geometry to check (%d)" % checked)
+	_check(faded == 0,
+		"every floor of the Exchange is drawn solid (%d of %d faded)" % [faded, checked])
+	# And from up on the gallery, the floors below stay drawn too.
 	leader.global_position = exchange.to_global(Vector3(-26, 3.05, -5))
-	await _settle(40)
-	_check(fs.active_floor == 1 and fs.opacity(1) > 0.95,
-		"climbing commits the gallery floor (floor %d, %.2f)"
-		% [fs.active_floor, fs.opacity(1)])
-	leader.global_position = _chunk("Hideout").to_global(Vector3(0, 0.1, 4))
-	await _settle(40)
-	_check(fs.opacity(1) == 1.0, "leaving the Exchange re-solidifies it")
+	await _settle(10)
+	faded = 0
+	for node in exchange.find_children("*", "GeometryInstance3D", true, false):
+		var g := node as GeometryInstance3D
+		if g != null and is_instance_valid(g) and (g.transparency > 0.01 or not g.visible):
+			faded += 1
+	_check(faded == 0, "climbing to the gallery fades nothing (%d faded)" % faded)
 
 	# 3. Depot breach: doors closed force the catwalk detour; blowing one and
 	#    awaiting the THREADED rebake opens the short route.

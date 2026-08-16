@@ -2,7 +2,7 @@
 ## The Exchange — a shuttered vertical market hall, bandit-run since the
 ## traders pulled out (docs/locations.md). The three-floor site: ground
 ## trading floor, mezzanine gallery firing down over the rails, closed-off
-## counting house up top (FloorSystem reveal state). The east passage runs
+## counting house up top. The east passage runs
 ## UNDER the gallery deck toward Depot 9.
 extends SiteChunk
 
@@ -47,9 +47,6 @@ func sky_energy() -> float:
 
 func wall_color() -> Color:
 	return Color(0.20, 0.18, 0.15)  # water-stained hall brick
-
-func floor_heights() -> Array:
-	return [0.0, MEZZ_H, TOP_H]
 
 func ambient() -> String:
 	return "ambient_hall"  # wind through the boarded skylights

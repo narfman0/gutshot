@@ -9,7 +9,7 @@
 ## CIVILIANS in it, and the encounter is a three-way waiting to happen:
 ##   · market crowd — geisha, villagers, unarmed, they scatter when it starts
 ##   · clan patrol — ninjato + SILENT shuriken, they vanish in smoke when hurt
-##   · rooftop watch — shuriken throwers on the shop roofs (FloorSystem tier)
+##   · rooftop watch — shuriken throwers on the shop roofs
 ##   · gang incursion — bandits shaking down the south stalls; the clan is
 ##     already base-hostile to them, so walking in on that fight is free
 ##   · the sensei at the shrine — deep HP, katana, the clan's authority
@@ -78,9 +78,6 @@ func wall_color() -> Color:
 
 func ambient() -> String:
 	return "ambient_market"
-
-func floor_heights() -> Array:
-	return [0.0, ROOF_H]  # street level and the shop roofs
 
 func ground_params() -> Dictionary:
 	# Small wet market cobbles: tight slabs, water everywhere from the stalls

@@ -1,7 +1,7 @@
 ## A smoke bomb: a temporary COVER-layer volume plus the cloud that sells it.
 ##
 ## The trick is that smoke is just cover with a timer. Every LOS test in the
-## game — Cover.exposure, can_hit, the FloorSystem overlook rule — raycasts
+## game — Cover.exposure, can_hit, the AI's sight checks — raycasts
 ## against Layers.COVER, so a sphere on that layer genuinely blinds
 ## everyone, player and AI alike, with no special cases anywhere. It is NOT
 ## in the navmesh source group, so nobody paths around it: you can walk

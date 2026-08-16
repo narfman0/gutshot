@@ -78,9 +78,6 @@ func ambient() -> String:
 func wall_color() -> Color:
 	return Color(0.24, 0.25, 0.26)
 
-func floor_heights() -> Array:
-	return [0.0, MEZZ_H, EXEC_H]
-
 func ground_params() -> Dictionary:
 	# Polished granite: huge book-matched slabs, tight dark joints, mirror
 	# finish. No grime — money keeps the district outside.

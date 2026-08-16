@@ -58,9 +58,6 @@ func buildings() -> Array:
 
 const ROOF_H := 4.5
 
-func floor_heights() -> Array:
-	return [0.0, ROOF_H]  # street level and the fire-escape roofline
-
 func gates() -> Array:
 	return [
 		{"side": "w", "center": 15.0},  # alley to the hideout

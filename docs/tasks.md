@@ -85,11 +85,17 @@ starting point rather than a verdict.
       stops nothing. Wants an LOS/occlusion check (or a muffling factor
       through COVER geometry), and the hideout should probably be deaf to
       the outside world regardless
-- [ ] **Over-the-shoulder mode should render ALL floors.** FloorSystem has no
-      idea the camera mode changed — it keeps hiding floors above the active
-      one, which is right for the iso read and wrong at eye level, where you
-      are looking THROUGH the building at missing geometry. Wants
-      `set_camera_mode` to put FloorSystem into a reveal-everything state
+- [x] **Render all floors** — done by DELETING the reveal/translucency
+      system outright (your call: all floors, both camera modes). FloorSystem
+      and the now-dead `floor_heights()` hook are gone; multi-floor sites are
+      always drawn whole. The combat smoke now asserts the opposite of what
+      it used to: no geometry in the Exchange may be faded or hidden, from
+      the ground floor OR the gallery, so nothing can quietly start hiding
+      things again.
+      WATCH FOR: the reveal existed so the iso camera could see under a
+      deck. If standing beneath the Exchange mezzanine now hides the crew,
+      the fix is camera-side (raise the angle, or cull only what sits
+      between camera and player) rather than bringing translucency back
 - [ ] **The party does not reliably follow.** They should generally follow
       whoever the player is controlling. `SquadFollow._in_combat()` returns
       true if ANY hostile is within `ENGAGE_DIST` (16 m) of the follower OR

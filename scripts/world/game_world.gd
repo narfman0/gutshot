@@ -160,7 +160,6 @@ func _ready() -> void:
 	_bake_district()
 	_spawn_crew()
 	_spawn_all_enemies()
-	_setup_floor_systems()
 	_setup_camera()
 	($HUD as Hud).setup(_squad, _objectives, _camera, _start_chunk().site_name())
 	_objectives.mission_failed.connect(_show_wipe_screen)
@@ -926,13 +925,6 @@ func _bank_job_if_carrying() -> void:
 	_job_escort = null
 	refresh_job()
 
-func _setup_floor_systems() -> void:
-	for chunk in _chunks:
-		if chunk.floor_heights().size() > 1:
-			var floors := FloorSystem.new()
-			floors.name = "FloorSystem_" + chunk.site_id()
-			add_child(floors)
-			floors.setup(_squad, chunk, chunk.floor_heights(), chunk.bounds_rect())
 
 # ── Site tracking: label, autosave, rest, respawn ────────────────────────────
 
