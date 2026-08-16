@@ -5,7 +5,21 @@ class_name SquadFollow
 extends Node
 
 const SPEED := 8.5           # slightly under the leader's so they trail
-const ENGAGE_DIST := 16.0    # enemy this close to me or the leader → fight
+## Beyond this from the leader, catching up outranks EVERYTHING — the crew
+## follows the player first and fights second. Playtest 2026-08-15: the party
+## kept stopping to fight and getting left behind.
+const CATCHUP_DIST := 14.0
+## ...and they sprint to close it. The player sprints at 14.25 against a
+## follow speed of 8.5, so without this they can never actually catch up —
+## which is half of why they appeared to stop following at all.
+const CATCHUP_SPEED := 12.5
+## Last-resort unstick. A follower wedged against geometry re-paths every
+## frame and gets the same short path back, so it stands there for good —
+## which is the other half of "the party stopped following". If one is far
+## behind AND has not moved for this long, warp it to the leader.
+const STUCK_SECS := 3.0
+const STUCK_SPEED := 0.6
+const ENGAGE_DIST := 12.0    # enemy this close to ME → fight
 const LEASH_RADIUS := 11.0
 const STOP_DIST := 1.4
 const HEAL_BELOW_FRAC := 0.75  # medic beams mates under this HP fraction
@@ -17,6 +31,7 @@ var formation_offset := Vector3(1.5, 0, 1.5)
 
 var body: Character
 var brain: CombatBrain
+var _stuck_for := 0.0
 
 func _ready() -> void:
 	body = get_parent() as Character
@@ -34,9 +49,34 @@ func _physics_process(delta: float) -> void:
 	if _tick_medic(delta):
 		return
 	if _in_combat():
+		_stuck_for = 0.0
 		brain.tick(delta)
 	else:
 		_follow(delta)
+		_tick_unstick(delta)
+
+## Warp a hopelessly stuck follower to the leader. Deliberately blunt: a
+## squadmate quietly reappearing behind you reads far better than one left
+## standing against a wall on the other side of the district.
+func _tick_unstick(delta: float) -> void:
+	if leader == null or not is_instance_valid(leader):
+		_stuck_for = 0.0
+		return
+	var gap := body.global_position.distance_to(leader.global_position)
+	if gap <= CATCHUP_DIST \
+			or Vector2(body.velocity.x, body.velocity.z).length() > STUCK_SPEED:
+		_stuck_for = 0.0
+		return
+	_stuck_for += delta
+	if _stuck_for < STUCK_SECS:
+		return
+	_stuck_for = 0.0
+	var slot := leader.global_position \
+		+ formation_offset.rotated(Vector3.UP, leader.rotation.y)
+	body.global_position = NavigationServer3D.map_get_closest_point(
+		body.get_world_3d().navigation_map, slot)
+	body.velocity = Vector3.ZERO
+	brain.forget_path()
 
 ## A downed mate outranks everything: the CLOSEST follower breaks off, runs
 ## over, and stands the revive channel. Other followers keep fighting.
@@ -115,18 +155,31 @@ func _tick_medic(delta: float) -> bool:
 	# Can't reach the patient from here — close in on them.
 	return brain.nav_to(patient.global_position, delta, SPEED, patient.global_position)
 
+## Fighting is the exception; following is the rule.
+##
+## This used to return true for any hostile within 16 m of the follower OR
+## the leader, and for a pinned threat at ANY distance — which in a district
+## where gangs are hostile on sight was very nearly always, so followers
+## fought instead of following and fell behind for good.
 func _in_combat() -> bool:
-	# A pinned threat (someone shot at us) is combat no matter the distance.
+	# Left behind? Then nothing else matters. Catch up.
+	if leader != null and is_instance_valid(leader) \
+			and body.global_position.distance_to(leader.global_position) > CATCHUP_DIST:
+		return false
+	# Being shot at still counts — but only by someone actually near us, not
+	# by whoever last pinged us from across the district.
 	if brain.threat != null and is_instance_valid(brain.threat) \
-			and brain.threat.is_alive():
+			and brain.threat.is_alive() \
+			and body.global_position.distance_to(brain.threat.global_position) \
+				<= ENGAGE_DIST * 1.5:
 		return true
-	var anchors: Array = [body]
-	if leader != null and is_instance_valid(leader):
-		anchors.append(leader)
+	# Hostiles close to ME. The leader's own attackers are not counted: the
+	# follower is trailing the leader anyway, so it arrives and engages a
+	# beat later instead of stopping dead in a corridor.
 	for enemy in Factions.hostiles_of(body.get_tree(), body.team):
-		for anchor in anchors:
-			if (enemy as Character).global_position.distance_to(anchor.global_position) <= ENGAGE_DIST:
-				return true
+		if (enemy as Character).global_position.distance_to(body.global_position) \
+				<= ENGAGE_DIST:
+			return true
 	return false
 
 func _follow(delta: float) -> void:
@@ -141,9 +194,12 @@ func _follow(delta: float) -> void:
 	var slot := leader.global_position + formation_offset.rotated(Vector3.UP, leader.rotation.y)
 	var to_slot := slot - body.global_position
 	to_slot.y = 0.0
+	# Sprint when trailing badly, walk when close — the crew reads as keeping
+	# up rather than teleporting or dawdling.
+	var follow_speed := CATCHUP_SPEED if to_slot.length() > CATCHUP_DIST else SPEED
 	if to_slot.length() <= STOP_DIST:
 		body.velocity.x = move_toward(body.velocity.x, 0.0, SPEED * 8.0 * delta)
 		body.velocity.z = move_toward(body.velocity.z, 0.0, SPEED * 8.0 * delta)
 		body.move_and_slide()
 		return
-	brain.nav_to(slot, delta, SPEED)
+	brain.nav_to(slot, delta, follow_speed)

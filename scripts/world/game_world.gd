@@ -1081,6 +1081,8 @@ func _process(delta: float) -> void:
 	if Engine.is_editor_hint():
 		return
 	var active := _squad.active_character()
+	if active != null and is_instance_valid(active):
+		AudioManager.listener_pos = active.global_position
 	if _ots:
 		if active != null and is_instance_valid(active):
 			_tick_ots_camera(active)

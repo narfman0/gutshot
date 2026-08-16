@@ -71,10 +71,14 @@ func _physics_process(delta: float) -> void:
 			if ally != null:
 				shooter.try_heal(ally)
 		else:
+			# A click ALWAYS sends a round. Acquiring somebody is a bonus, not
+			# a precondition: try_fire refuses when the target is in full
+			# cover (Cover.can_hit), and the old code let that swallow the
+			# shot entirely — you clicked at a man behind a crate and nothing
+			# happened. fire_wild does its own rate/reload/ammo gating, so
+			# falling through to it can't break the fire rate.
 			var enemy := _acquire_hostile_in_cone(aim)
-			if enemy != null:
-				shooter.try_fire(enemy)
-			else:
+			if enemy == null or not shooter.try_fire(enemy):
 				shooter.fire_wild(aim)
 	elif Vector2(body.velocity.x, body.velocity.z).length() > 0.5:
 		_face(body.global_position + body.velocity)

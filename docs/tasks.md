@@ -64,11 +64,28 @@
 
 ## Playtest feedback — 2026-08-15 (first human play session)
 
-The first real playtest. Every item below is observed behaviour, not theory;
-the diagnosis after each is from reading the code afterwards, so it is a
-starting point rather than a verdict.
+The first real playtest. All five are FIXED (2026-08-16); what each item
+says below is the original report plus the diagnosis, kept because the
+diagnosis is the interesting part. What actually shipped:
 
-- [ ] **Factions fight the moment the game opens.** They should be quiet and
+- factions: `Factions.engages_on_sight()` splits "who are enemies" from "who
+  PICKS the fight". NPC factions that merely dislike each other stand off
+  until provoked; CREW and HORDE are exempt. Fixing this exposed a latent
+  bug — `provoke()` early-returned for already-hostile pairs, so those
+  provocations were never recorded and could never escalate
+- sound: `Shooter.noise_reaches()` raycasts COVER, so a wall stops a noise
+  alert exactly as it stops a bullet. Separately, combat SFX became
+  distance-mixed (`AudioManager.play_sfx_at`) — they were non-positional, so
+  every shot in the district played at full volume in your ears
+- floors: the whole reveal/translucency system deleted
+- following: catching up now outranks fighting past 14 m, followers sprint
+  to close (they could never catch a sprinting player at 8.5 vs 14.25), and
+  a wedged follower warps to the crew after 3 s — a follower off the navmesh
+  re-paths to the same short path forever and stands there for good
+- shooting: a click always sends a round; `try_fire` refusing on full cover
+  no longer swallows it
+
+- [x] **Factions fight the moment the game opens.** They should be quiet and
       docile in general, and start trouble only when something causes it.
       Cause is structural rather than a bug: `Factions._BASE_HOSTILE` puts
       GANGS at war with CORP and CLAN from boot, every pack has an
@@ -78,7 +95,7 @@ starting point rather than a verdict.
       decision: either factions start neutral and base hostility becomes
       something the world EARNS, or packs need a "don't start it" posture
       that only breaks when provoked or when the player is seen
-- [ ] **Gunshots carry through walls and across sites**, pulling enemies —
+- [x] **Gunshots carry through walls and across sites**, pulling enemies —
       and reaching into the hideout. `Shooter._alert_hearing()` alerts every
       hostile within `HEARING_RADIUS` (14 m) on straight-line DISTANCE with
       no occlusion test at all, so a wall, a building or a site boundary
@@ -96,7 +113,7 @@ starting point rather than a verdict.
       deck. If standing beneath the Exchange mezzanine now hides the crew,
       the fix is camera-side (raise the angle, or cull only what sits
       between camera and player) rather than bringing translucency back
-- [ ] **The party does not reliably follow.** They should generally follow
+- [x] **The party does not reliably follow.** They should generally follow
       whoever the player is controlling. `SquadFollow._in_combat()` returns
       true if ANY hostile is within `ENGAGE_DIST` (16 m) of the follower OR
       the leader, and also whenever `brain.threat` is pinned at any distance
@@ -105,7 +122,7 @@ starting point rather than a verdict.
       behind. Wants following to win more often: a tighter engage distance,
       a leash to the leader that overrides combat past some range, or
       "follow unless actually being shot at"
-- [ ] **Shooting does not always fire when clicked.** Two halves:
+- [x] **Shooting does not always fire when clicked.** Two halves:
       (a) ISO — clicking should always send a round toward the click even
       with no target. The wild-shot fallback exists, but only when the cone
       acquires NOBODY; if it acquires an enemy who is in full cover,

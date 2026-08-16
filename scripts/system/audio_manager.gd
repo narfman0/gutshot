@@ -17,6 +17,16 @@ const _SFX_DB := -8.0
 const _SILENT_DB := -60.0
 const _CROSSFADE_SECS := 2.5
 
+## Where the player is listening from — GameWorld keeps this on the active
+## character. Combat SFX are mixed against it so a firefight three sites away
+## does not play at full volume in your ears (playtest 2026-08-15: gunshots
+## carried "from far away, even entering the hideout").
+var listener_pos := Vector3.ZERO
+## Full volume inside this, falling off to silence at the cutoff.
+const SFX_NEAR := 14.0
+const SFX_CUTOFF := 48.0
+const SFX_FAR_DB := -28.0
+
 var _pool: Array[AudioStreamPlayer] = []
 var _pool_idx := 0
 ## Two ambient beds — the active one and the one fading out. Crossing into
@@ -53,6 +63,19 @@ func play_sfx(sfx_name: String, volume_db := 0.0, pitch_jitter := 0.07) -> void:
 	p.volume_db = _SFX_DB + volume_db
 	p.pitch_scale = 1.0 + randf_range(-pitch_jitter, pitch_jitter)
 	p.play()
+
+## A world-positioned one-shot: same cues, mixed by distance from the
+## listener and dropped entirely beyond the cutoff. Non-positional
+## play_sfx stays for UI and for anything happening TO the player.
+func play_sfx_at(sfx_name: String, at: Vector3, volume_db := 0.0,
+		pitch_jitter := 0.07) -> void:
+	var d := listener_pos.distance_to(at)
+	if d > SFX_CUTOFF:
+		return
+	var falloff := 0.0
+	if d > SFX_NEAR:
+		falloff = SFX_FAR_DB * ((d - SFX_NEAR) / (SFX_CUTOFF - SFX_NEAR))
+	play_sfx(sfx_name, volume_db + falloff, pitch_jitter)
 
 ## SoundBank variant if the cue is banked, else the synthesized WAV. Missing
 ## sample files (nobody ran fetch_assets.sh) fall through to the synth rather

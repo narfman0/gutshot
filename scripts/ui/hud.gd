@@ -229,6 +229,7 @@ func _build_kit_bar() -> void:
 	_kit_row.name = "KitBar"
 	_kit_row.theme = UITheme.theme
 	_kit_row.add_theme_constant_override("separation", 6)
+	_kit_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_kit_row.anchor_left = 0.5
 	_kit_row.anchor_right = 0.5
 	_kit_row.anchor_top = 1.0
@@ -260,6 +261,7 @@ func _refresh_kit() -> void:
 		label.add_theme_font_size_override("font_size", 13)
 		label.add_theme_color_override("font_color", UITheme.C_HEAD)
 		label.text = "[%s] %s" % [KIT_KEYS[i], ability.display_name]
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE  # never eat a click
 		_kit_row.add_child(label)
 		_kit_entries.append({"label": label, "ability": ability, "name": ability.display_name})
 		shown += 1

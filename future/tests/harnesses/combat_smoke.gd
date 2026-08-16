@@ -79,6 +79,22 @@ func _ready() -> void:
 	var walled := Cover.exposure(shooter_char.muzzle_position(), target)
 	_check(walled <= Cover.FULL_COVER_MAX, "full wall blocks all rays (exposure %.2f)" % walled)
 	_check(not shooter.try_fire(target), "shot refused through full cover")
+	# ...but a CLICK must still send a round downrange. The player controller
+	# falls through to fire_wild whenever try_fire refuses, so a target behind
+	# a wall can never swallow the shot (playtest 2026-08-15: clicking at a
+	# man in cover did nothing at all). fire_wild does its own rate/reload
+	# gating, which is what makes that fallback safe.
+	_check(shooter.fire_wild(target.global_position),
+		"a refused shot still fires WILD — a click always sends a round")
+	# The harness gear is rate-ungated on purpose, so prove the gating on a
+	# realistic rate: the fallback must not become a way to outrun fire_rate.
+	var rate_gear := shooter_char.active_gear()
+	var ungated := rate_gear.fire_rate
+	rate_gear.fire_rate = 2.0
+	_check(shooter.fire_wild(target.global_position), "a wild shot at a real fire rate")
+	_check(not shooter.fire_wild(target.global_position),
+		"the next one is rate-gated — the fallback can't outrun fire_rate")
+	rate_gear.fire_rate = ungated
 
 	# 4. Run-and-gun penalty: moving_accuracy_mult 0 → every moving shot misses.
 	#    (Sidestep so the wall from step 3 isn't between them.)
@@ -165,6 +181,22 @@ func _ready() -> void:
 	_check(is_equal_approx(victim.hp, hp_pre_swing - 15.0),
 		"swing lands full damage (hp %.1f -> %.1f)" % [hp_pre_swing, victim.hp])
 	_check(shots_heard[0] == 0, "steel is quiet — no shot_fired emitted")
+
+	# 8. Gunfire does not carry THROUGH the world. Playtest 2026-08-15: shots
+	#    pulled enemies from behind walls and across site boundaries.
+	shooter_char.global_position = Vector3(20, 0, 0)
+	target.global_position = Vector3(20, 0, -8)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var space := target.get_world_3d().direct_space_state
+	var ear_from := shooter_char.muzzle_position()
+	_check(Shooter.noise_reaches(ear_from, target, space, shooter_char),
+		"in the open, a shot reaches the ear")
+	_make_cover_box(Vector3(20, 1.1 * squash, -4), Vector3(6.0, 2.2 * squash, 0.4))
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check(not Shooter.noise_reaches(ear_from, target, space, shooter_char),
+		"through a wall, the same shot never arrives")
 
 	if _failures.is_empty():
 		print("COMBAT_SMOKE: ALL PASS")

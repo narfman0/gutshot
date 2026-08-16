@@ -111,8 +111,8 @@ func try_fire(target: Character) -> bool:
 		_mag[slot] = mag_left(slot) - 1
 		if _mag[slot] <= 0:
 			start_reload()  # auto-reload on empty; this shot still fires
-	AudioManager.play_sfx(g.shot_sfx)
 	var muzzle := character.muzzle_position()
+	AudioManager.play_sfx_at(g.shot_sfx, muzzle)
 	Vfx.muzzle_flash(get_tree().current_scene, muzzle)
 	var moving := Vector2(character.velocity.x, character.velocity.z).length() > 0.5
 	var accuracy := minf(0.99, g.base_accuracy \
@@ -142,7 +142,7 @@ func _swing(target: Character, g: GearItem) -> bool:
 	if character.global_position.distance_to(target.global_position) > g.fire_range:
 		return false
 	_next_shot_ms = Time.get_ticks_msec() + int(1000.0 / maxf(g.fire_rate, 0.1))
-	AudioManager.play_sfx(g.shot_sfx)  # the whoosh
+	AudioManager.play_sfx_at(g.shot_sfx, character.global_position)  # the whoosh
 	CharacterAnimator.oneshot(character, "attack", 1.5, 0.55)
 	var moving := Vector2(character.velocity.x, character.velocity.z).length() > 0.5
 	var accuracy := minf(0.99,
@@ -151,7 +151,7 @@ func _swing(target: Character, g: GearItem) -> bool:
 	var hit := randf() < accuracy
 	last_shot_hit = hit
 	if hit:
-		AudioManager.play_sfx("slash")
+		AudioManager.play_sfx_at("slash", target.global_position)
 		Juice.impact_burst(get_tree().current_scene,
 			target.global_position + Vector3(0, 1.0 * Character.VERTICAL_SQUASH, 0),
 			Color(0.9, 0.25, 0.2))
@@ -184,8 +184,8 @@ func fire_wild(at_point: Vector3) -> bool:
 		_mag[slot] = mag_left(slot) - 1
 		if _mag[slot] <= 0:
 			start_reload()
-	AudioManager.play_sfx(g.shot_sfx)
 	var muzzle := character.muzzle_position()
+	AudioManager.play_sfx_at(g.shot_sfx, muzzle)
 	Vfx.muzzle_flash(get_tree().current_scene, muzzle)
 	var flat := at_point - character.global_position
 	flat.y = 0.0
@@ -205,14 +205,41 @@ func fire_wild(at_point: Vector3) -> bool:
 		_alert_hearing()
 	return true
 
+## Gunfire carries — but not through the world. Playtest 2026-08-15: shots
+## were pulling enemies from across walls, buildings and whole site
+## boundaries, and reaching into the hideout.
+##
+## Occlusion is one raycast on the same COVER layer every other sight test
+## uses, so a wall stops a noise alert exactly like it stops a bullet. Muzzle
+## height on both ends, so a waist-high crate does not deafen the room.
+## Does a noise made at `from` reach `listener`? One raycast on the same
+## COVER layer every sight test uses, so a wall stops a noise alert exactly
+## as it stops a bullet. Ear height on the listener, so a waist-high crate
+## does not deafen the room.
+static func noise_reaches(from: Vector3, listener: Character,
+		space: PhysicsDirectSpaceState3D, source: Node3D = null) -> bool:
+	if listener == null or not is_instance_valid(listener):
+		return false
+	var to := listener.global_position + Vector3(0, 1.4 * Character.VERTICAL_SQUASH, 0)
+	var query := PhysicsRayQueryParameters3D.create(from, to, Layers.LOS_MASK)
+	var skip: Array[RID] = [listener.get_rid()]
+	if source is CollisionObject3D:
+		skip.append((source as CollisionObject3D).get_rid())
+	query.exclude = skip
+	return space.intersect_ray(query).is_empty()
+
 func _alert_hearing() -> void:
 	GameState.shot_fired.emit(character)
+	var from := character.muzzle_position()
+	var space := character.get_world_3d().direct_space_state
 	for node in get_tree().get_nodes_in_group("characters"):
 		var enemy := node as Character
 		if enemy == null or enemy.team == character.team or not enemy.is_alive():
 			continue
 		if character.global_position.distance_to(enemy.global_position) > HEARING_RADIUS:
 			continue
+		if not noise_reaches(from, enemy, space, character):
+			continue  # a wall between us — they never heard it
 		# Type-scan, not a name lookup — controllers are attached in code and
 		# not every call site names the node.
 		for child in enemy.get_children():

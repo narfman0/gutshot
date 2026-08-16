@@ -117,7 +117,10 @@ func acquire_threat() -> Character:
 		return threat
 	threat = null
 	var best_d := ENGAGE_RANGE
-	for node in Factions.hostiles_of(body.get_tree(), body.team):
+	# Unprompted acquisition only picks fights this faction would actually
+	# start; a pinned threat (someone shot us) is handled above and outranks
+	# this, so self-defence still works against anyone.
+	for node in Factions.sight_targets_of(body.get_tree(), body.team):
 		var c := node as Character
 		var d := body.global_position.distance_to(c.global_position)
 		if d < best_d:
@@ -383,6 +386,13 @@ static func _prop_extent(prop: Node) -> float:
 ## (Vector3.INF → face along the path). Returns false when there is no path
 ## or every waypoint is consumed (arrived or unreachable) — callers decide.
 ## Public: SquadFollow reuses it for formation movement.
+## Drop the cached path — after a teleport the old waypoints lead back to
+## where the body used to be.
+func forget_path() -> void:
+	_path_dest = Vector3.INF
+	_waypoints = []
+	_wp_index = 0
+
 func nav_to(dest: Vector3, delta: float, speed: float = SPEED,
 		face_point: Vector3 = Vector3.INF) -> bool:
 	if _path_dest == Vector3.INF or dest.distance_to(_path_dest) > REPATH_DIST:

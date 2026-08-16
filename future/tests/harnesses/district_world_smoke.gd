@@ -132,6 +132,79 @@ func _ready() -> void:
 	DirAccess.remove_absolute(SaveManager._path(TEST_SLOT))
 	GameState.debug_session = true
 
+	# 7. The crew FOLLOWS. Playtest 2026-08-15: the party kept stopping to
+	#    fight and getting left behind, so following must now outrank
+	#    fighting past a catch-up distance — proven in the worst case, with
+	#    the leader walking off through hostile turf.
+	# A downed leader hands control to the next crew member, and the crew
+	# then correctly follows THAT one — so the test has to hold control still
+	# to mean anything. Make squad[0] a bullet sponge.
+	leader.max_hp = 1000000.0
+	leader.hp = leader.max_hp
+	leader.global_position = street.to_global(Vector3(0, 0.1, 18))
+	await _settle(20)
+	var followers: Array = []
+	for member in GameState.squad:
+		var c := member as Character
+		if c != null and c != leader and is_instance_valid(c) and c.is_alive():
+			followers.append(c)
+	_check(followers.size() == 3, "three followers to test (got %d)" % followers.size())
+	# March the leader the length of the street, through the gang packs.
+	leader.global_position = street.to_global(Vector3(0, 0.1, -18))
+	var closed := 0
+	for k in 20:
+		await get_tree().create_timer(0.5).timeout
+		closed = 0
+		for f in followers:
+			var c := f as Character
+			if is_instance_valid(c) and c.is_alive() \
+					and c.global_position.distance_to(leader.global_position) \
+						<= SquadFollow.CATCHUP_DIST:
+				closed += 1
+		if closed >= 2:
+			break
+	_check(_world.active_character() == leader,
+		"the sponge leader is still the one being controlled")
+	_check(closed >= 2,
+		"the crew closes on the leader even through a fight (%d of %d within %.0f m)"
+		% [closed, followers.size(), SquadFollow.CATCHUP_DIST])
+
+	# 8. The district is QUIET when you walk in. Playtest 2026-08-15: several
+	#    factions were already shooting each other at boot. NPC factions that
+	#    merely dislike each other now stand off until provoked; the crew and
+	#    the Spawn are the exemptions.
+	Factions.reset_all()
+	_check(not Factions.engages_on_sight(Factions.GANGS, Factions.CLAN),
+		"gangs and the clan do not start it on sight")
+	_check(not Factions.engages_on_sight(Factions.GANGS, Factions.CORP),
+		"gangs and corp security do not start it on sight")
+	_check(Factions.engages_on_sight(Factions.GANGS, Factions.CREW),
+		"but the gangs still jump the CREW on sight — that is the game")
+	_check(Factions.engages_on_sight(Factions.HORDE, Factions.CLAN),
+		"and the Spawn still attacks everything")
+	# Provoked, they fight properly.
+	Factions.provoke(Factions.GANGS, Factions.CLAN)
+	_check(Factions.engages_on_sight(Factions.GANGS, Factions.CLAN),
+		"once provoked, they DO engage on sight")
+	Factions.reset_provocations()
+	# And nobody is actually shooting in Little Japan at rest — the site that
+	# ships a standing gang-vs-clan stand-off.
+	var lj := _chunk("Littlejapan")
+	leader.global_position = _chunk("Hideout").to_global(Vector3(0, 0.1, 4))
+	await _settle(30)
+	var fighting := 0
+	for node in get_tree().get_nodes_in_group("enemy_ai"):
+		var ec := node as EnemyController
+		if ec == null or not is_instance_valid(ec.body) or not ec.body.is_alive():
+			continue
+		if not lj.bounds_rect().grow(2.0).has_point(
+				Vector2(ec.body.global_position.x, ec.body.global_position.z)):
+			continue
+		if ec.state == EnemyController.State.FIGHT:
+			fighting += 1
+	_check(fighting == 0,
+		"Little Japan is calm with the crew away (%d in a fight)" % fighting)
+
 	if _failures.is_empty():
 		print("DISTRICT_WORLD_SMOKE: ALL PASS")
 		get_tree().quit(0)

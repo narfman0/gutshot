@@ -64,8 +64,15 @@ static func hostile(a: int, b: int) -> bool:
 	return _provoked.has(k) or _honor.has(k)
 
 ## Mark two factions hostile until the crew next rests.
+##
+## This records the provocation even when the pair is ALREADY base-hostile.
+## It used to early-out in that case as an optimisation, which quietly broke
+## once engages_on_sight arrived: base-hostile NPC factions stand off until
+## provoked, so if the provocation is never written down they can never
+## escalate — a gang could shoot a ninja and the clan would never turn on
+## them as a faction.
 static func provoke(a: int, b: int) -> void:
-	if a == b or hostile(a, b):
+	if a == b:
 		return
 	_provoked[_key(a, b)] = true
 
@@ -87,6 +94,27 @@ static func note_attack(victim_faction: int, attacker_faction: int) -> void:
 	else:
 		provoke(victim_faction, attacker_faction)
 
+## Will `a` START a fight with `b` unprompted, on sight?
+##
+## `hostile()` says who are ENEMIES. This says who PICKS the fight, and the
+## two are not the same thing. Playtest 2026-08-15: walking in, several
+## factions were already at war with each other, because base hostility made
+## every gang/clan and gang/corp pair open fire the moment they saw one
+## another. The district should be quiet and docile until something happens.
+##
+## So NPC factions who merely dislike each other now stand off. They still
+## defend themselves — being shot routes through note_attack, which provokes
+## — and once provoked they fight properly. Two exemptions: the CREW, because
+## gangs jumping the player on sight IS the game, and the SPAWN, which is at
+## war with everything that breathes or computes.
+static func engages_on_sight(a: int, b: int) -> bool:
+	if not hostile(a, b):
+		return false
+	if a == CREW or b == CREW or a == HORDE or b == HORDE:
+		return true
+	var k := _key(a, b)
+	return _provoked.has(k) or _honor.has(k)
+
 ## Every living character hostile to `faction`, via the global "characters"
 ## group. Fine at squad scale; revisit if rosters grow past dozens.
 static func hostiles_of(tree: SceneTree, faction: int) -> Array:
@@ -94,5 +122,15 @@ static func hostiles_of(tree: SceneTree, faction: int) -> Array:
 	for node in tree.get_nodes_in_group("characters"):
 		var c := node as Character
 		if c != null and c.is_alive() and hostile(faction, c.team):
+			out.append(c)
+	return out
+
+## Who `faction` will actually open up on unprompted — the list the AI's
+## sight checks use, as opposed to the full enemies list.
+static func sight_targets_of(tree: SceneTree, faction: int) -> Array:
+	var out: Array = []
+	for node in tree.get_nodes_in_group("characters"):
+		var c := node as Character
+		if c != null and c.is_alive() and engages_on_sight(faction, c.team):
 			out.append(c)
 	return out

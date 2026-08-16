@@ -437,7 +437,9 @@ func _nearest_hostile_pos() -> Vector3:
 
 ## A player-team character visible inside sight range → fight, tell the pack.
 func _check_sight() -> bool:
-	for node in Factions.hostiles_of(get_tree(), body.team):
+	# sight_targets_of, not hostiles_of: a faction that merely dislikes
+	# another stands off until provoked (see Factions.engages_on_sight).
+	for node in Factions.sight_targets_of(get_tree(), body.team):
 		var c := node as Character
 		if body.global_position.distance_to(c.global_position) > aggro_radius:
 			continue
