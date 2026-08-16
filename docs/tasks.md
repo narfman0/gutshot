@@ -62,6 +62,54 @@
       readability comes back, it should be diegetic (per-pack direction
       cues, incoming-fire intensity), not a global bar
 
+## Playtest feedback — 2026-08-15 (first human play session)
+
+The first real playtest. Every item below is observed behaviour, not theory;
+the diagnosis after each is from reading the code afterwards, so it is a
+starting point rather than a verdict.
+
+- [ ] **Factions fight the moment the game opens.** They should be quiet and
+      docile in general, and start trouble only when something causes it.
+      Cause is structural rather than a bug: `Factions._BASE_HOSTILE` puts
+      GANGS at war with CORP and CLAN from boot, every pack has an
+      `aggro_radius` that engages on sight, and Little Japan deliberately
+      ships a standing three-way (clan patrol vs gang shakedown). So the
+      district is mid-fight before the player does anything. Wants a real
+      decision: either factions start neutral and base hostility becomes
+      something the world EARNS, or packs need a "don't start it" posture
+      that only breaks when provoked or when the player is seen
+- [ ] **Gunshots carry through walls and across sites**, pulling enemies —
+      and reaching into the hideout. `Shooter._alert_hearing()` alerts every
+      hostile within `HEARING_RADIUS` (14 m) on straight-line DISTANCE with
+      no occlusion test at all, so a wall, a building or a site boundary
+      stops nothing. Wants an LOS/occlusion check (or a muffling factor
+      through COVER geometry), and the hideout should probably be deaf to
+      the outside world regardless
+- [ ] **Over-the-shoulder mode should render ALL floors.** FloorSystem has no
+      idea the camera mode changed — it keeps hiding floors above the active
+      one, which is right for the iso read and wrong at eye level, where you
+      are looking THROUGH the building at missing geometry. Wants
+      `set_camera_mode` to put FloorSystem into a reveal-everything state
+- [ ] **The party does not reliably follow.** They should generally follow
+      whoever the player is controlling. `SquadFollow._in_combat()` returns
+      true if ANY hostile is within `ENGAGE_DIST` (16 m) of the follower OR
+      the leader, and also whenever `brain.threat` is pinned at any distance
+      — and in a district where gangs are hostile on sight, that is almost
+      always true, so followers fight instead of following and get left
+      behind. Wants following to win more often: a tighter engage distance,
+      a leash to the leader that overrides combat past some range, or
+      "follow unless actually being shot at"
+- [ ] **Shooting does not always fire when clicked.** Two halves:
+      (a) ISO — clicking should always send a round toward the click even
+      with no target. The wild-shot fallback exists, but only when the cone
+      acquires NOBODY; if it acquires an enemy who is in full cover,
+      `try_fire` refuses via `can_fire` → `Cover.can_hit` and the click is
+      swallowed silently. Fall back to `fire_wild` whenever `try_fire`
+      returns false.
+      (b) OTS — should fire immediately on click and keep firing while held
+      until the magazine is empty. Same swallowed-click cause, plus worth
+      checking the captured-mouse input path delivers the press promptly
+
 ## Phase 2 — Multi-Floor Template Level (next)
 
 See docs/locations.md — the Vantag District: tower (portal), Depot 9
