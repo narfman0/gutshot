@@ -73,13 +73,7 @@ func _build_active(vbox: VBoxContainer) -> void:
 	orders.custom_minimum_size.x = 520
 	orders.add_theme_font_size_override("font_size", 14)
 	orders.add_theme_color_override("font_color", UITheme.C_MUTED)
-	if GameState.carrying:
-		orders.text = "You have the %s. Get back to the hideout — %s want it back, and they are looking." % [
-			str(job.get("loot", "take")), Factions.NAMES.get(Jobs.owner_of(GameState.active_job), "they")]
-	else:
-		orders.text = "Take the %s from %s, at %s. Then bring it home." % [
-			str(job.get("loot", "take")), str(job.get("where", "the site")),
-			_site_name(str(job.get("site", "")))]
+	orders.text = _orders_text(job)
 	vbox.add_child(orders)
 
 	var give_up := Button.new()
@@ -87,7 +81,7 @@ func _build_active(vbox: VBoxContainer) -> void:
 	give_up.pressed.connect(func():
 		GameState.abandon_job()
 		if _world != null and is_instance_valid(_world):
-			_world.refresh_job_loot()
+			_world.refresh_job()
 		_build())
 	vbox.add_child(give_up)
 
@@ -123,9 +117,38 @@ func _build_offers(vbox: VBoxContainer) -> void:
 			if GameState.accept_job(job_id):
 				AudioManager.play_sfx("revive")
 				if _world != null and is_instance_valid(_world):
-					_world.refresh_job_loot()
+					_world.refresh_job()
 				_build())
 		vbox.add_child(take)
+
+## Standing orders in the contract's own verb. Every job ends the same way —
+## get home, get paid — but they do not all start the same way.
+func _orders_text(job: Dictionary) -> String:
+	var id := GameState.active_job
+	var who: String = Factions.NAMES.get(Jobs.owner_of(id), "they")
+	var where := "%s, at %s" % [str(job.get("where", "the site")),
+		_site_name(str(job.get("site", "")))]
+	if GameState.carrying:
+		match Jobs.type_of(id):
+			"hit":
+				return "The mark is down. Carry the proof back to the hideout — %s know it was you." % who
+			"sabotage":
+				return "The core is out. Get clear and get home — %s are coming." % who
+			"escort":
+				return "He is walking with you. Get him to the hideout ALIVE; if he dies the contract dies with him. %s are looking." % who
+			_:
+				return "You have the %s. Get back to the hideout — %s want it back, and they are looking." % [
+					str(job.get("loot", "take")), who]
+	match Jobs.type_of(id):
+		"hit":
+			return "Find the mark on %s and put him down. Then bring the proof home." % where
+		"sabotage":
+			return "Wreck the installation in %s — shoot it, blast it, whatever holds. Then get out." % where
+		"escort":
+			return "Walk up to him in %s, then walk him home. He does not fight, and he does not survive being left behind." % where
+		_:
+			return "Take the %s from %s. Then bring it home." % [
+				str(job.get("loot", "take")), where]
 
 func _site_name(site_id: String) -> String:
 	for entry in DistrictMap.SITES:

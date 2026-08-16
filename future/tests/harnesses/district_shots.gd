@@ -66,7 +66,7 @@ func _ready() -> void:
 	_teleport(_chunk("Street").to_global(Vector3(-16.0, 0.1, -13.0)))
 	await _settle(10)
 	GameState.accept_job("ledger")
-	_world.refresh_job_loot()
+	_world.refresh_job()
 	await _shot("district_18_job_loot.png", 40)
 	_teleport(_chunk("Street").to_global(Vector3(-16.0, 0.1, -20.0)))
 	await _shot("district_19_job_carrying.png", 60)

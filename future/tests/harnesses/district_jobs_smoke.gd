@@ -64,7 +64,7 @@ func _ready() -> void:
 	_check(GameState.accept_job("ledger"), "the crew can take the chop shop job")
 	_check(not GameState.accept_job("manifest"),
 		"a second contract is refused while one is live")
-	_world.refresh_job_loot()
+	_world.refresh_job()
 	await _settle(3)
 
 	# 2. The loot is really there, inside the chop shop, and only the ACTIVE
@@ -127,7 +127,7 @@ func _ready() -> void:
 
 	# 6. The clan job leaves an HONOR grudge that resting never washes off.
 	_check(GameState.accept_job("blade"), "the crew can take the clan job next")
-	_world.refresh_job_loot()
+	_world.refresh_job()
 	await _settle(3)
 	var blade := _loot()
 	_check(blade != null, "the clan loot spawned")
@@ -147,11 +147,11 @@ func _ready() -> void:
 
 	# 7. Abandoning a contract puts the loot back and clears the order.
 	_check(GameState.accept_job("manifest"), "the crew takes the depot job")
-	_world.refresh_job_loot()
+	_world.refresh_job()
 	await _settle(3)
 	_check(_loot() != null, "the manifest is on the floor")
 	GameState.abandon_job()
-	_world.refresh_job_loot()
+	_world.refresh_job()
 	await _settle(3)
 	_check(_loot() == null and GameState.active_job == "",
 		"abandoning clears the order and takes the loot away")
@@ -171,6 +171,100 @@ func _ready() -> void:
 		"the save round-trips the live contract and the finished ones")
 	DirAccess.remove_absolute(SaveManager._path(TEST_SLOT))
 	GameState.debug_session = true
+
+	# ── The other three verbs. All of them end the same way (get home, get
+	#    paid) because they share the carrying flag — so what each section
+	#    proves is that the right thing in the world STARTS the run home.
+	GameState.abandon_job()
+	_world.refresh_job()
+	await _settle(3)
+
+	# 9. HIT: a named mark spawns; killing him is what starts the getaway.
+	_check(GameState.accept_job("warlord"), "the crew takes the hit")
+	_world.refresh_job()
+	await _settle(5)
+	var mark: Character = null
+	for node in _world._job_nodes:
+		if node is Character and (node as Character).max_hp > 200.0:
+			mark = node as Character
+	_check(mark != null, "the mark spawned on the trading floor")
+	_check(_world._job_nodes.size() >= 3, "the mark brought a detail (%d bodies)"
+		% _world._job_nodes.size())
+	# Stand where the job is: completing an objective while parked in the
+	# safe room banks it the same tick, which is correct but untestable.
+	leader.global_position = _chunk("Exchange").to_global(Vector3(0, 0.1, 10))
+	await _settle(5)
+	if mark != null:
+		_check(not GameState.carrying, "the hit is not done just by arriving")
+		mark.receive_damage(999999.0, leader)
+		await _settle(5)
+		_check(GameState.carrying, "killing the mark starts the run home")
+	var xp_pre_hit := GameState.xp
+	leader.global_position = _chunk("Hideout").to_global(Vector3(0, 0.1, 4))
+	await _settle(10)
+	_check(GameState.xp == xp_pre_hit + int(Jobs.job("warlord")["xp"]),
+		"the hit pays on delivery (xp +%d)" % (GameState.xp - xp_pre_hit))
+
+	# 10. SABOTAGE: the core takes fire like any breachable, and blowing it
+	#     is the trigger. It must survive a few rounds first — an objective
+	#     that pops to one bullet is not an objective.
+	_check(GameState.accept_job("assembler"), "the crew takes the sabotage")
+	_world.refresh_job()
+	await _settle(5)
+	var core: JobSabotage = null
+	for node in _world._job_nodes:
+		if node is JobSabotage:
+			core = node as JobSabotage
+	_check(core != null, "the fabricator core spawned in the sanctum")
+	leader.global_position = _chunk("Fab").to_global(Vector3(0, 0.1, 8))
+	await _settle(5)
+	if core != null:
+		core.receive_damage(40.0)
+		await _settle(3)
+		_check(not GameState.carrying and is_instance_valid(core),
+			"the core survives a glancing hit")
+		while is_instance_valid(core) and core.hp > 0.0:
+			core.receive_damage(80.0)
+			await _settle(2)
+		await _settle(5)
+		_check(GameState.carrying, "wrecking the core starts the getaway")
+		_check(Factions.hostile(Factions.ASSEMBLY, Factions.CREW),
+			"the machines take it personally")
+	leader.global_position = _chunk("Hideout").to_global(Vector3(0, 0.1, 4))
+	await _settle(10)
+	_check(GameState.completed_jobs.has("assembler"), "the sabotage banks")
+
+	# 11. ESCORT: contact starts it, and losing the package LOSES the job.
+	_check(GameState.accept_job("informant"), "the crew takes the escort")
+	_world.refresh_job()
+	await _settle(5)
+	var person: Character = null
+	for node in _world._job_nodes:
+		if node is Character:
+			person = node as Character
+	_check(person != null, "the informant is waiting in the lobby")
+	leader.global_position = _chunk("Tower").to_global(Vector3(0, 0.1, 14))
+	await _settle(5)
+	if person != null:
+		var follower := GameState.squad[1] as Character
+		follower.global_position = person.global_position
+		await _settle(6)
+		_check(not GameState.carrying,
+			"a follower brushing past does NOT start the escort")
+		leader.global_position = person.global_position + Vector3(1.0, 0, 1.0)
+		for i in 60:
+			await get_tree().physics_frame
+			if GameState.carrying:
+				break
+		_check(GameState.carrying, "the active character making contact starts it")
+		# Kill the package: the contract dies with him.
+		person.receive_damage(999999.0)
+		await _settle(8)
+		_check(GameState.active_job == "" and not GameState.carrying,
+			"losing the informant loses the job")
+		_check(not GameState.completed_jobs.has("informant"),
+			"a lost escort is NOT banked")
+		_check(Jobs.available().has("informant"), "and it goes back on the board")
 
 	if _failures.is_empty():
 		print("DISTRICT_JOBS_SMOKE: ALL PASS")

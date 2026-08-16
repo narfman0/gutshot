@@ -166,7 +166,7 @@ func _ready() -> void:
 	_objectives.mission_failed.connect(_show_wipe_screen)
 	_objectives.site_cleared.connect(_on_site_cleared)
 	GameState.crew_leveled.connect(_on_crew_leveled)
-	refresh_job_loot()  # a Continue mid-contract puts the loot back on the floor
+	refresh_job()  # a Continue mid-contract rebuilds the objective
 	_tick_sites(0.0)  # register the arrival site (label, save, mood, ambient)
 	SceneManager.fade_in()
 
@@ -750,31 +750,116 @@ func _on_crew_leveled(_new_level: int) -> void:
 const JOB_HUNT_RADIUS := 70.0
 const JOB_HUNT_INTERVAL := 2.0
 
-var _job_loot: JobLoot = null
+## Whatever the live contract put in the world: a pickup, a mark, a core, or
+## a person. One handle, because only one job runs at a time.
+var _job_nodes: Array = []
+var _job_escort: JobEscort = null
 var _job_hunt_t := 0.0
 
-## Put the loot on the floor (or take it away) to match GameState. Safe to
-## call any time — the board calls it on accept/abandon, boot calls it for a
-## restored save.
-func refresh_job_loot() -> void:
-	if _job_loot != null and is_instance_valid(_job_loot):
-		_job_loot.queue_free()
-	_job_loot = null
-	if GameState.active_job == "" or GameState.carrying:
+## Reconcile the world with GameState. Safe to call any time — the board
+## calls it on accept/abandon, boot calls it for a restored save.
+func refresh_job() -> void:
+	for node in _job_nodes:
+		if is_instance_valid(node):
+			(node as Node).queue_free()
+	_job_nodes = []
+	_job_escort = null
+	if GameState.active_job == "":
 		return
-	var job := Jobs.job(GameState.active_job)
+	var id := GameState.active_job
+	var job := Jobs.job(id)
 	var chunk: SiteChunk = _chunks_by_id.get(str(job.get("site", "")))
 	if chunk == null:
 		return
-	_job_loot = JobLoot.spawn(chunk, job, self)
-	_job_loot.lifted.connect(_on_loot_lifted)
-
-## The moment that turns a walk into a getaway.
-func _on_loot_lifted() -> void:
-	var id := GameState.active_job
-	if id == "":
+	if GameState.carrying:
+		# Mid-contract reload. Only the escort has anything left in the world
+		# to restore — the others are already in the crew's pocket. Put the
+		# package back on the crew rather than back at the tower.
+		if Jobs.type_of(id) == "escort":
+			_build_escort(chunk, job)
+			if _job_escort != null:
+				_job_escort.following = true
+				var active := _squad.active_character()
+				if active != null and is_instance_valid(active) \
+						and _job_nodes.size() > 0 and is_instance_valid(_job_nodes[0]):
+					(_job_nodes[0] as Node3D).global_position = \
+						active.global_position + Vector3(1.5, 0.0, 1.5)
 		return
-	_job_loot = null
+	match Jobs.type_of(id):
+		"hit":
+			_build_hit(chunk, job)
+		"sabotage":
+			var core := JobSabotage.build_objective(chunk, job)
+			core.breached.connect(_on_objective_done)
+			_job_nodes.append(core)
+		"escort":
+			_build_escort(chunk, job)
+		_:
+			var loot := JobLoot.spawn(chunk, job, self)
+			loot.lifted.connect(_on_objective_done)
+			_job_nodes.append(loot)
+
+## The mark, plus a detail who die with him being nobody in particular.
+func _build_hit(chunk: SiteChunk, job: Dictionary) -> void:
+	var pos: Vector3 = job.get("pos", Vector3.ZERO)
+	var mark := spawn_event_enemy(chunk, {
+		"skin": str(job.get("mark_skin", "gangster")),
+		"pos": pos, "pack": "job_mark", "required": false,
+		"faction": Jobs.owner_of(GameState.active_job),
+		"hp": float(job.get("mark_hp", 240.0)), "xp": 0, "aggro": 16.0,
+		"gear": str(job.get("mark_gear", "res://resources/gear/enemy_rifle.tres")),
+	})
+	if mark == null:
+		return
+	var tag := Label3D.new()
+	tag.text = "★ " + str(job.get("name", "MARK"))
+	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	tag.font_size = 30
+	tag.pixel_size = 0.004
+	tag.outline_size = 8
+	tag.modulate = Color(1.0, 0.45, 0.4)
+	tag.position.y = 2.4
+	mark.add_child(tag)
+	mark.character_died.connect(func(_c): _on_objective_done())
+	_job_nodes.append(mark)
+	for i in int(job.get("guards", 0)):
+		var guard := spawn_event_enemy(chunk, {
+			"skin": "biker", "pack": "job_mark", "required": false,
+			"pos": pos + Vector3(3.0 if i % 2 == 0 else -3.0, 0.0, -2.0),
+			"faction": Jobs.owner_of(GameState.active_job),
+			"hp": 70.0, "xp": 10,
+			"gear": "res://resources/gear/enemy_smg.tres",
+		})
+		if guard != null:
+			_job_nodes.append(guard)
+
+## The package: unarmed, neutral, and hers to lose.
+func _build_escort(chunk: SiteChunk, job: Dictionary) -> void:
+	var person := spawn_event_enemy(chunk, {
+		"skin": str(job.get("escort_skin", "suit")),
+		"pos": job.get("pos", Vector3.ZERO), "pack": "job_escort",
+		"faction": Factions.CIVIL, "required": false, "unarmed": true,
+		"hp": 90.0, "xp": 0, "aggro": 0.0, "pursue": false,
+	})
+	if person == null:
+		return
+	_job_escort = JobEscort.attach(person, self)
+	_job_escort.contacted.connect(_on_objective_done)
+	# Losing the package is the fail state: the contract drops, and whatever
+	# grudge the job earned stays earned.
+	_job_escort.died.connect(func():
+		if GameState.active_job != "" and Jobs.type_of(GameState.active_job) == "escort":
+			($HUD as Hud).flash_job("THE INFORMANT IS DEAD — JOB LOST")
+			AudioManager.play_sfx("down")
+			GameState.abandon_job())
+	_job_nodes.append(person)
+
+## The moment that turns a walk into a getaway — shared by every job type,
+## which is why they all feel like the same contract with different verbs.
+func _on_objective_done() -> void:
+	var id := GameState.active_job
+	if id == "" or GameState.carrying:
+		return
 	GameState.lift_loot()
 	var owner_faction := Jobs.owner_of(id)
 	# An honor grudge outlives the hideout's rest; an ordinary one is
@@ -784,8 +869,17 @@ func _on_loot_lifted() -> void:
 	else:
 		Factions.provoke(owner_faction, Factions.CREW)
 	AudioManager.play_sfx("telegraph")
-	($HUD as Hud).flash_job("%s TAKEN — GET IT HOME" % str(Jobs.job(id).get("loot", "IT")))
+	($HUD as Hud).flash_job("%s — GET CLEAR" % _done_banner(id))
 	_hunt_carrier(true)
+
+## What the completion banner says, per verb.
+func _done_banner(id: String) -> String:
+	var what := str(Jobs.job(id).get("loot", "IT"))
+	match Jobs.type_of(id):
+		"hit": return "THE MARK IS DOWN"
+		"sabotage": return "THE CORE IS OUT"
+		"escort": return "THE INFORMANT IS WITH YOU"
+		_: return "%s TAKEN" % what
 
 func _tick_jobs(delta: float) -> void:
 	if not GameState.carrying:
@@ -824,7 +918,13 @@ func _bank_job_if_carrying() -> void:
 	AudioManager.play_sfx("levelup")
 	($HUD as Hud).flash_job("%s DELIVERED  ·  +%d XP" % [
 		str(job.get("loot", "THE TAKE")), paid])
-	refresh_job_loot()
+	# The package walked home; it doesn't loiter in the safe room afterwards.
+	for node in _job_nodes:
+		if is_instance_valid(node):
+			(node as Node).queue_free()
+	_job_nodes = []
+	_job_escort = null
+	refresh_job()
 
 func _setup_floor_systems() -> void:
 	for chunk in _chunks:
@@ -844,6 +944,11 @@ func _tick_sites(delta: float) -> void:
 			if (chunk as SiteChunk).bounds_rect().grow(2.0).has_point(p):
 				if chunk.site_id() != _active_site:
 					_enter_site(chunk)
+				elif chunk.heals_crew():
+					# Banking on ENTRY alone misses a contract that completes
+					# while the crew is already stood in the safe room — an
+					# escort catching up, say.
+					_bank_job_if_carrying()
 				break  # in a corridor, no chunk matches — the label stays put
 	for chunk in _chunks:
 		var id: String = chunk.site_id()

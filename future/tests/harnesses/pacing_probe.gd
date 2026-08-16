@@ -155,6 +155,16 @@ func _ready() -> void:
 	_check(avg_job > avg_repeat,
 		"a job (%d) pays better than re-farming a cleared site (%d) — pushing must beat grinding"
 		% [avg_job, avg_repeat])
+	# Jobs are meant to be the REASON to play, so taking one has to beat
+	# spending the same time clearing one more site. This is the invariant
+	# that keeps the loop pointed at the board.
+	_check(avg_job > avg_first,
+		"a job (%d) out-pays an average first clear (%d) — the board must be the best play"
+		% [avg_job, avg_first])
+	_check(int(profiles["push (fresh site + job)"]) > int(profiles["explore (two fresh sites)"]),
+		"a session spent on a job beats one spent clearing another site (%d vs %d)"
+		% [int(profiles["push (fresh site + job)"]),
+			int(profiles["explore (two fresh sites)"])])
 	_check(avg_first > avg_repeat,
 		"a first clear (%d) beats a repeat clear (%d)" % [avg_first, avg_repeat])
 	var rising := true

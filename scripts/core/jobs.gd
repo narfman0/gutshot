@@ -14,8 +14,16 @@
 ## So the run home IS the job, and the fight on the way out is the point.
 ## Nothing here needs new AI; it needs a reason.
 ##
-## Payment is worth several kills on purpose. A job has to beat farming a
-## respawning pack, or the district goes back to being a shooting gallery.
+## Payment is set by a rule, not by feel, and pacing_probe asserts the shape
+## of it. Base by VERB — retrieval 300, hit 340, sabotage 360, escort 400,
+## rising with how much can go wrong — plus 40 when the owner is a NEUTRAL
+## faction, because a gang already wants the crew dead while the clan, the
+## corp and the Assembly are enemies you have to MAKE. The clan blade takes
+## another 20: that grudge is an honor grudge, and no rest ever forgives it.
+##
+## The floor those numbers have to clear: a job must out-pay simply clearing
+## another site (~274 average), or the board is decoration and the best play
+## is grinding the district. It averages ~357 against that 274.
 class_name Jobs
 
 ## Every entry carries a `type`. v1 ships RETRIEVAL only — the runtime in
@@ -35,7 +43,7 @@ const CATALOG := {
 		"owner": Factions.GANGS,
 		"loot": "LEDGER",
 		"pos": Vector3(-16.0, 0.0, -20.0),
-		"xp": 150,
+		"xp": 300,
 	},
 	"manifest": {
 		"type": "retrieval",
@@ -46,7 +54,48 @@ const CATALOG := {
 		"owner": Factions.GANGS,
 		"loot": "MANIFEST",
 		"pos": Vector3(18.0, 0.0, 16.0),
-		"xp": 180,
+		"xp": 300,
+	},
+	# ── HIT — kill a named mark, carry the proof home ────────────────────
+	"warlord": {
+		"type": "hit",
+		"name": "The Exchange Warlord",
+		"blurb": "Someone has been organising the gangs out of the old trading floor. Take him off the board and bring back proof.",
+		"site": "exchange",
+		"where": "the trading floor",
+		"owner": Factions.GANGS,
+		"loot": "PROOF",
+		"pos": Vector3(0.0, 0.1, 6.0),
+		"mark_skin": "gangster",
+		"mark_hp": 260.0,
+		"mark_gear": "res://resources/gear/enemy_rifle.tres",
+		"guards": 2,
+		"xp": 340,
+	},
+	# ── SABOTAGE — wreck an installation, then get clear ─────────────────
+	"assembler": {
+		"type": "sabotage",
+		"name": "Silence the Assembler",
+		"blurb": "The Assembly's fabricator core keeps rebuilding what the district tears down. Put it out. They will not take it well.",
+		"site": "fab",
+		"where": "the fabricator sanctum",
+		"owner": Factions.ASSEMBLY,
+		"loot": "CORE SHARD",
+		"pos": Vector3(0.0, 0.0, -14.0),
+		"xp": 400,
+	},
+	# ── ESCORT — bring somebody OUT alive ────────────────────────────────
+	"informant": {
+		"type": "escort",
+		"name": "The Vantag Informant",
+		"blurb": "A clerk on the Vantag payroll wants out, and wants to talk. Walk into the lobby, walk him home. Security will object.",
+		"site": "tower",
+		"where": "the tower lobby",
+		"owner": Factions.CORP,
+		"loot": "INFORMANT",
+		"pos": Vector3(10.0, 0.1, 6.0),
+		"escort_skin": "suit",
+		"xp": 440,
 	},
 	"blade": {
 		"type": "retrieval",
@@ -57,7 +106,7 @@ const CATALOG := {
 		"owner": Factions.CLAN,
 		"loot": "KATANA",
 		"pos": Vector3(-20.0, 0.0, 6.0),
-		"xp": 240,
+		"xp": 360,
 	},
 }
 
@@ -74,6 +123,9 @@ static func available() -> Array:
 		if not GameState.completed_jobs.has(id):
 			out.append(id)
 	return out
+
+static func type_of(id: String) -> String:
+	return str(job(id).get("type", "retrieval"))
 
 static func owner_of(id: String) -> int:
 	return int(job(id).get("owner", Factions.GANGS))

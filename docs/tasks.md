@@ -193,18 +193,18 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       Delivery pays 150–240 XP and lands the mission-complete beat where
       the crew is safe rather than as a popup over the bodies. Save v3
       persists the live contract + finished ones
-- [ ] Jobs v2 — the other archetypes, into the SAME Jobs.CATALOG (entries
-      already carry a `type`; GameWorld branches on it):
-      HIT (named target with a nameplate + bodyguard pack — closest to what
-      combat already does), SABOTAGE (destroy a thing via the BreachDoor
-      damage model; adds a non-combat verb and a timer), ESCORT/PROTECT
-      (keep a CIVIL alive across a site, or hold a position for a duration —
-      inverts the usual pressure, and escort AI is the fiddly one).
-      Also wanted: a CORP-owned contract in the tower. Worth doing because
-      gang-owned jobs have NO "you made a new enemy" beat — the gangs are
-      base-hostile to the crew already, so only neutral owners (clan, corp,
-      Assembly) can turn on you. Right now the clan blade is the only job
-      that demonstrates it
+- [x] Jobs v2 — all four verbs, six contracts, one board. HIT (a named mark
+      with a nameplate and a detail, at the Exchange), SABOTAGE (an Assembly
+      fabricator core that takes bullets AND grenades, in the Fab sanctum),
+      ESCORT (a Vantag informant who follows the crew home and whose death
+      LOSES the contract, out of the Tower lobby) alongside the three
+      retrieval jobs. Every type reuses the same `carrying` flag as
+      "objective done, now get home and get paid", so the hunt, the banking
+      and the HUD all work unchanged — the verbs differ only in what STARTS
+      the run home. Sabotage extends BreachDoor so both existing damage
+      paths hurt it for free. Three of the six are owned by NEUTRAL factions
+      (clan/Assembly/corp), which is where the "you just made an enemy"
+      beat actually lands
 - [ ] Jobs follow-ups: chained/multi-stage contracts, a fence NPC paying
       credits rather than raw XP, jobs that expire, rival crews racing you
       to the same take
@@ -224,11 +224,17 @@ sites via the SceneManager registry. Depot 9 is the first hand-crafted level.
       tiers decoration. Now 2 tiers open in the first session, 3 by ~5,
       4 by ~20, all 5 by ~80. The XP curve stays steep; the gates moved to
       meet it
-- [ ] TUNING, flagged by pacing_probe (needs a human feel-check first):
-      (b) JOBS PAY LESS THAN JUST CLEARING ANOTHER SITE — a fresh clear
-      averages 273 XP against a job's 190, so "explore two sites" (546/session)
-      beats "site + job" (463). If jobs are meant to be the reason to play,
-      they need to out-pay a clear: roughly 350-400 each
+- [x] Job payouts re-based on a RULE rather than feel: verb difficulty
+      (retrieval 300 / hit 340 / sabotage 360 / escort 400) plus 40 when the
+      owner is a neutral faction you have to make an enemy of, plus 20 for
+      the clan blade's unforgivable honor grudge. Average job 357 against an
+      average first clear of 274, so a session on the board (629) now beats
+      one spent clearing another site (546) which beats farming respawns
+      (228). pacing_probe asserts that ordering so it cannot silently regress
+- [ ] Site XP spread is wide and unexamined: Little Japan pays 478 on first
+      clear against Depot 9's 200. Defensible (it is the densest, hardest
+      site, and its clan units are worth 30 apiece) but it skews every
+      average in the probe. Worth a deliberate pass
 - [ ] Progression follow-ups: difficulty scaling against crew level; more
       capstones that grant ABILITIES rather than stats (Demolitions
       Training is the only one today); per-node icons; a respec at the
